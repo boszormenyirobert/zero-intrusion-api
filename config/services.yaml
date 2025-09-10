@@ -1,0 +1,89 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    MAILER_HOST: '%env(MAILER_HOST)%'
+    MAILER_UNAME: '%env(MAILER_UNAME)%'
+    MAILER_UPASSWORD: '%env(MAILER_UPASSWORD)%'
+    MAILER_PORT: '%env(MAILER_PORT)%'
+
+    VONAGE_API_KEY: '%env(VONAGE_API_KEY)%'
+    VONAGE_API_SECRET: '%env(VONAGE_API_SECRET)%'
+
+    EASYLOGIN_DOMAIN: '%env(EASYLOGIN_DOMAIN)%'
+    EASYLOGIN_SERVICE_REGISTRATION_PARTNER: '%env(EASYLOGIN_SERVICE_REGISTRATION_PARTNER)%'
+    EASYLOGIN_SERVICE_IDENTITY: '%env(EASYLOGIN_SERVICE_IDENTITY)%'
+    EASYLOGIN_SERVICE_REGISTRATION: '%env(EASYLOGIN_SERVICE_REGISTRATION)%'
+    EASYLOGIN_SERVICE_REGISTRATION_NEW: '%env(EASYLOGIN_SERVICE_REGISTRATION_NEW)%'
+
+    CORPORATE_ID_KEY: '%env(CORPORATE_ID_KEY)%'
+    CORPORATE_ID_SECRET: '%env(CORPORATE_ID_SECRET)%'
+    SERVICE_API_KEY: '%env(SERVICE_API_KEY)%'
+    SERVICE_API_SECRET: '%env(SERVICE_API_SECRET)%'
+    DATA_HASH_SECRET: '%env(DATA_HASH_SECRET)%'
+    DATABASE_HASH_SECRET: '%env(DATABASE_HASH_SECRET)%'
+    DATABASE_IV_SECRET: '%env(DATABASE_IV_SECRET)%'
+
+    EXTENSION_REGISTRATION_POOL_MESSAGE: '%env(EXTENSION_REGISTRATION_POOL_MESSAGE)%'
+    EXTENSION_REGISTRATION_POOL_SECRET: '%env(EXTENSION_REGISTRATION_POOL_SECRET)%'
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.    
+                              
+    App\Service\Corporate\CorporateRegistrationDatabaseService:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+
+    App\Service\Corporate\CorporateRegistrationService:
+        arguments:
+            MAILER_HOST: '%(MAILER_HOST)%'
+            MAILER_UNAME: '%(MAILER_UNAME)%'
+            MAILER_UPASSWORD: '%(MAILER_UPASSWORD)%'
+            MAILER_PORT: '%(MAILER_PORT)%'    
+
+            VONAGE_API_KEY: '%(VONAGE_API_KEY)%'
+            VONAGE_API_SECRET: '%(VONAGE_API_SECRET)%'
+
+            EASYLOGIN_DOMAIN: '%EASYLOGIN_DOMAIN%'
+            EASYLOGIN_SERVICE_REGISTRATION_PARTNER: '%EASYLOGIN_SERVICE_REGISTRATION_PARTNER%'
+            $EASYLOGIN_SERVICE_IDENTITY: '%EASYLOGIN_SERVICE_IDENTITY%'
+            $EASYLOGIN_SERVICE_REGISTRATION: '%EASYLOGIN_SERVICE_REGISTRATION%'
+            EASYLOGIN_SERVICE_REGISTRATION_NEW: '%EASYLOGIN_SERVICE_REGISTRATION_NEW%'
+
+            CORPORATE_ID_KEY: '%CORPORATE_ID_KEY%'
+            CORPORATE_ID_SECRET: '%CORPORATE_ID_SECRET%'
+            SERVICE_API_KEY: '%SERVICE_API_KEY%'
+            SERVICE_API_SECRET: '%SERVICE_API_SECRET%'
+            DATA_HASH_SECRET: '%DATA_HASH_SECRET%'
+            DATABASE_HASH_SECRET: '%DATABASE_HASH_SECRET%'
+            DATABASE_IV_SECRET: '%DATABASE_IV_SECRET%'
+
+            EXTENSION_REGISTRATION_POOL_MESSAGE: '%EXTENSION_REGISTRATION_POOL_MESSAGE%'
+            EXTENSION_REGISTRATION_POOL_SECRET: '%EXTENSION_REGISTRATION_POOL_SECRET%'
+               
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\EventListener\JsonValidationListener:
+        arguments:
+            $logger: '@logger'
+        tags:
+            - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }
+
+    App\EventListener\HmacExtensionValidationListener:
+        tags:
+        - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }
+    App\EventListener\HmacMobileValidationListener:
+        tags:
+        - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }        
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones

@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Controller\CredentialHub;
+
+use App\Service\AccessRegistry\DTO\DeleteApplicationDto;
+use App\DTO\QR\VaultDeleteQrContentDTO;
+use App\Service\AuthBridge\AuthBridgeService;
+use App\Service\QrService\QrService;
+use App\Controller\PayloadValidator\PayloadValidator;
+use Psr\Log\LoggerInterface;
+use App\DTO\QR\CredentialHubIdentityDTO;
+
+class SharedService
+{
+    public function __construct(
+            private AuthBridgeService $authBridgeService,
+            private QrService $qrService,
+            private PayloadValidator $payloadValidator,
+            private LoggerInterface $logger
+    ) {}
+
+    public function decodeJson($validatedPayload, string $key): array{
+        if (!isset($validatedPayload[$key])) {
+            throw new \InvalidArgumentException("Payload key '$key' is missing.");
+        }   
+        if (!is_string($validatedPayload[$key])) {
+            throw new \InvalidArgumentException("Payload key '$key' must be a JSON string.");
+        }   
+        if (empty($validatedPayload[$key])) {
+            throw new \InvalidArgumentException("Payload key '$key' cannot be empty.");
+        }   
+
+        $data = $validatedPayload[$key];
+        
+        return json_decode($data, true);
+    }
+
+    public function getApplicationDto($user): DeleteApplicationDto{
+        return new DeleteApplicationDto(
+            removeProcessId: $user['removeProcessId'],
+            targetId: $user['targetId']
+        );
+    }
+
+    public function generateRequestIdentity($validatedPayload, $processKey):array{
+            /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */        
+            $identity = $this->authBridgeService->generateRequestIdentity($processKey);
+            
+            $method = 'get' . ucfirst($processKey);
+
+            $qrContent = $this->getQrContent($validatedPayload, $identity->getXExtensionAuthOne(), $identity->$method());
+            $qrCode = $this->qrService->getQrCode($qrContent);  
+            $identity->setQrCode($qrCode);
+
+            if($processKey === PayloadKeys::VAULT_DELETE_PROCESS_ID){
+                 return $identity->toRemoveProcessArray();
+            }
+
+            return $identity->toRegistrationProcessArray();
+    }
+
+    public function getQrContent(array $validatedPayload, $mobilXExtensionAuth, $processId): VaultDeleteQrContentDTO
+    {
+        return new VaultDeleteQrContentDTO(
+            $validatedPayload['source'],
+            $validatedPayload['targetId'],
+            $validatedPayload['type'],
+            $mobilXExtensionAuth,
+            $processId
+        );
+    }  
+
+    public function getProcessId($request, $payloadKey, $fullPayload = false){
+        $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
+        $payload = json_decode($validatedPayload[$payloadKey] ?? '', true);
+
+        if($fullPayload){
+            return $payload;
+        }
+        
+        if (!is_array($payload) || empty($payload['processId'])) {
+            return false;
+        }
+
+        return $payload['processId'];
+    }    
+}

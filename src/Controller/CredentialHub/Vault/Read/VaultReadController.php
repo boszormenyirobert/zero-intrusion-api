@@ -1,0 +1,153 @@
+<?php
+
+namespace App\Controller\CredentialHub\Vault\Read;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Psr\Log\LoggerInterface;
+use App\Service\AuthBridge\AuthBridgeService;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Helper\ResponseHelper;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Attribute\RequireHmac;
+use App\Attribute\ExtensionHmac;
+use App\Attribute\MobileHmac;
+use App\Attribute\RequireJson;
+use App\Service\QrService\QrService;
+use App\Controller\CredentialHub\Vault\Read\VaultReadService;
+use App\Controller\CredentialHub\PayloadKeys;
+use App\Controller\CredentialHub\SharedService;
+
+#[Route('/api/credential-hub/vault/read')]
+class VaultReadController extends AbstractController
+{
+    public function __construct(
+        private LoggerInterface $logger,
+        private PayloadValidator $payloadValidator,
+        private ResponseHelper $responseHelper,
+        private AuthBridgeService $authBridgeService
+    ) {}
+
+    /**
+     * Called by Browser-Extension
+     * 
+     * This is used to create a browser extension VAULT identity
+     *
+     * Generate two HMAC and applicationProcessId
+     * Generated HMAC added to the extension Header as X-Extension-Auth  to verify the identity
+     * Generated HMAC included in the QR-Code. Used by Mobile App - added to the header - to verify the identity
+     * The generated processId is added to the QR-Code and to the extension body as applicationProcessId
+     * 
+     * Saved in the AuthBridge Database
+     * 
+     * Database automatically cleared by cronjob. If row id older than X Min will be deleted.
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    #[Route('/qr-identity', name: 'vault_read_qr_identity', methods: "POST")]
+    #[RequireHmac]
+    #[RequireJson]
+    public function vaultReadQrIdentity(
+        Request $request,
+        QrService $qrService,
+        VaultReadService $vaultReadService
+    ): JsonResponse {
+        $payloadKey = PayloadKeys::VAULT_READ_QR_IDENTITY;
+        $processKey = PayloadKeys::VAULT_PROCESS_ID;
+
+        try {
+            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
+            $source = $validatedPayload[$payloadKey]['source'];
+            $type = $validatedPayload[$payloadKey]['type'];
+
+            if ($source === 'extension' && $type === 'applications') {
+                /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */                
+                $identity = $this->authBridgeService->generateRequestIdentity($processKey);
+            }
+
+            $qrContent = $vaultReadService->getQrContent($type, $source, $identity->getXExtensionAuthOne(), $identity);
+            $qrCode = $qrService->getQrCode($qrContent);
+            $identity->setQrCode($qrCode);
+
+
+            return $this->responseHelper->createSuccessResponse($identity->toApplicationProcessArray());
+        } catch (\Exception $e) {
+            return $this->responseHelper->handleException($e);
+        }
+    }
+
+    /**
+     * Called by Mobile App
+     * 
+     * Find applications in the AccessRegistry by PublicId
+     * Move into the AuthBridge table the related record by applicationProcessId
+     * Updated the Record with the credentials
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    #[Route('/credential', name: 'vault_read_credential', methods: "POST")]
+    #[RequireHmac]
+    #[MobileHmac]    
+    #[RequireJson]
+    public function vaultReadCredential(
+        Request $request,
+        SharedService $sharedService
+    ): Response {
+        $payloadKey = PayloadKeys::VAULT_READ_CREDENTIAL;
+
+        try {
+            $process = $sharedService->getProcessId($request, $payloadKey, true); 
+            if(!$process) {
+                return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+            }
+            
+            $applicationListAdded = $this->authBridgeService->persistDecryptedUserData($process);
+
+            return $this->json([
+                'application_access_process' => $applicationListAdded,
+                'error' => ''
+            ]);
+        } catch (\Exception $e) {
+            return $this->responseHelper->handleException($e);
+        }
+    }
+
+    /**
+     * Called by Browser-Extension
+     * Get User Credentials By applicationProcessId from the AuthBridge
+     * Delete the record from the AuthBridge
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    #[Route('/state', name: 'vault_read_state', methods: "POST")]
+    #[RequireHmac]
+    #[RequireJson]
+    #[ExtensionHmac]
+    public function vaultReadState(
+        Request $request,
+        SharedService $sharedService
+    ): JsonResponse {
+        $payloadKey = PayloadKeys::VAULT_READ_STATE;
+
+        try {
+            $processId = $sharedService->getProcessId($request, $payloadKey);
+
+            if(!$processId) {
+                return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+            }
+
+            $response = $this->authBridgeService->fetchApplicationsFromAccessTable($processId);
+
+            return $this->responseHelper->createSuccessResponse(
+                array_merge( ['applicationList' => $response['response']], $response['process'])
+                );
+        } catch (\Exception $e) {
+            return $this->responseHelper->handleException($e);
+        }
+    }
+}

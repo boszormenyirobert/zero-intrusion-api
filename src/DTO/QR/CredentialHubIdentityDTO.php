@@ -1,0 +1,258 @@
+<?php
+namespace App\DTO\QR;
+
+use Symfony\Component\Validator\Constraints as Assert;
+
+class CredentialHubIdentityDTO
+{
+    #[Assert\NotBlank]
+    public array $validCommunication = [];
+
+    public ?string $createdAt;
+    public ?string $xExtensionAuthOne;
+    public ?string $xExtensionAuthTwo;
+
+    public ?string $secret;
+    public ?string $iv;
+
+    public ?string $registrationProcessId;
+    public ?string $removeProcessId;
+    public ?string $domainProcessId;
+    public ?string $applicationProcessId;
+    public ?string $qrCode;
+
+    
+    public function getValidCommunication(): array
+    {
+        return $this->validCommunication;
+    }
+
+    public function setValidCommunication(array $validCommunication): void
+    {
+        $this->validCommunication = $validCommunication;
+    }
+
+    public function getCreatedAt(): ?string
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(?string $createdAt): void
+    {
+        $this->createdAt = $createdAt;
+    }
+
+    public function getXExtensionAuthOne(): ?string
+    {
+        return $this->xExtensionAuthOne;
+    }
+
+    public function setXExtensionAuthOne(?string $xExtensionAuthOne): void
+    {
+        $this->xExtensionAuthOne = $xExtensionAuthOne;
+    }
+
+    public function getXExtensionAuthTwo(): ?string
+    {
+        return $this->xExtensionAuthTwo;
+    }
+
+    public function setXExtensionAuthTwo(?string $xExtensionAuthTwo): void
+    {
+        $this->xExtensionAuthTwo = $xExtensionAuthTwo;
+    }
+
+    /**
+     * Get the value of secret
+     */ 
+    public function getSecret()
+    {
+        return $this->secret;
+    }
+
+    /**
+     * Set the value of secret
+     *
+     * @return  self
+     */ 
+    public function setSecret($secret)
+    {
+        $this->secret = $secret;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of iv
+     */ 
+    public function getIv()
+    {
+        return $this->iv;
+    }
+
+    /**
+     * Set the value of iv
+     *
+     * @return  self
+     */ 
+    public function setIv($iv)
+    {
+        $this->iv = $iv;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of registrationProcessId
+     */ 
+    public function getRegistrationProcessId()
+    {
+        return $this->registrationProcessId;
+    }
+
+    /**
+     * Set the value of registrationProcessId
+     *
+     * @return  self
+     */ 
+    public function setRegistrationProcessId($registrationProcessId)
+    {
+        $this->registrationProcessId = $registrationProcessId;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of removeProcessId
+     */ 
+    public function getRemoveProcessId()
+    {
+        return $this->removeProcessId;
+    }
+
+    /**
+     * Set the value of removeProcessId
+     *
+     * @return  self
+     */ 
+    public function setRemoveProcessId($removeProcessId)
+    {
+        $this->removeProcessId = $removeProcessId;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of domainProcessId
+     */ 
+    public function getDomainProcessId()
+    {
+        return $this->domainProcessId;
+    }
+
+    /**
+     * Set the value of domainProcessId
+     *
+     * @return  self
+     */ 
+    public function setDomainProcessId($domainProcessId)
+    {
+        $this->domainProcessId = $domainProcessId;
+
+        return $this;
+    }
+
+    public function toRegistrationProcessArray(): array
+    {
+        return [
+            'validCommunication' => $this->validCommunication,
+            'createdAt' => $this->createdAt,
+            'xExtensionAuthOne' => $this->xExtensionAuthOne,
+            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
+            'secret' => $this->secret,
+            'iv' => $this->iv,
+            'registrationProcessId' => $this->registrationProcessId,
+            'qrCode' => $this->qrCode
+        ];
+    }  
+    public function toDomainProcessArray(): array
+    {
+        return [
+            'validCommunication' => $this->validCommunication,
+            'createdAt' => $this->createdAt,
+            'xExtensionAuthOne' => $this->xExtensionAuthOne,
+            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
+            'secret' => $this->secret,
+            'iv' => $this->iv,
+            'domainProcessId' => $this->domainProcessId,
+            'qrCode' => $this->qrCode
+        ];
+    } 
+    public function toRemoveProcessArray(): array
+    {
+        return [
+            'validCommunication' => $this->validCommunication,
+            'createdAt' => $this->createdAt,
+            'xExtensionAuthOne' => $this->xExtensionAuthOne,
+            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
+            'secret' => $this->secret,
+            'iv' => $this->iv,
+            'removeProcessId' => $this->removeProcessId,
+            'qrCode' => $this->qrCode
+        ];
+    }      
+    
+    public function toApplicationProcessArray(): array
+    {
+        return [
+            'validCommunication' => $this->validCommunication,
+            'createdAt' => $this->createdAt,
+            'xExtensionAuthOne' => $this->xExtensionAuthOne,
+            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
+            'secret' => $this->secret,
+            'iv' => $this->iv,
+            'applicationProcessId' => $this->applicationProcessId,
+            'qrCode' => $this->qrCode
+        ];
+    }     
+
+    /**
+     * Get the value of qrCode
+     */ 
+    public function getQrCode()
+    {
+        return $this->qrCode;
+    }
+
+    /**
+     * Set the value of qrCode
+     *
+     * @return  self
+     */ 
+    public function setQrCode($qrCode)
+    {
+        $this->qrCode = $qrCode;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of applicationProcessId
+     */ 
+    public function getApplicationProcessId()
+    {
+        return $this->applicationProcessId;
+    }
+
+    /**
+     * Set the value of applicationProcessId
+     *
+     * @return  self
+     */ 
+    public function setApplicationProcessId($applicationProcessId)
+    {
+        $this->applicationProcessId = $applicationProcessId;
+
+        return $this;
+    }
+}

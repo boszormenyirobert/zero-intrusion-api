@@ -76,7 +76,7 @@ final class NotifierService
         //    'userAuth' =>  $decryptedResponse['decrypted']
         ]);
 
-        $userIdentity =[
+        $userIdentitySigned =[
             'signature' => $this->signMessageWithPrivateKey($userIdentity, $corporateIdentity),
             'publicId' => $user['publicId'],
             'email' => $user['email'],
@@ -87,13 +87,15 @@ final class NotifierService
         $this->httpClient->request(
             'POST', 
             $corporateIdentity->getCallbackUserLogin(), 
-            ['json' => $userIdentity]
+            ['json' => $userIdentitySigned]
         );
     }
 
     private function signMessageWithPrivateKey($userIdentity, $corporate){
             $corporatePrivateKey = $corporate->getSslPrivateKey();
             $this->logger->critical(' Private Key: ' . $corporatePrivateKey);
+            $this->logger->critical(' Public Key: ' . $corporate->getSslPublicKey());
+            $this->logger->critical(' Corporate Id: ' . $corporate->getCorporateId());
 
             $result = openssl_sign($userIdentity, $signature, $corporatePrivateKey, OPENSSL_ALGO_SHA256);
 

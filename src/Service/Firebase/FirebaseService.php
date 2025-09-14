@@ -6,10 +6,12 @@ use Psr\Log\LoggerInterface;
 use GuzzleHttp\Client;
 use App\Repository\IdentityRepository;
 use App\Service\Identity\Database\CrypterDatabaseIdentityService;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 class FirebaseService
 {
         public function __construct(
+            private ContainerBagInterface $params,
             private IdentityRepository $identityRepository,
             private CrypterDatabaseIdentityService $crypterDatabaseIdentityService,
             private LoggerInterface $logger
@@ -32,38 +34,8 @@ class FirebaseService
     }
 
     private function getJwt() {
-        $client_email = "firebase-adminsdk-fbsvc@zerointrusionlock.iam.gserviceaccount.com";
-        $private_key = <<<EOD
-            -----BEGIN PRIVATE KEY-----
-            MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCwQFKwesPYC49u
-            9t5LF8PCOhVBfB2PXg4r9rnFl4Ieo+JjY3F6SM6eD2TmHjGWXTHsQIlwGmm+j7QE
-            MI0wzyPlCGssCKGFWGEvLIVHj38BtXrmlcixTE/nJ1eG5a9rTH50svqt0oqq+DkU
-            UvjvC1kvuJLZZzE8HAIcx1eEezPhx4p7luyhdthwQ7UdQYuEP3k3/Weow7jbezyS
-            S/crf9yMV61c1M8Qvm4PimV+NRDVLraMVVyeepdAVpMVjmm/RkKyH+TA4QGknEp6
-            ezFS0SwJAiAnGfAeMpKzDzBueEmdzXxGDoMgztvTqINDAQplJmas8kcmoBpYFMrF
-            sBu+jygnAgMBAAECggEALxfQwFTdFVHpbkXKGZhs9u2cFlY6c7823Cpdct1LqDIz
-            4EiG3pyrkHIejJoOt9WI7E5GKszz6jXtbJ0obJ08Qwsfz7EyrzVxKjCkH/3IesVp
-            5EirSixQwTuy2FlwqKPUugvEjUNPR+VxIuwUlZKbrvOLUUmQTzZQni3pRX3B3BaJ
-            YjN5vxr36hYrTviHeZLhtseSlXlheB+IJVfV/e1orTsteQp2HKBlCwzFGuTlV5ZR
-            yMK+aUCtm4X4IBDyu3tkruPxBz70H+NCADVasReKCzJfjRUZ5rFUm0ibBYbADYmE
-            qNhzh1QRSBv0GY9MCVpD+asCh70mLPEBAv7eXAwpoQKBgQDz3K7t9/DNEawHS49Y
-            K4UjS3p9aua5ew5xeGHKSJlNjWyjZ2NAtN2OWY1TpuabPQ82rKjynyR3ZsD/Cx0s
-            KjD0d/QOR8tFXc/bPhstLl6WGub7Z34YYPrUcoU2qbQUYeB2+jxP6qRIUjjBui3j
-            XvUt+Ie1IB2vVEWwXwk91j//EQKBgQC5BiLANt4y8YBesm135TcFKCACc17n/i7G
-            JaeFSw7PwBJPlnKivK44+Gg6PUMU/zWRwIbIAAWwzFSoo5RM/+A/2ivWxvosKTfN
-            BugjglC16BOlwgLsmp/5mQqmp88MDA28acoJdjv+WyjZU8tlPBqotG5eWX5mIXRY
-            wK4CsOijtwKBgQCcLz1CYEgzrxvU2EoImGb/AfqDlRIMvYm0lvtayUCWcPuhdDgX
-            Wz+DSku/xedwiZzS0aarLc33QzJcpsuaW7Na//CprMW9uaXEr3RMbaRa0wQZBGG4
-            T3SW2HoFVo9ldoKC8SXrsUZio3aCbTGyrECvnrub/+PDRWAU4+lRV4VJYQKBgQC3
-            Jjy1+lofIXHJy2OTACFjiGGPK3bxvGm+mL1ns3G48k7t22YkcxMer740kDncCfiU
-            C3kfdu4rIUhYGnyNb+giLKuikhpIJpDm8gROSgvs1QrF1POiFDlxEC474/aO3Uun
-            iyyECza9xKz92/WFg2Z8QwbRfFMjc9BAnpJhdY8DpwKBgBhh6wxzx3QseUhaOauj
-            /1r+u7zW0r2mDpOYoCf9fZlCkZ9GZO9O0HMV7505qgdrg9+wwAnA58HpvvbxWcQ2
-            mKgL/Dv6JzPZBB1EaPz9v1oCwXr8/68tLlyqU+ZVK8fM3Qh6Ev9PRr4Y7ROg0P5P
-            fA+BrXiv0fEMz8H/IHl2H1bT
-            -----END PRIVATE KEY-----
-            EOD;
-
+        $client_email = $this->params->get('FIREBASE_CLIENT_EMAIL');
+        $private_key = $this->params->get('FIREBASE_PRIVATE_KEY');
         $header = base64_encode(json_encode([
             "alg" => "RS256",
             "typ" => "JWT"
@@ -73,7 +45,7 @@ class FirebaseService
         $claim = base64_encode(json_encode([
             "iss" => $client_email,
             "scope" => "https://www.googleapis.com/auth/firebase.messaging",
-            "aud" => "https://oauth2.googleapis.com/token",
+            "aud" => $this->params->get('FIREBASE_TOKEN_URI'),
             "iat" => $now,
             "exp" => $now + 3600
         ]));
@@ -97,7 +69,7 @@ class FirebaseService
     private function getAccessToken($jwt) {
         $client = new Client();
         try {
-            $response = $client->post('https://oauth2.googleapis.com/token', [
+            $response = $client->post($this->params->get('FIREBASE_TOKEN_URI'), [
                 'form_params' => [
                     'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
                     'assertion'  => $jwt,
@@ -105,7 +77,7 @@ class FirebaseService
                 'headers' => [
                     'Content-Type' => 'application/x-www-form-urlencoded',
                 ],
-                'verify' => 'C:\wamp64\bin\php\php8.3.14\extras\ssl\cacert.pem', 
+                'verify' => $this->params->get('FIREBASE_CACERT_PATH'), 
             ]);
 
             $body = $response->getBody()->getContents();
@@ -154,7 +126,7 @@ class FirebaseService
                     'Content-Type'  => 'application/json',
                 ],
                 'body' => json_encode($message),
-                'verify' => 'C:\wamp64\bin\php\php8.3.14\extras\ssl\cacert.pem',
+                'verify' => $this->params->get('FIREBASE_CACERT_PATH'),
             ]);
 
             $body = $responseFcm->getBody()->getContents();

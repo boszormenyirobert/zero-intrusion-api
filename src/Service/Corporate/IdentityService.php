@@ -47,7 +47,7 @@ class IdentityService
 
     private  function generateSslAuthKeys(): array
     {
-            $configPath = 'C:\\wamp64\\bin\\php\\php8.3.14\\extras\\ssl\\openssl.cnf';
+            $configPath = $this->params->get('OPENSSL_CNF');;
 
             if (!file_exists($configPath)) {
                 $this->logger->critical("Nem találom az openssl.cnf fájlt: $configPath\n");

@@ -58,7 +58,8 @@ class Credential
     {
         $authBridgeResponse->setCredential($decryptedLogin->getUserCredential());
         $authBridgeResponse->setDescription($decryptedLogin->getDescription()); 
-
+        $authBridgeResponse->setUserPublicId($decryptedLogin->getPublicId());
+        
         return $authBridgeResponse;
     }
 }

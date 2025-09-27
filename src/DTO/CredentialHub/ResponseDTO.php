@@ -11,6 +11,7 @@ class ResponseDTO
     private ?AuthBridge $data;
     private ?string $credential = null;
     private ?string $description = null;
+    private ?string $userPublicId = null;
 
     public function __construct(
         bool $process,
@@ -104,6 +105,19 @@ class ResponseDTO
         return $this;
     }
 
+    public function setUserPublicId($userPublicId)
+    {
+        $this->userPublicId = $userPublicId;
+
+        return $this;
+    }
+
+    public function getUserPublicId()
+    {
+
+        return $this->userPublicId;
+    }    
+        
     public function toDomainStateArray(): array
     {
         return [
@@ -111,7 +125,8 @@ class ResponseDTO
             'validation' => $this->getValidation(),
             'process_check' => $this->isProcessCheck(),
             'credential' => $this->getCredential(),
-            'description' => $this->getDescription()
+            'description' => $this->getDescription(),
+            'publicId' => $this->getUserPublicId()
         ];
     }
 

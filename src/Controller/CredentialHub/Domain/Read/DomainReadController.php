@@ -19,6 +19,7 @@ use App\Controller\CredentialHub\Domain\Read\DomainReadService;
 use App\Controller\CredentialHub\PayloadKeys;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Controller\CredentialHub\SharedService;
+use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/credential-hub/domain/read')]
 class DomainReadController extends AbstractController
@@ -55,7 +56,8 @@ class DomainReadController extends AbstractController
         AuthBridgeService $authBridgeService,
         QrService $qrService,
         DomainReadService $domainReadService,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        FirebaseService $firebaseService
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_READ_QR_IDENTITY;
         $processKey = PayloadKeys::DOMAIN_PROCESS_ID;
@@ -63,7 +65,8 @@ class DomainReadController extends AbstractController
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $domain = $validatedPayload[$payloadKey]['domain'];
-
+            $userPublicId = $validatedPayload[$payloadKey]['userPublicId'];
+           
             /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
             $identity = $authBridgeService->generateRequestIdentity($processKey);
             $authToken = $identity->getXExtensionAuthOne();
@@ -79,6 +82,18 @@ class DomainReadController extends AbstractController
 
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
+
+            $this->logger->critical('qrCode : ' . $qrCode);
+
+            if($userPublicId)
+            {                
+                $firebaseService->manageFcm(  
+                    $userPublicId,                 
+                    'Test Title', 
+                    'Test Body',
+                    $qrContent
+                );               
+            }
 
             return $this->responseHelper->createSuccessResponse($identity->toDomainProcessArray());
         } catch (\Exception $e) {

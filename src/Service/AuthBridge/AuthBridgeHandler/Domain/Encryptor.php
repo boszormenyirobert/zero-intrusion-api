@@ -84,6 +84,7 @@ class Encryptor
         $authBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
         $authBridge->setTargetId($credentialData['targetId']);
         $authBridge->setProcessState(true);
+        $authBridge->setPublicId($user['publicId']);
 
         $this->loginDatabaseService->addUserLogin($authBridge);        
 

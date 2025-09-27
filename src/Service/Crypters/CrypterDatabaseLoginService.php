@@ -70,6 +70,7 @@ final class CrypterDatabaseLoginService
         if($description){     
             $decrypted->setDescription($this->decryptData($description, $iv));
         }
+        $decrypted->setPublicId($value->getPublicId());
         return $decrypted;
     }
 

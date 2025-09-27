@@ -50,6 +50,9 @@ class AuthBridge
     #[ORM\Column(type: 'boolean', nullable: true)]
     private ?bool $processState;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $publicId = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable(); 
@@ -193,6 +196,18 @@ class AuthBridge
     public function setProcessState(bool $processState): self
     {
         $this->processState = $processState;
+
+        return $this;
+    }
+
+    public function getPublicId(): ?string
+    {
+        return $this->publicId;
+    }
+
+    public function setPublicId(?string $publicId): static
+    {
+        $this->publicId = $publicId;
 
         return $this;
     } 

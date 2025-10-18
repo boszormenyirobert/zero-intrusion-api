@@ -30,7 +30,19 @@
     1. Android Handy registration
     2. Set in the HUB 
        .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=1
-    3. Open HUB instance registration
+    3. !!! It is currently from DB available. The "Instance Registrator" copy his publicId replace on frontend HUB .env  by INSTALLATION_PUBLIC_ID=   
 
+
+    3. Create public and private key in the 
+        /config/jwt
+        
+        openssl genpkey -algorithm RSA -out config/jwt/private.pem -aes256 -pass pass:ZeroIntrusionLockAndLayeredEncryption -pkeyopt rsa_keygen_bits:4096
+        openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem -passin pass:ZeroIntrusionLockAndLayeredEncryption
+
+            chmod 644 config/jwt/public.pem      chown www-data:www-data
+            chmod 600 config/jwt/private.pem     chown www-data:www-data
+    4. Open HUB instance registration
+    2. Set in the HUB 
+       .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=1       
 
 

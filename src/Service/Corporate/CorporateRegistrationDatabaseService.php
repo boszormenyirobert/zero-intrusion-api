@@ -125,10 +125,9 @@ class CorporateRegistrationDatabaseService
             'publicId' => $publicId
         ]);
 
-        if($identity){
-            $identity->setBusinessService($businessServices);
-            $this->entityManager->persist($identity);
-            $this->entityManager->flush();
-        }
+        
+        $identity->setBusinessService($businessServices);
+        $this->entityManager->persist($identity);
+        $this->entityManager->flush();        
     }
 }

@@ -32,3 +32,5 @@
        .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=1
     3. Open HUB instance registration
 
+
+

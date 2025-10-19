@@ -5,6 +5,25 @@
     cURL support	enabled
     OpenSSL support	enabled
     openssl.cafile	C:/wamp64/bin/php/php8.3.14/extras/ssl/openssl.pem
+    Ubuntu:
+        sudo mkdir -p /etc/ssl/certs && \
+        sudo curl -o /etc/ssl/certs/cacert.pem https://curl.se/ca/cacert.pem && \
+        sudo sed -i '/openssl.cafile/d' /etc/php/8.3/cli/php.ini && \
+        sudo sed -i '/curl.cainfo/d' /etc/php/8.3/cli/php.ini && \
+        echo "openssl.cafile=/etc/ssl/certs/cacert.pem" | sudo tee -a /etc/php/8.3/cli/php.ini && \
+        echo "curl.cainfo=/etc/ssl/certs/cacert.pem" | sudo tee -a /etc/php/8.3/cli/php.ini && \
+        sudo sed -i '/openssl.cafile/d' /etc/php/8.3/apache2/php.ini && \
+        sudo sed -i '/curl.cainfo/d' /etc/php/8.3/apache2/php.ini && \
+        echo "openssl.cafile=/etc/ssl/certs/cacert.pem" | sudo tee -a /etc/php/8.3/apache2/php.ini && \
+        echo "curl.cainfo=/etc/ssl/certs/cacert.pem" | sudo tee -a /etc/php/8.3/apache2/php.ini && \
+        
+        export SSL_CERT_FILE=/etc/ssl/certs/cacert.pem && \
+        export CURL_CA_BUNDLE=/etc/ssl/certs/cacert.pem 
+        
+        sudo ln -s /etc/ssl/certs/cacert.pem /usr/local/share/ca-certificates/cacert.pem
+        sudo systemctl restart apache2
+
+
 
 ### API
     // db connection in .env

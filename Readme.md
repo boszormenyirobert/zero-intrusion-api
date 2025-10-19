@@ -27,10 +27,11 @@
     php bin/console doctrine:migrations:migrate
     
 ## After installation first Step:
+    0. Open the api log file
     1. Android Handy registration
     2. Set in the HUB 
        .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=1
-    3. !!! It is currently from DB available. The "Instance Registrator" copy his publicId replace on frontend HUB .env  by INSTALLATION_PUBLIC_ID=   
+    3. !!! Take from the log the public id and copy his publicId, replace on frontend HUB .env  by INSTALLATION_PUBLIC_ID=   
 
 
     3. Create public and private key in the 

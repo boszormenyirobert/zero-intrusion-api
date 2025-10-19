@@ -12,8 +12,10 @@
     php bin/console doctrine:database:create --if-not-exists
     php bin/console doctrine:migrations:migrate
 
+    php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate
+
 ### Android
-    Open project in android studio
+    Open project in android studio, or if it is already deployed register.
 
 ### HUB
     // db connection in .env
@@ -45,6 +47,7 @@
             chmod 600 config/jwt/private.pem     chown www-data:www-data
     4. Open HUB instance registration
     2. Set in the HUB 
-       .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=1       
+       .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=0
+    5. Stop mobil application and restart it   
 
 

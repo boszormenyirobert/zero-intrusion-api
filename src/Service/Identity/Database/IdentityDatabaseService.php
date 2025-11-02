@@ -22,6 +22,7 @@ class IdentityDatabaseService
 
     public function updateIdentity(Identity $secret)
     {
+        $this->entityManager->persist($secret);
         $this->entityManager->flush();
     }
 }

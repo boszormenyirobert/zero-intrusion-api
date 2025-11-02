@@ -29,8 +29,7 @@ class IdentityService
         $this->newIdentity['ssl_private_key'] =  $keys['privateKeyPem'];
 
         $encryptedIdentity = $this->crypterDatabaseService->encyptDataObject(
-            $this->newIdentity,
-            $this->params
+            $this->newIdentity
         );
 
         $this->corporateRegistrationDatabaseService->addNewIdentity($encryptedIdentity, $businessModel, $publicId, $scope);

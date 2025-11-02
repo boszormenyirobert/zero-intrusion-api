@@ -46,10 +46,17 @@ final class IdentityService
         $secret = $this->crypterDatabaseIdentityService->encyptDataObject($identityKey->toArray());
         // Save the encrypted IdentityKeyDTO object in the database
         $this->identityDatabaseService->addIdentity($secret);
-
         // Set the unencrypted privateId in the IdentityKeyDTO object before returning
         $identityKey->setPrivateId($setOfIds['shared_privateId']);
 
+
+        $total = $this->secretManagerRepository->count();
+        $this->logger->critical("Registrator Public ID: " . $total);
+        if($total === 1){
+            $first = $this->secretManagerRepository->findBy([], ['id' => 'ASC'], 1)[0] ?? null;
+            $this->logger->critical("Registrator Public ID: " . $first->getPublicId());
+        }          
+ 
         return  $identityKey;
     } 
 

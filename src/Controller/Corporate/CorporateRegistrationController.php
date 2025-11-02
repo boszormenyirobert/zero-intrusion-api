@@ -53,16 +53,15 @@ class CorporateRegistrationController extends AbstractController
          $this->logger->critical('service_registration_corporate_data: ');
 
         $payload = $this->requestService->requestControll($request);
-        $data = $this->corporateRegistrationService->accessDataByKey($payload, 'getIdentity');
-        $this->logger->critical('service_registration_corporate_data: ' . json_encode($data));
+        $data = $this->corporateRegistrationService->accessDataByKey($payload, 'getIdentity');        
 
         if($data['scope'] == 'external'){
             $identity = $identityRepository->findOneBy(['publicId' => $data['publicId']]);
             $data['businessModel'] = $this->corporateRegistrationService->getSelectedSubscription($identity->getBusinessService());            
         } 
 
-         if (array_key_exists('error', $payload)) {
-            $this->logger->critical('service_registration_corporate_data: ' . json_encode($payload));
+        if (array_key_exists('error', $payload)) {
+            $this->logger->critical('ERROR service_registration_corporate_data: ' . json_encode($payload));
             return $this->json($payload);
         }
 

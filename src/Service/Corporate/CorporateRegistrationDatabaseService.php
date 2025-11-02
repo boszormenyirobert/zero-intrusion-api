@@ -75,6 +75,7 @@ class CorporateRegistrationDatabaseService
         if($scope === 'internal'){
             $businessServices = $this->generateBusinessService($businessModel);
             $corporateIdentity->setBusinessServices($businessServices);
+            // TODO : should not called by the FE HUB registration: updateUserIdentity
             $this->updateUserIdentity($publicId, $businessServices);
         }else if($scope === 'external'){
             $identity = $this->identityRepository->findOneBy([
@@ -124,9 +125,9 @@ class CorporateRegistrationDatabaseService
             'publicId' => $publicId
         ]);
 
+        
         $identity->setBusinessService($businessServices);
-
         $this->entityManager->persist($identity);
-        $this->entityManager->flush();
+        $this->entityManager->flush();        
     }
 }

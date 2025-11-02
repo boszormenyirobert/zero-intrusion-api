@@ -76,8 +76,6 @@ final class IdentityService
      */             
     public function updateIdentityRecoverySettings($user)
     {
-        $this->logger->critical('recovery-settings ', [$user]);   
-
         // Get user from secretManagerTable => default DB-encrypted
         /** @var Identity */
         $userIdentityObject = $this->secretManagerRepository->findOneBy(['publicId' => $user['publicId']]);
@@ -92,6 +90,8 @@ final class IdentityService
         $requestDecryptedPrivateId = $this->sodiumService->sodiumDecrypt($user['privateId'], $secret);
 
         if (\strcmp($requestDecryptedPrivateId, $dbDecryptedPrivateId) == 0) {
+            $this->logger->critical('recovery-settings ', [$user]);
+            $this->logger->critical('recovery-settings ', [$decryptedDatabaseIdentity]);   
             /** @varIdentity */
             $encryptedUpdatedIdentityObject = $this->crypterDatabaseIdentityService->encyptUpdateIdentity($decryptedDatabaseIdentity, $user);
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);

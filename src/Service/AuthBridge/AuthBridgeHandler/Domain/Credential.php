@@ -37,11 +37,13 @@ class Credential
                 
                 $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);
                 array_push($authBridgeResponses, $mappedUserData);
-            }
-                            $this->logger->critical("Processing AuthBridge for user: " . $authBridgeResponses);
-
+            }                            
             //$authBridgeResponse->setData(null);
             //array_push($authBridgeResponses, $authBridgeResponse);
+        }
+
+        foreach ($authBridgeResponses as $response) {
+            $this->logger->critical("Returning AuthBridge for user: " . $response->getCredential());
         }
 
         return $authBridgeResponses;

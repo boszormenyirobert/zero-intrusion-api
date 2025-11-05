@@ -30,11 +30,11 @@ class Encryptor
         if (!$credentialsCollection) {
             return false;
         }
-
+        $this->logger->critical("Decrypted credentials found.", ['data' => $credentialsCollection]);
         return $this->updateLoginEntry($user, $credentialsCollection);
     }
         
-    private function findDecryptedCredential(array $user, string $userSecret): ?array
+    private function findDecryptedCredential(array $user, string $userSecret): array
     {
         $pages = $this->accessRegistryRepository->findBy(
             ['publicId' => $user['publicId']
@@ -44,7 +44,7 @@ class Encryptor
 
         if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {
             $this->logger->critical("No matching credential found for domain: " . $user['domain']);
-            return null;
+            return [];
         }
 
         $decryptedCredentials = [];
@@ -56,7 +56,7 @@ class Encryptor
                 'targetId' => $app['targetId']
             ];
         }
-        $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
+        //$decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
         
         return $decryptedCredentials;
     }

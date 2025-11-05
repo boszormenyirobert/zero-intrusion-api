@@ -30,9 +30,13 @@ class Credential
         
         foreach ($authBridges as $authBridgeResponse) {
             $user = $authBridgeResponse->getData();
-
+           
             if ($authBridgeResponse->isProcessCheck()) {
                 $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'domain');
+                 
+                $this->logger->critical("Processing AuthBridge for user: " . $user->getUserCredential());
+                $this->logger->critical("Processing AuthBridge for user: " . $decryptedLogin->getUserCredential());
+
               //  $this->loginDatabaseService->removeUserLogin($user);
                 
                 $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);
@@ -56,11 +60,7 @@ class Credential
         );
        
         $userCredentialsByDomain = [];
-
         foreach ($authBridges as $authBridge) {
-
-            $this->logger->critical("Found " . json_encode($authBridge->getId()) . " for domainProcessId: " . $domainProcessId);  
-
             $responseDTO = new ResponseDTO(
                 true,
                 !$authBridge->isProcessState() ? 'Missing handy validation' : true,

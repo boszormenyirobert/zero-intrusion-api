@@ -91,13 +91,14 @@ class Encryptor
         $iv = base64_decode($authBridge->getIv());
        
         foreach ($credentialsCollection as $credentialData) {
-            $authBridge->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
-            $authBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
-            $authBridge->setTargetId($credentialData['targetId']);
-            $authBridge->setProcessState(true);
-            $authBridge->setPublicId($user['publicId']);   
-            $this->loginDatabaseService->addUserLogin($authBridge); 
-            
+            $newAuthBridge = clone $authBridge;
+            $newAuthBridge->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
+            $newAuthBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
+            $newAuthBridge->setTargetId($credentialData['targetId']);
+            $newAuthBridge->setProcessState(true);
+            $newAuthBridge->setPublicId($user['publicId']);   
+            $this->loginDatabaseService->addUserLogin($newAuthBridge); 
+
             $this->logger->critical("Decrypted credentials found.", ['data' => $credentialData]);
         } 
         return true;

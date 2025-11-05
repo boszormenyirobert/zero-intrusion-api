@@ -99,6 +99,8 @@ class SharedRegistrationController extends AbstractController
 
             return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());
         } catch (\Throwable $e) {
+                        $this->logger->info('sharedRegistrationQrIdentity userPublic Id: '.json_encode($e));
+
             return $this->responseHelper->handleException($e);
         }
     }

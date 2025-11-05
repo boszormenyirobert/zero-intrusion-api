@@ -20,6 +20,7 @@ use App\Service\QrService\QrService;
 use App\Controller\CredentialHub\Shared\SharedRegistrationService;
 use App\Controller\CredentialHub\SharedService;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/credential-hub/shared/registration')]
 class SharedRegistrationController extends AbstractController
@@ -52,7 +53,8 @@ class SharedRegistrationController extends AbstractController
         Request $request,
         AuthBridgeService $authBridgeService,
         QrService $qrService,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        FirebaseService $firebaseService
     ): JsonResponse {
         $processKey = 'registrationProcessId';
         $payloadKey = 'shared_registration_qr_identity';
@@ -65,6 +67,7 @@ class SharedRegistrationController extends AbstractController
             if (!isset($validatedPayload->type)) {
                 return $this->responseHelper->createErrorResponse('Missing registration type');
             }
+            $userPublicId = $validatedPayload[$payloadKey]['userPublicId'];
 
             /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */            
             $identity = $authBridgeService->generateRequestIdentity($processKey);
@@ -83,6 +86,16 @@ class SharedRegistrationController extends AbstractController
             $extendedQrContent = $this->sharedRegistrationService->getExtendedQrContent($validatedPayload->type, $qrContent, $validatedPayload);
             $qrCode = $qrService->getQrCode($extendedQrContent);
             $identity->setQrCode($qrCode);
+
+            if($userPublicId)
+            {                
+                $firebaseService->manageFcm(  
+                    $userPublicId,                 
+                    'Test Title', 
+                    'Test Body',
+                    $qrContent
+                );               
+            }            
 
             return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());
         } catch (\Throwable $e) {

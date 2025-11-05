@@ -20,7 +20,8 @@ class SharedRegistrationService
             $validatedPayload->type,
             $validatedPayload->source,
             $validatedPayload->isNew,
-            $validatedPayload->description
+            $validatedPayload->description,
+            $validatedPayload->userPublicId
         );
     }
 

@@ -87,10 +87,10 @@ class SharedRegistrationController extends AbstractController
             $qrCode = $qrService->getQrCode($extendedQrContent);
             $identity->setQrCode($qrCode);
 
-            if($userPublicId)
+            if($qrContent->userPublicId)
             {                
                 $firebaseService->manageFcm(  
-                    $userPublicId,                 
+                    $qrContent->userPublicId,                 
                     'Test Title', 
                     'Test Body',
                     $qrContent

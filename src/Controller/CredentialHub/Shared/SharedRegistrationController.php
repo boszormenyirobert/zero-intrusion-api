@@ -67,7 +67,6 @@ class SharedRegistrationController extends AbstractController
             if (!isset($validatedPayload->type)) {
                 return $this->responseHelper->createErrorResponse('Missing registration type');
             }
-            $this->logger->critical('sharedRegistrationQrIdentity userPublic Id: '.json_encode($validatedPayload));
             /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
             $identity = $authBridgeService->generateRequestIdentity($processKey);
             $authToken = $identity->getXExtensionAuthOne();
@@ -86,10 +85,10 @@ class SharedRegistrationController extends AbstractController
             $qrCode = $qrService->getQrCode($extendedQrContent);
             $identity->setQrCode($qrCode);
 
-            if($qrContent->userPublicId)
+            if($userPublicId =$validatedPayload['userPublicId'] ?? false)
             {                
                 $firebaseService->manageFcm(  
-                    $qrContent->userPublicId,                 
+                    $userPublicId,                 
                     'Test Title', 
                     'Test Body',
                     $qrContent
@@ -98,8 +97,6 @@ class SharedRegistrationController extends AbstractController
 
             return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());
         } catch (\Throwable $e) {
-                        $this->logger->info('sharedRegistrationQrIdentity userPublic Id: '.json_encode($e));
-
             return $this->responseHelper->handleException($e);
         }
     }

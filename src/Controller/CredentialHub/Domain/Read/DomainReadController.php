@@ -83,8 +83,6 @@ class DomainReadController extends AbstractController
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
 
-            $this->logger->critical('qrCode : ' . $qrCode);
-
             if($userPublicId)
             {                
                 $firebaseService->manageFcm(  

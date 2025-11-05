@@ -66,6 +66,7 @@ class Credential
             );
             array_push($userCredentialsByDomain, $responseDTO);
         }
+        $this->logger->critical("Found " . json_encode($userCredentialsByDomain));  
         return $userCredentialsByDomain;
      }   
 

@@ -98,8 +98,6 @@ class Encryptor
             $newAuthBridge->setProcessState(true);
             $newAuthBridge->setPublicId($user['publicId']);   
             $this->loginDatabaseService->addUserLogin($newAuthBridge); 
-
-            $this->logger->critical("Decrypted credentials found.", ['data' => $credentialData]);
         } 
         return true;
     }

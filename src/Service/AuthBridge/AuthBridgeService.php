@@ -33,7 +33,7 @@ class AuthBridgeService
     }    
 
     // Called by extension checker: DomainRead
-    public function getUserCredentialsByDomainProcessId($domainProcessId): ResponseDTO
+    public function getUserCredentialsByDomainProcessId($domainProcessId): array
     {
         return $this->credential->getUserCredentialsByDomainProcessId($domainProcessId);
     }

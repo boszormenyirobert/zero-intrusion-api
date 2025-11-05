@@ -165,6 +165,6 @@ class DomainReadController extends AbstractController
             $errorResponse = $this->responseHelper->handleException($e, ['login_process_check' => false]);
         }
 
-        return $errorResponse ?? $this->responseHelper->createSuccessResponse($response->toDomainStateArray());
+        return $errorResponse ?? $this->responseHelper->createSuccessResponse($response);
     }
 }

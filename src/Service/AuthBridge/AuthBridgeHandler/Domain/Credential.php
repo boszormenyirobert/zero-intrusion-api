@@ -21,37 +21,52 @@ class Credential
      * Retrieves user credentials by domainProcessId.
      *
      * @param string $domainProcessId
-     * @return ResponseDTO
+     * @return ResponseDTO[]
      */
-    public function getUserCredentialsByDomainProcessId($domainProcessId): ResponseDTO
+    public function getUserCredentialsByDomainProcessId($domainProcessId): array
     {
-        $authBridgeResponse = $this->findValidUser($domainProcessId);
-        $user = $authBridgeResponse->getData();
+        $authBridges = $this->findValidUser($domainProcessId);
+        $authBridgeResponses = [];
+        
+        foreach ($authBridges as $authBridgeResponse) {
+            $user = $authBridgeResponse->getData();
 
-        if ($authBridgeResponse->isProcessCheck()) {
-            $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'domain');
-            $this->loginDatabaseService->removeUserLogin($user);
-            
-            return $this->mapUserData($decryptedLogin, $authBridgeResponse);
+            if ($authBridgeResponse->isProcessCheck()) {
+                $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'domain');
+                $this->loginDatabaseService->removeUserLogin($user);
+                
+                $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);
+                array_push($authBridgeResponses, $mappedUserData);
+            }
+            //$authBridgeResponse->setData(null);
+            //array_push($authBridgeResponses, $authBridgeResponse);
         }
-        $authBridgeResponse->setData(null);
 
-        return $authBridgeResponse;
+        return $authBridgeResponses;
     }
 
-       private function findValidUser(string $domainProcessId): ResponseDTO
+    /**
+    * @return ResponseDTO[]
+    */
+       private function findValidUser(string $domainProcessId): array
     {
-        $authBridge = $this->authBridgeRepository->findOneBy(
+        $authBridges = $this->authBridgeRepository->findBy(
             ['domainProcessId' => $domainProcessId],
             ['createdAt' => 'DESC']
         );
        
-        return new ResponseDTO(
-            $authBridge ? true : false,
-            ($authBridge && !$authBridge->isProcessState()) ? 'Missing handy validation' : true,
-            ($authBridge && $authBridge->isProcessState()) ? true : false,
-            $authBridge ? $authBridge : null
-        );
+        $userCredentialsByDomain = [];
+
+        foreach ($authBridges as $authBridge) {
+            $responseDTO = new ResponseDTO(
+                true,
+                !$authBridge->isProcessState() ? 'Missing handy validation' : true,
+                $authBridge->isProcessState() ? true : false,
+                $authBridge
+            );
+            array_push($userCredentialsByDomain, $responseDTO);
+        }
+        return $userCredentialsByDomain;
      }   
 
     private function mapUserData($decryptedLogin, $authBridgeResponse): ResponseDTO

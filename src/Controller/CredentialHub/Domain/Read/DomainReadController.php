@@ -89,8 +89,8 @@ class DomainReadController extends AbstractController
             {                
                 $firebaseService->manageFcm(  
                     $userPublicId,                 
-                    'Test Title', 
-                    'Test Body',
+                    'From domain read',
+                    'Forwarded the QR content, ordered by the user publicId',
                     $qrContent
                 );               
             }

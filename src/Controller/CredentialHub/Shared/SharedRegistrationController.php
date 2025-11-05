@@ -87,12 +87,12 @@ class SharedRegistrationController extends AbstractController
 
             if($userPublicId =$validatedPayload['userPublicId'] ?? false)
             {                
-                $firebaseService->manageFcm(  
-                    $userPublicId,                 
-                    'Test Title', 
-                    'Test Body',
+                $firebaseService->manageFcm(
+                    $userPublicId,
+                    'From shared registration',
+                    'Forwarded the QR content, ordered by the user publicId',
                     $qrContent
-                );               
+                );             
             }            
 
             return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());

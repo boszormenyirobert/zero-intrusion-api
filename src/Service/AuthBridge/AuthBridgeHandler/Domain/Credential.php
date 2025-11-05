@@ -56,9 +56,11 @@ class Credential
         );
        
         $userCredentialsByDomain = [];
-        $this->logger->critical("Found " . json_encode($authBridges));  
 
         foreach ($authBridges as $authBridge) {
+
+            $this->logger->critical("Found " . json_encode($authBridge->getId()) . " for domainProcessId: " . $domainProcessId);  
+
             $responseDTO = new ResponseDTO(
                 true,
                 !$authBridge->isProcessState() ? 'Missing handy validation' : true,

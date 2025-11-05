@@ -25,13 +25,13 @@ class Encryptor
 
     public function setDecryptedValuesForDomain(array $user, string $userSecret): bool
     {
-        $credentialData = $this->findDecryptedCredential($user, $userSecret);
+        $credentialsCollection = $this->findDecryptedCredential($user, $userSecret);
 
-        if (!$credentialData) {
+        if (!$credentialsCollection) {
             return false;
         }
 
-        return $this->updateLoginEntry($user, $credentialData);
+        return $this->updateLoginEntry($user, $credentialsCollection);
     }
         
     private function findDecryptedCredential(array $user, string $userSecret): ?array
@@ -40,15 +40,25 @@ class Encryptor
             ['publicId' => $user['publicId']
         ]);
         
-        $app = $this->extractCredentialForDomain($pages, $user['domain']);
+        $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
 
-        if (!$app || !$app['credential']) {
+        if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {
             $this->logger->critical("No matching credential found for domain: " . $user['domain']);
             return null;
         }
 
+        $decryptedCredentials = [];
+        foreach ($apps as $app) {
+            $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
+            $decryptedCredentials[] = [
+                'decrypted' => $decrypted,
+                'description' => $app['description'],
+                'targetId' => $app['targetId']
+            ];
+        }
         $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
-        return ['decrypted' => $decrypted, 'description' => $app['description'], 'targetId' => $app['targetId']];
+        
+        return $decryptedCredentials;
     }
 
     public function findDecryptedCredentialForWeb(array $user, string $userSecret): ?array
@@ -69,7 +79,7 @@ class Encryptor
         return ['decrypted' => $decrypted];
     }    
 
-    private function updateLoginEntry(array $user, array $credentialData): bool
+    private function updateLoginEntry(array $user, array $credentialsCollection): bool
     {
         $authBridge = $this->authBridgeRepository->findOneBy(['domainProcessId' => $user['domainProcessId']]);
 
@@ -79,25 +89,28 @@ class Encryptor
         }
 
         $iv = base64_decode($authBridge->getIv());
-
-        $authBridge->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
-        $authBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
-        $authBridge->setTargetId($credentialData['targetId']);
-        $authBridge->setProcessState(true);
-        $authBridge->setPublicId($user['publicId']);
-
-        $this->loginDatabaseService->addUserLogin($authBridge);        
-
+       
+        foreach ($credentialsCollection as $credentialData) {
+            $authBridge->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
+            $authBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
+            $authBridge->setTargetId($credentialData['targetId']);
+            $authBridge->setProcessState(true);
+            $authBridge->setPublicId($user['publicId']);   
+            $this->loginDatabaseService->addUserLogin($authBridge); 
+        } 
         return true;
     }
 
-    private function extractCredentialForDomain(array $getPages, string $targetDomain): ?array
+    // Return with all matching credentials for the domain by publicId
+    private function extractCredentialsForDomain(array $getPages, string $targetDomain): array
     {
+        $results = [];
+        
         foreach ($getPages as $userPage) {
             if ($userPage->getDomain() !== null) {
                 $decrypted = $this->crypterDatabaseUserService->decryptFromDatabase($userPage);
                 if ($decrypted && $decrypted->getDomain() === $targetDomain) {
-                    return [
+                    $results[] = [
                         'credential' => $decrypted->getUserCredential(),
                         'description' => $decrypted->getDescription(),
                         'targetId' => $decrypted->getTargetId()
@@ -105,7 +118,8 @@ class Encryptor
                 }
             }
         }
-        return null;
+        
+        return $results;
     }
 
     private function extractCredentialForWeb(array $getPages, string $targetDomain): ?array

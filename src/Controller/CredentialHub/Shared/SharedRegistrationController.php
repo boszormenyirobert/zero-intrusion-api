@@ -67,7 +67,7 @@ class SharedRegistrationController extends AbstractController
             if (!isset($validatedPayload->type)) {
                 return $this->responseHelper->createErrorResponse('Missing registration type');
             }
-            $this->logger->critical('sharedRegistrationQrIdentity userPublic Id: '.$validatedPayload);
+            $this->logger->critical('sharedRegistrationQrIdentity userPublic Id: '.json_encode($validatedPayload));
             /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
             $identity = $authBridgeService->generateRequestIdentity($processKey);
             $authToken = $identity->getXExtensionAuthOne();

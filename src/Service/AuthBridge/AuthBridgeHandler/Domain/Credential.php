@@ -75,10 +75,11 @@ class Credential
 
     private function mapUserData($decryptedLogin, $authBridgeResponse): ResponseDTO
     {
-        $authBridgeResponse->setCredential($decryptedLogin->getUserCredential());
-        $authBridgeResponse->setDescription($decryptedLogin->getDescription()); 
-        $authBridgeResponse->setUserPublicId($decryptedLogin->getPublicId());
+        $clonedResponse = clone $authBridgeResponse;
+        $clonedResponse->setCredential($decryptedLogin->getUserCredential());
+        $clonedResponse->setDescription($decryptedLogin->getDescription()); 
+        $clonedResponse->setUserPublicId($decryptedLogin->getPublicId());
         
-        return $authBridgeResponse;
+        return $clonedResponse;
     }
 }

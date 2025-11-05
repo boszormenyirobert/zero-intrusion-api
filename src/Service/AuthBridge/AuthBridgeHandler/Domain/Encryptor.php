@@ -30,7 +30,7 @@ class Encryptor
         if (!$credentialsCollection) {
             return false;
         }
-        $this->logger->critical("Decrypted credentials found.", ['data' => $credentialsCollection]);
+        
         return $this->updateLoginEntry($user, $credentialsCollection);
     }
         
@@ -97,6 +97,8 @@ class Encryptor
             $authBridge->setProcessState(true);
             $authBridge->setPublicId($user['publicId']);   
             $this->loginDatabaseService->addUserLogin($authBridge); 
+            
+            $this->logger->critical("Decrypted credentials found.", ['data' => $credentialData]);
         } 
         return true;
     }

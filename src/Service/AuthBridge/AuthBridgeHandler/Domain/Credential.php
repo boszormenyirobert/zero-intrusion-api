@@ -36,9 +36,10 @@ class Credential
               //  $this->loginDatabaseService->removeUserLogin($user);
                 
                 $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);
-                $this->logger->critical("Processing AuthBridge for user: " . $mappedUserData->getCredential());
                 array_push($authBridgeResponses, $mappedUserData);
             }
+                            $this->logger->critical("Processing AuthBridge for user: " . $authBridgeResponses);
+
             //$authBridgeResponse->setData(null);
             //array_push($authBridgeResponses, $authBridgeResponse);
         }

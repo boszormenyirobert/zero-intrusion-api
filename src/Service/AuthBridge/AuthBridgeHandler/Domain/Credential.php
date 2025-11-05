@@ -41,11 +41,6 @@ class Credential
             //$authBridgeResponse->setData(null);
             //array_push($authBridgeResponses, $authBridgeResponse);
         }
-
-        foreach ($authBridgeResponses as $response) {
-            $this->logger->critical("Returning AuthBridge for user: " . $response->getCredential());
-        }
-
         return $authBridgeResponses;
     }
 

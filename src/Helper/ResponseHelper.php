@@ -14,7 +14,7 @@ class ResponseHelper
 
     public function createSuccessResponse(array $data): JsonResponse
     {        
-        return new JsonResponse(array_merge(['success' => true], $data));
+        return new JsonResponse(array_merge($data, ['success' => true]));
     }
 
     public function createErrorResponse(string $errorMessage, int $statusCode = Response::HTTP_BAD_REQUEST): JsonResponse

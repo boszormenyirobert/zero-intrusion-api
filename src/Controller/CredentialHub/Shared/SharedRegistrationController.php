@@ -82,9 +82,12 @@ class SharedRegistrationController extends AbstractController
             }           
 
             $extendedQrContent = $this->sharedRegistrationService->getExtendedQrContent($validatedPayload->type, $qrContent, $validatedPayload);
+            $this->logger->critical('Extended QR Content:1 ', (array)$extendedQrContent);
             $qrCode = $qrService->getQrCode($extendedQrContent);
-            $identity->setQrCode($qrCode);
+             $this->logger->critical('Extended QR Content:2 ');
 
+            $identity->setQrCode($qrCode);
+ $this->logger->critical('Extended QR Content:3 ');
             if(isset($validatedPayload->userPublicId) && $validatedPayload->userPublicId)
             {                
                 $firebaseService->manageFcm(

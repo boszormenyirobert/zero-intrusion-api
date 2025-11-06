@@ -8,7 +8,7 @@ use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\QrService\QrService;
 use App\Controller\PayloadValidator\PayloadValidator;
 use Psr\Log\LoggerInterface;
-use App\DTO\QR\CredentialHubIdentityDTO;
+use App\Service\Firebase\FirebaseService;
 
 class SharedService
 {
@@ -16,6 +16,7 @@ class SharedService
             private AuthBridgeService $authBridgeService,
             private QrService $qrService,
             private PayloadValidator $payloadValidator,
+            private FirebaseService $firebaseService,
             private LoggerInterface $logger
     ) {}
 
@@ -83,5 +84,28 @@ class SharedService
         }
 
         return $payload['processId'];
-    }    
+    }
+    
+    public function sendFcmNotification($source, $userPublicId, $qrContent){
+        $descriptions = [
+            'domainRead' => [
+                'title' => 'From domain read',
+                'body' => 'Forwarded the QR content, ordered by the user publicId',
+            ],
+            'shared-registration' => [
+                'title' => 'From shared registration',
+                'body' => 'Forwarded the QR content, ordered by the user publicId',
+            ],
+        ];
+
+        if($userPublicId)
+        {                
+            $this->firebaseService->manageFcm(  
+                $userPublicId,                 
+                $descriptions[$source]['title'],
+                $descriptions[$source]['body'],
+                $qrContent
+            );               
+        }
+    }
 }

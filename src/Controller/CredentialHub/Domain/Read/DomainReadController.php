@@ -19,7 +19,6 @@ use App\Controller\CredentialHub\Domain\Read\DomainReadService;
 use App\Controller\CredentialHub\PayloadKeys;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Controller\CredentialHub\SharedService;
-use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/credential-hub/domain/read')]
 class DomainReadController extends AbstractController
@@ -27,7 +26,8 @@ class DomainReadController extends AbstractController
     public function __construct(
         private LoggerInterface $logger,
         private PayloadValidator $payloadValidator,
-        private ResponseHelper $responseHelper
+        private ResponseHelper $responseHelper,
+        private SharedService $sharedService
     ) {}
 
 
@@ -56,8 +56,7 @@ class DomainReadController extends AbstractController
         AuthBridgeService $authBridgeService,
         QrService $qrService,
         DomainReadService $domainReadService,
-        ValidatorInterface $validator,
-        FirebaseService $firebaseService
+        ValidatorInterface $validator
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_READ_QR_IDENTITY;
         $processKey = PayloadKeys::DOMAIN_PROCESS_ID;
@@ -83,15 +82,11 @@ class DomainReadController extends AbstractController
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
 
-            if($userPublicId)
-            {                
-                $firebaseService->manageFcm(  
-                    $userPublicId,                 
-                    'From domain read',
-                    'Forwarded the QR content, ordered by the user publicId',
-                    $qrContent
-                );               
-            }
+            $this->sharedService->sendFcmNotification(
+                'domainRead',
+                $userPublicId,
+                $qrContent
+            );
 
             return $this->responseHelper->createSuccessResponse($identity->toDomainProcessArray());
         } catch (\Exception $e) {
@@ -145,14 +140,13 @@ class DomainReadController extends AbstractController
     #[ExtensionHmac]
     public function domainReadState(
         Request $request,
-        SharedService $sharedService,
         AuthBridgeService $authBridgeService
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_READ_STATE;
         $errorResponse = null;
 
         try {
-            $processId = $sharedService->getProcessId($request, $payloadKey);
+            $processId = $this->sharedService->getProcessId($request, $payloadKey);
 
             if (!$processId) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');

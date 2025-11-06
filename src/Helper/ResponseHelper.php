@@ -14,6 +14,7 @@ class ResponseHelper
 
     public function createSuccessResponse(array $data): JsonResponse
     {        
+        $this->logger->critical(json_encode(array_merge($data, ['success' => true])));
         return new JsonResponse(array_merge($data, ['success' => true]));
     }
 

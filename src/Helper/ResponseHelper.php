@@ -16,7 +16,9 @@ class ResponseHelper
     {        
         $logData = [];
         foreach ($data as $key => $value) {
-            if (is_object($value) && method_exists($value, 'toArray')) {
+            if (is_object($value) && method_exists($value, 'toDomainStateArray')) {
+                $logData[$key] = $value->toDomainStateArray();
+            } elseif (is_object($value) && method_exists($value, 'toArray')) {
                 $logData[$key] = $value->toArray();
             } elseif (is_object($value) && $value instanceof \JsonSerializable) {
                 $logData[$key] = $value->jsonSerialize();

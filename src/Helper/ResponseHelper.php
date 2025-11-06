@@ -15,20 +15,26 @@ class ResponseHelper
     public function createSuccessResponse(array $data): JsonResponse
     {        
         $logData = [];
+        $responseData = [];
+        
         foreach ($data as $key => $value) {
             if (is_object($value) && method_exists($value, 'toDomainStateArray')) {
                 $logData[$key] = $value->toDomainStateArray();
+                $responseData[$key] = $value->toDomainStateArray();
             } elseif (is_object($value) && method_exists($value, 'toArray')) {
                 $logData[$key] = $value->toArray();
+                $responseData[$key] = $value->toArray();
             } elseif (is_object($value) && $value instanceof \JsonSerializable) {
                 $logData[$key] = $value->jsonSerialize();
+                $responseData[$key] = $value->jsonSerialize();
             } else {
                 $logData[$key] = $value;
+                $responseData[$key] = $value;
             }
         }
         
         $this->logger->critical('Success response data', $logData);
-        return new JsonResponse(array_merge($data, ['success' => true]));
+        return new JsonResponse(array_merge($responseData, ['success' => true]));
     }
 
     public function createErrorResponse(string $errorMessage, int $statusCode = Response::HTTP_BAD_REQUEST): JsonResponse

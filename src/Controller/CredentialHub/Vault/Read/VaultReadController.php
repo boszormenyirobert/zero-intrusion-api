@@ -73,7 +73,7 @@ class VaultReadController extends AbstractController
             $qrContent = $vaultReadService->getQrContent($type, $source, $identity->getXExtensionAuthOne(), $identity);
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
-
+            $this->logger->critical('Vault Read QR Content: ', (array)$validatedPayload[$payloadKey]);
             if(isset($validatedPayload[$payloadKey]['userPublicId']) && $validatedPayload[$payloadKey]['userPublicId'])
             {                
                 $firebaseService->manageFcm(

@@ -19,6 +19,7 @@ use App\Service\QrService\QrService;
 use App\Controller\CredentialHub\Vault\Read\VaultReadService;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Controller\CredentialHub\SharedService;
+use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/credential-hub/vault/read')]
 class VaultReadController extends AbstractController
@@ -53,7 +54,8 @@ class VaultReadController extends AbstractController
     public function vaultReadQrIdentity(
         Request $request,
         QrService $qrService,
-        VaultReadService $vaultReadService
+        VaultReadService $vaultReadService,        
+        FirebaseService $firebaseService
     ): JsonResponse {
         $payloadKey = PayloadKeys::VAULT_READ_QR_IDENTITY;
         $processKey = PayloadKeys::VAULT_PROCESS_ID;
@@ -72,6 +74,15 @@ class VaultReadController extends AbstractController
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
 
+            if(isset($validatedPayload[$payloadKey]['userPublicId']) && $validatedPayload[$payloadKey]['userPublicId'])
+            {                
+                $firebaseService->manageFcm(
+                    $validatedPayload[$payloadKey]['userPublicId'],
+                    'From shared registration',
+                    'Forwarded the QR content, ordered by the user publicId',
+                    $qrContent
+                );             
+            }     
 
             return $this->responseHelper->createSuccessResponse($identity->toApplicationProcessArray());
         } catch (\Exception $e) {

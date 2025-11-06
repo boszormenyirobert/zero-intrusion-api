@@ -14,7 +14,18 @@ class ResponseHelper
 
     public function createSuccessResponse(array $data): JsonResponse
     {        
-        $this->logger->critical(json_encode(array_merge($data, ['success' => true])));
+        $logData = [];
+        foreach ($data as $key => $value) {
+            if (is_object($value) && method_exists($value, 'toArray')) {
+                $logData[$key] = $value->toArray();
+            } elseif (is_object($value) && $value instanceof \JsonSerializable) {
+                $logData[$key] = $value->jsonSerialize();
+            } else {
+                $logData[$key] = $value;
+            }
+        }
+        
+        $this->logger->critical('Success response data', $logData);
         return new JsonResponse(array_merge($data, ['success' => true]));
     }
 

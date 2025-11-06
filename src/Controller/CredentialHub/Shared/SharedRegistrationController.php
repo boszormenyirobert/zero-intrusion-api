@@ -85,10 +85,10 @@ class SharedRegistrationController extends AbstractController
             $qrCode = $qrService->getQrCode($extendedQrContent);
             $identity->setQrCode($qrCode);
 
-            if($userPublicId =$validatedPayload->userPublicId ?? false)
+            if(isset($validatedPayload->userPublicId) && $validatedPayload->userPublicId)
             {                
                 $firebaseService->manageFcm(
-                    $userPublicId,
+                    $validatedPayload->userPublicId,
                     'From shared registration',
                     'Forwarded the QR content, ordered by the user publicId',
                     $qrContent

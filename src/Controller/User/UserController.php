@@ -85,7 +85,6 @@ class UserController extends AbstractController
             }
             
             $defaultResponse = $qrData['defaultResponse'];     
-            $this->logger->critical('body', $defaultResponse);
 
         return new Response($defaultResponse['body'], 200, $defaultResponse['headers']);
     }    

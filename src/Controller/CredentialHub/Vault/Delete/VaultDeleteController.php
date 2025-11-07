@@ -46,12 +46,13 @@ class VaultDeleteController extends AbstractController
             }
             $identity = $this->sharedService->generateRequestIdentity($process, $processKey);
 
-            if(isset($process['userPublicId']) && $process['userPublicId'])
+            if(isset($process['userPublicId']) && $process['userPublicId'] &&
+            isset($identity['qrCode']) && $identity['qrCode'])
             {     
                 $this->sharedService->sendFcmNotification(
                     'vaultDelete',
                     $process['userPublicId'],
-                    $identity['qrContent']
+                    $identity['qrCode']
                 );  
             }   
 

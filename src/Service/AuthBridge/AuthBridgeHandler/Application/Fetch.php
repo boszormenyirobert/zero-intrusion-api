@@ -19,13 +19,15 @@ class Fetch
         private RegistryState $registryState
     ) {}
 
-    public function fetchApplicationsFromAccessTable($applicationProcessId): array
+    public function fetchApplicationsFromAccessTable($applicationProcessId, $processType): array
     {
-        $encryptedUser = $this->authBridgeRepository->findOneBy(['applicationProcessId' => $applicationProcessId]);
+        $process = $processType === 'application' ? 'applicationProcessId' : 'domainProcessId';
+        $encryptedUser = $this->authBridgeRepository->findOneBy([$process => $applicationProcessId]);
+
 
         $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabase($encryptedUser, "applications");
 
-        $process = $this->registryState->registrationState($applicationProcessId, 'applicationProcessId');
+        $process = $this->registryState->registrationState($applicationProcessId, $process);
         
         return [
             'process' => $process->toVaultStateArray(),

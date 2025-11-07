@@ -54,9 +54,9 @@ class AuthBridgeService
         return $this->identity->generateRequestIdentity($processType);
     }
 
-    public function fetchApplicationsFromAccessTable($applicationProcessId): array
+    public function fetchApplicationsFromAccessTable($applicationProcessId, $processType): array
     {
-        return $this->fetch->fetchApplicationsFromAccessTable($applicationProcessId);
+        return $this->fetch->fetchApplicationsFromAccessTable($applicationProcessId, $processType);
     }
 
     public function updateProcessState(string $processKey, string $processId): void

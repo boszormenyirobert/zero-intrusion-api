@@ -84,7 +84,7 @@ final class CrypterDatabaseLoginService
 
         $decrypted = new AuthBridge();
         $decrypted->setApplications($this->decryptData($applications, $iv));
-        $this->logger->critical('Applications content: ' . ($decrypted->getApplications() ?? 'NULL'));
+
         return $decrypted;
     }
 

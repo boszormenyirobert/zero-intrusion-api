@@ -36,8 +36,15 @@ class Credential
                 $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'applications');
               //  $this->loginDatabaseService->removeUserLogin($user);
 
-                $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);
-                array_push($authBridgeResponses, $mappedUserData);
+                if ($decryptedLogin && $decryptedLogin->getApplications()) {
+                    $credentialsArray = json_decode($decryptedLogin->getApplications(), true);
+                    $mappedUserDataCollection = $this->mapUserData($credentialsArray, $authBridgeResponse);
+                    
+                    // Add all mapped credentials to the response array
+                    foreach ($mappedUserDataCollection as $mappedUserData) {
+                        array_push($authBridgeResponses, $mappedUserData);
+                    }
+                }
             }                            
             //$authBridgeResponse->setData(null);
             //array_push($authBridgeResponses, $authBridgeResponse);
@@ -69,13 +76,23 @@ class Credential
         return $userCredentialsByDomain;
      }   
 
-    private function mapUserData($decryptedLogin, $authBridgeResponse): ResponseDTO
+    private function mapUserData(array $decryptedCredentials, $authBridgeResponse): array
     {
-        $clonedResponse = clone $authBridgeResponse;
-        $clonedResponse->setCredential($decryptedLogin->getUserCredential());
-        $clonedResponse->setDescription($decryptedLogin->getDescription()); 
-        $clonedResponse->setUserPublicId($decryptedLogin->getPublicId());
+        $mappedResponses = [];
         
-        return $clonedResponse;
+        foreach ($decryptedCredentials as $credential) {
+            $clonedResponse = clone $authBridgeResponse;
+            
+            // Parse the JSON credential data
+            $credentialData = json_decode($credential['decrypted'], true);
+            
+            $clonedResponse->setCredential(json_encode($credentialData));
+            $clonedResponse->setDescription($credential['description']); 
+            $clonedResponse->setUserPublicId($authBridgeResponse->getData()->getPublicId());
+            
+            $mappedResponses[] = $clonedResponse;
+        }
+        
+        return $mappedResponses;
     }
 }

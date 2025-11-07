@@ -87,7 +87,7 @@ class DomainReadController extends AbstractController
                 $userPublicId,
                 $qrContent
             );
-
+            $this->logger->critical('Domain Read QR Identity generated for domain: ' . $domain);
             return $this->responseHelper->createSuccessResponse($identity->toDomainProcessArray());
         } catch (\Exception $e) {
             $this->logger->critical(\json_encode($e->getMessage()));

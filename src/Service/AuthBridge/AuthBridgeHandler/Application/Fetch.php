@@ -31,25 +31,25 @@ class Fetch
         
         return [
             'process' => $process->toVaultStateArray(),
-            'response' => $decrypted ? $this->buildResponseFromApplications($decrypted->getApplications()) : false
+            'response' => $decrypted ? $this->buildResponseFromApplications($decrypted->getApplications(), $processType) : false
         ];        
     }
 
-    private function buildResponseFromApplications(string $json): array
+    private function buildResponseFromApplications(string $json, string $processType): array
     {
         try {
             $apps = json_decode($json);
-            return array_map(fn($a) => $this->mapApplication($a), $apps);
+            return array_map(fn($a) => $this->mapApplication($a, $processType), $apps);
         } catch (Exception $e) {
             $this->logger->critical("Error: " . $this->serializerInterface->serialize($e, 'json'));
             return ['error' => 'Failed to process application data'];
         }
     }
 
-    private function mapApplication(object $a): array
+    private function mapApplication(object $a, string $processType): array
     {
         return [
-            'application' => $a->application,
+             $processType => $a->$processType,
             'userCredential' => $a->userCredential,
             'description' => $a->description,
             'targetId' => $a->targetId

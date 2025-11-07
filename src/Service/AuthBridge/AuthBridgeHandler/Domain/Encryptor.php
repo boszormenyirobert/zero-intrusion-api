@@ -90,12 +90,13 @@ class Encryptor
 
         $iv = base64_decode($authBridge->getIv());
         $dbEncryptedCredentials = [];
-        foreach ($credentialsCollection as $credentialData) {
+        foreach ($credentialsCollection as $credentialData) {            
             $encryptedCredential = [
-                'userCredential' => $this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv),
-                'description' => $this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv),
+                'userCredential' => $credentialData['decrypted'],
+                'description' => $credentialData['description'],
                 'targetId' => $credentialData['targetId']
             ];
+            $this->crypterDatabaseLoginService->encryptDataFromArray($encryptedCredential, $iv);
             
             $dbEncryptedCredentials[] = $encryptedCredential;    
             $this->logger->critical("Created credential data with targetId: " . $credentialData['targetId']);

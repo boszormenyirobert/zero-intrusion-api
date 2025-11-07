@@ -32,7 +32,8 @@ class Credential
             $user = $authBridgeResponse->getData();
            
             if ($authBridgeResponse->isProcessCheck()) {
-                $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'application');
+                // changed default 'domain' to 'application'
+                $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'applications');
               //  $this->loginDatabaseService->removeUserLogin($user);
                 
                 $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);

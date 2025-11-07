@@ -35,7 +35,7 @@ class Credential
                 // changed default 'domain' to 'application'
                 $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'applications');
               //  $this->loginDatabaseService->removeUserLogin($user);
-                $this->logger->critical(json_encode($decryptedLogin, true));
+                $this->logger->critical(json_encode($user, true));
                 $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);
                 array_push($authBridgeResponses, $mappedUserData);
             }                            

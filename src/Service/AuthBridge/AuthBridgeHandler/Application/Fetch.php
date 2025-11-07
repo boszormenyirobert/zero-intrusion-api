@@ -42,7 +42,7 @@ class Fetch
             if($processType === 'application') {
                 return array_map(fn($a) => $this->mapApplication($a, $processType), $apps);
             } else {
-                return $apps;
+               return array_map(fn($a) => $this->mapDomain($a, $processType), $apps);
             }                   
         } catch (Exception $e) {
             $this->logger->critical("Error: " . $this->serializerInterface->serialize($e, 'json'));
@@ -50,6 +50,7 @@ class Fetch
         }
     }
 
+    // convert json object to array
     private function mapApplication(object $a): array
     {
         return [
@@ -62,7 +63,7 @@ class Fetch
     private function mapDomain(object $a): array
     {
         return [
-            'application' => $a->application,
+            'credential' => $a->decrypted,
             'userCredential' => $a->userCredential,
             'description' => $a->description,
             'targetId' => $a->targetId

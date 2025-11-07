@@ -153,12 +153,14 @@ class DomainReadController extends AbstractController
             }
 
             $response = $authBridgeService->fetchApplicationsFromAccessTable($processId, 'domain');
-
+            return $this->responseHelper->createSuccessResponse(
+                array_merge(
+                    ['domainList' => $response['response']], 
+                    $response['process'])
+                );
         } catch (\Exception $e) {
             $this->logger->critical('Error: ' . $e->getMessage());
-            $errorResponse = $this->responseHelper->handleException($e, ['login_process_check' => false]);
-        }
-
-        return $errorResponse ?? $this->responseHelper->createSuccessResponse($response);
+            return $this->responseHelper->handleException($e, ['login_process_check' => false]);            
+        }        
     }
 }

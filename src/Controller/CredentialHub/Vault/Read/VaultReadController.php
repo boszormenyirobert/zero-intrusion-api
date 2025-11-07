@@ -154,7 +154,9 @@ class VaultReadController extends AbstractController
             $response = $this->authBridgeService->fetchApplicationsFromAccessTable($processId, 'application');
 
             return $this->responseHelper->createSuccessResponse(
-                array_merge( ['applicationList' => $response['response']], $response['process'])
+                array_merge(
+                    ['applicationList' => $response['response']], 
+                    $response['process'])
                 );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

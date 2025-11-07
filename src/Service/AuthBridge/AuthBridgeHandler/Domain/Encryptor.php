@@ -98,7 +98,7 @@ class Encryptor
             $dbEncryptedCredentials[] = $decrypted;    
         } 
         $authBridge->setProcessState(true);
-        $authBridge->setCredentials($dbEncryptedCredentials);
+        $authBridge->setApplications($dbEncryptedCredentials);
         $this->loginDatabaseService->addUserLogin($authBridge); 
 
         /**         

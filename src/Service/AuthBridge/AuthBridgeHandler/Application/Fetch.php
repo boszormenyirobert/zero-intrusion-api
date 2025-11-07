@@ -39,23 +39,33 @@ class Fetch
     {
         try {
             $apps = json_decode($json);
-            return array_map(fn($a) => $this->mapApplication($a, $processType), $apps);
+            if($processType === 'application') {
+                return array_map(fn($a) => $this->mapApplication($a, $processType), $apps);
+            } else {
+                return $apps;
+            }                   
         } catch (Exception $e) {
             $this->logger->critical("Error: " . $this->serializerInterface->serialize($e, 'json'));
             return ['error' => 'Failed to process application data'];
         }
     }
 
-    private function mapApplication(object $a, string $processType): array
+    private function mapApplication(object $a): array
     {
-        $baseArray = [
+        return [
+            'application' => $a->application,
             'userCredential' => $a->userCredential,
             'description' => $a->description,
             'targetId' => $a->targetId
         ];
-        
-        return $processType === 'application' 
-            ? array_merge($baseArray, ['application' => $a->application])
-            : $baseArray;
     }
+    private function mapDomain(object $a): array
+    {
+        return [
+            'application' => $a->application,
+            'userCredential' => $a->userCredential,
+            'description' => $a->description,
+            'targetId' => $a->targetId
+        ];
+    }    
 }

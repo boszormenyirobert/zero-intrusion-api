@@ -1,0 +1,22 @@
+BACKUP POINT - Working State with Multiple Credentials Support
+=============================================================
+
+Date: 2025-11-07
+Commit Hash: 284d7cd22c1249af0787157cbb904f2c9d9bbc1e
+Commit Message: refact read loginEntry => list of user credentials by domain
+
+What was implemented:
+- Multiple credentials support for domain-based authentication
+- Fixed JSON serialization issues with ResponseDTO objects
+- Improved credential storage using JSON in AuthBridge.applications field
+- Enhanced credential retrieval to handle multiple credentials per domain
+- Fixed object cloning issues to prevent reference problems
+
+Key files modified:
+- src/Helper/ResponseHelper.php (JSON serialization fixes)
+- src/Service/AuthBridge/AuthBridgeHandler/Domain/Credential.php (multiple credential handling)
+- src/Service/AuthBridge/AuthBridgeHandler/Domain/Encryptor.php (credential storage as JSON)
+- src/Controller/CredentialHub/Shared/SharedRegistrationController.php (safety improvements)
+
+To restore to this point:
+git reset --hard 284d7cd22c1249af0787157cbb904f2c9d9bbc1e

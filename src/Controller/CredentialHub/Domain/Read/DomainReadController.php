@@ -152,7 +152,7 @@ class DomainReadController extends AbstractController
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
 
-            $response = $authBridgeService->getUserCredentialsByDomainProcessId($processId);
+            $response = $authBridgeService->fetchApplicationsFromAccessTable($processId);
 
         } catch (\Exception $e) {
             $this->logger->critical('Error: ' . $e->getMessage());

@@ -49,7 +49,6 @@ class Fetch
     private function mapApplication(object $a, string $processType): array
     {
         return [
-             $processType => $a->$processType,
             'userCredential' => $a->userCredential,
             'description' => $a->description,
             'targetId' => $a->targetId

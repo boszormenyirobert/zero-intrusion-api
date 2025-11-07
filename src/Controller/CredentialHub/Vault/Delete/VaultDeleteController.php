@@ -52,7 +52,7 @@ class VaultDeleteController extends AbstractController
                 $this->sharedService->sendFcmNotification(
                     'vaultDelete',
                     $process['userPublicId'],
-                    $identity['qrCode']
+                    $identity
                 );  
             }   
 

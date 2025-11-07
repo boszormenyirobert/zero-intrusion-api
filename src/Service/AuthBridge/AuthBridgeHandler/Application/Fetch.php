@@ -48,11 +48,14 @@ class Fetch
 
     private function mapApplication(object $a, string $processType): array
     {
-        return [
-            'application' => $a->application,
+        $baseArray = [
             'userCredential' => $a->userCredential,
             'description' => $a->description,
             'targetId' => $a->targetId
         ];
+        
+        return $processType === 'application' 
+            ? array_merge($baseArray, ['application' => $a->application])
+            : $baseArray;
     }
 }

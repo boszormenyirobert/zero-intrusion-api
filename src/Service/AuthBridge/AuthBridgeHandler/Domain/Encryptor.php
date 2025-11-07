@@ -99,7 +99,7 @@ class Encryptor
             
             $dbEncryptedCredentials[] = $encryptedCredential;    
             $this->logger->critical("Created AccessRegistry with targetId: " . $credentialData['targetId']);
-            $this->logger->critical("Created AccessRegistry with targetId: " . $this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
+            $this->logger->critical("Created AccessRegistry with targetId: " .$credentialData['decrypted']);
             $this->logger->critical("Created AccessRegistry with targetId: " . $credentialData['description']);
 
         } 

@@ -57,7 +57,10 @@ class SharedService
                  return $identity->toRemoveProcessArray();
             }
 
-            return $identity->toRegistrationProcessArray();
+            return [
+                'toQrRead' => $identity->toRegistrationProcessArray(),
+                'toNotification' => $qrContent
+            ];
     }
 
     public function getQrContent(array $validatedPayload, $mobilXExtensionAuth, $processId): VaultDeleteQrContentDTO

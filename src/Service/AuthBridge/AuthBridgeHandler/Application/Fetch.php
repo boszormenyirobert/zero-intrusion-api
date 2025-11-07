@@ -64,8 +64,8 @@ class Fetch
     {
         $this->logger->critical("Mapping domain credential", (array)$a  );
         return [
-            'credential' => $a->decrypted,
-            'userCredential' => $a->userCredential,
+            'userName' => $a->userName,
+            'userPassword' => $a->userPassword,
             'description' => $a->description,
             'targetId' => $a->targetId
         ];

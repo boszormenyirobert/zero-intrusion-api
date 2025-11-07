@@ -10,7 +10,7 @@ use App\Service\Crypters\SodiumService;
 use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
 use Psr\Log\LoggerInterface;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
-
+use App\Service\AuthBridge\AuthBridgeHandler\Application\Encryptor as ApplicationEncryptor;
 
 class Encryptor
 {
@@ -21,7 +21,8 @@ class Encryptor
         private AuthBridgeRepository $authBridgeRepository,
         private CrypterDatabaseLoginService $crypterDatabaseLoginService,
         private LoginDatabaseService $loginDatabaseService,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private ApplicationEncryptor $applicationEncryptor
     ) {}
 
     public function setDecryptedValuesForDomain(array $user, string $userSecret): bool
@@ -92,21 +93,16 @@ class Encryptor
         $dbEncryptedCredentials = [];
         foreach ($credentialsCollection as $credentialData) {
             $encryptedCredential = new AccessRegistry();
-            $encryptedCredential->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
-            $encryptedCredential->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
+            $encryptedCredential->setUserCredential($credentialData['decrypted']);
+            $encryptedCredential->setDescription($credentialData['description']);
             $encryptedCredential->setTargetId($credentialData['targetId']);
-            
-            
-            $dbEncryptedCredentials[] = $encryptedCredential;    
-            $this->logger->critical("Created AccessRegistry with targetId: " . $credentialData['targetId']);
-            $this->logger->critical("Created AccessRegistry with targetId: " .$credentialData['decrypted']);
-            $this->logger->critical("Created AccessRegistry with targetId: " . $credentialData['description']);
-
+            $dbEncryptedCredentials[] = $encryptedCredential; 
         } 
         
-        $this->logger->critical("Setting " . count($dbEncryptedCredentials) . " applications to AuthBridge");
+        $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
+
         $authBridge->setProcessState(true);
-        $authBridge->setApplications($dbEncryptedCredentials);
+        $authBridge->setApplications($databaseEncryptedCredentialsList);
         $this->loginDatabaseService->addUserLogin($authBridge); 
 
         /**         

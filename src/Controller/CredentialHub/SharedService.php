@@ -54,7 +54,10 @@ class SharedService
             $identity->setQrCode($qrCode);
 
             if($processKey === PayloadKeys::VAULT_DELETE_PROCESS_ID){
-                 return $identity->toRemoveProcessArray();
+                return [
+                    'toQrRead' => $identity->toRemoveProcessArray(),
+                    'toNotification' => $qrContent
+                ];
             }
 
             return [

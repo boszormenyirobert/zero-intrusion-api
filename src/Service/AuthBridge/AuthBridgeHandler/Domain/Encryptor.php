@@ -99,6 +99,9 @@ class Encryptor
             
             $dbEncryptedCredentials[] = $encryptedCredential;    
             $this->logger->critical("Created AccessRegistry with targetId: " . $credentialData['targetId']);
+            $this->logger->critical("Created AccessRegistry with targetId: " . $this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
+            $this->logger->critical("Created AccessRegistry with targetId: " . $credentialData['description']);
+
         } 
         
         $this->logger->critical("Setting " . count($dbEncryptedCredentials) . " applications to AuthBridge");

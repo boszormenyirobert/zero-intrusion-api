@@ -90,23 +90,20 @@ class Encryptor
 
         $iv = base64_decode($authBridge->getIv());
         $dbEncryptedCredentials = [];
-        foreach ($credentialsCollection as $credentialData) {            
-            $encryptedCredential = [
-                'userCredential' => $credentialData['decrypted'],
-                'description' => $credentialData['description'],
-                'targetId' => $credentialData['targetId']
-            ];
-            $this->crypterDatabaseLoginService->encryptDataFromArray($encryptedCredential, $iv);
+        foreach ($credentialsCollection as $credentialData) {
+            $encryptedCredential = new AccessRegistry();
+            $encryptedCredential->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
+            $encryptedCredential->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
+            $encryptedCredential->setTargetId($credentialData['targetId']);
+            
             
             $dbEncryptedCredentials[] = $encryptedCredential;    
-            $this->logger->critical("Created credential data with targetId: " . $credentialData['targetId']);
+            $this->logger->critical("Created AccessRegistry with targetId: " . $credentialData['targetId']);
         } 
         
         $this->logger->critical("Setting " . count($dbEncryptedCredentials) . " applications to AuthBridge");
         $authBridge->setProcessState(true);
-        
-        // JSON serialize the credentials array
-        $authBridge->setApplications(json_encode($dbEncryptedCredentials));
+        $authBridge->setApplications($dbEncryptedCredentials);
         $this->loginDatabaseService->addUserLogin($authBridge); 
 
         /**         

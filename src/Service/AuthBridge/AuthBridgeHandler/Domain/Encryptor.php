@@ -2,6 +2,7 @@
 
 namespace App\Service\AuthBridge\AuthBridgeHandler\Domain;
 
+use App\Entity\AccessRegistry;
 use App\Repository\AccessRegistryRepository;
 use App\Repository\AuthBridgeRepository;
 use App\Service\Crypters\CrypterDatabaseLoginService;
@@ -56,7 +57,6 @@ class Encryptor
                 'targetId' => $app['targetId']
             ];
         }
-        //$decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
         
         return $decryptedCredentials;
     }
@@ -89,16 +89,29 @@ class Encryptor
         }
 
         $iv = base64_decode($authBridge->getIv());
-       
+        $dbEncryptedCredentials = [];
         foreach ($credentialsCollection as $credentialData) {
-            $newAuthBridge = clone $authBridge;
-            $newAuthBridge->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
-            $newAuthBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
-            $newAuthBridge->setTargetId($credentialData['targetId']);
-            $newAuthBridge->setProcessState(true);
-            $newAuthBridge->setPublicId($user['publicId']);   
-            $this->loginDatabaseService->addUserLogin($newAuthBridge); 
+            $decrypted = new AccessRegistry();
+            $decrypted->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
+            $decrypted->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
+            $decrypted->setTargetId($credentialData['targetId']);
+            $dbEncryptedCredentials[] = $decrypted;    
         } 
+        $authBridge->setProcessState(true);
+        $authBridge->setCredentials($dbEncryptedCredentials);
+        $this->loginDatabaseService->addUserLogin($authBridge); 
+
+        /**         
+            foreach ($credentialsCollection as $credentialData) {
+                $newAuthBridge = clone $authBridge;
+                $newAuthBridge->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
+                $newAuthBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
+                $newAuthBridge->setTargetId($credentialData['targetId']);
+                $newAuthBridge->setProcessState(true);
+                $newAuthBridge->setPublicId($user['publicId']);   
+                $this->loginDatabaseService->addUserLogin($newAuthBridge); 
+            } 
+        */
         return true;
     }
 

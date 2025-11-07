@@ -20,7 +20,6 @@ use App\Service\QrService\QrService;
 use App\Controller\CredentialHub\Shared\SharedRegistrationService;
 use App\Controller\CredentialHub\SharedService;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/credential-hub/shared/registration')]
 class SharedRegistrationController extends AbstractController
@@ -54,7 +53,7 @@ class SharedRegistrationController extends AbstractController
         AuthBridgeService $authBridgeService,
         QrService $qrService,
         ValidatorInterface $validator,
-        FirebaseService $firebaseService
+        SharedService $sharedService
     ): JsonResponse {
         $processKey = 'registrationProcessId';
         $payloadKey = 'shared_registration_qr_identity';
@@ -86,13 +85,12 @@ class SharedRegistrationController extends AbstractController
             $identity->setQrCode($qrCode);
             
             if(isset($validatedPayload->userPublicId) && $validatedPayload->userPublicId)
-            {                
-                $firebaseService->manageFcm(
+            {     
+                $sharedService->sendFcmNotification(
+                    'sharedRegistration',
                     $validatedPayload->userPublicId,
-                    'From shared registration',
-                    'Forwarded the QR content, ordered by the user publicId',
                     $qrContent
-                );             
+                );  
             }            
 
             return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());

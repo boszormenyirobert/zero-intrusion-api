@@ -92,10 +92,22 @@ class SharedService
                 'title' => 'From domain read',
                 'body' => 'Forwarded the QR content, ordered by the user publicId',
             ],
-            'shared-registration' => [
+            'sharedRegistration' => [
                 'title' => 'From shared registration',
                 'body' => 'Forwarded the QR content, ordered by the user publicId',
             ],
+            'vaultRead' => [
+                'title' => 'From vault read',
+                'body' => 'Forwarded the QR content, ordered by the user publicId',
+            ],   
+            'vaultEdit' => [
+                'title' => 'From vault edit',
+                'body' => 'Forwarded the QR content, ordered by the user publicId',
+            ],    
+            'vaultDelete' => [
+                'title' => 'From vault delete',
+                'body' => 'Forwarded the QR content, ordered by the user publicId',
+            ],                                 
         ];
 
         if($userPublicId)

@@ -28,7 +28,8 @@ class VaultReadController extends AbstractController
         private LoggerInterface $logger,
         private PayloadValidator $payloadValidator,
         private ResponseHelper $responseHelper,
-        private AuthBridgeService $authBridgeService
+        private AuthBridgeService $authBridgeService,
+        private SharedService $sharedService
     ) {}
 
     /**
@@ -54,8 +55,7 @@ class VaultReadController extends AbstractController
     public function vaultReadQrIdentity(
         Request $request,
         QrService $qrService,
-        VaultReadService $vaultReadService,        
-        FirebaseService $firebaseService
+        VaultReadService $vaultReadService
     ): JsonResponse {
         $payloadKey = PayloadKeys::VAULT_READ_QR_IDENTITY;
         $processKey = PayloadKeys::VAULT_PROCESS_ID;
@@ -75,13 +75,12 @@ class VaultReadController extends AbstractController
             $identity->setQrCode($qrCode);
             $this->logger->critical('Vault Read QR Content: ', (array)$validatedPayload[$payloadKey]);
             if(isset($validatedPayload[$payloadKey]['userPublicId']) && $validatedPayload[$payloadKey]['userPublicId'])
-            {                
-                $firebaseService->manageFcm(
+            {                 
+                $this->sharedService->sendFcmNotification(
+                    'vaultRead',
                     $validatedPayload[$payloadKey]['userPublicId'],
-                    'From shared registration',
-                    'Forwarded the QR content, ordered by the user publicId',
                     $qrContent
-                );             
+                );
             }     
 
             return $this->responseHelper->createSuccessResponse($identity->toApplicationProcessArray());

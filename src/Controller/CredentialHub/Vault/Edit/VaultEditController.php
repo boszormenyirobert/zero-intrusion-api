@@ -28,7 +28,8 @@ class VaultEditController extends AbstractController
         private LoggerInterface $logger,
         private PayloadValidator $payloadValidator,
         private ResponseHelper $responseHelper,
-        private AccessRegistryRegistrationService $accessRegistryRegistrationService
+        private AccessRegistryRegistrationService $accessRegistryRegistrationService,
+        private SharedService $sharedService,
     ) {}
 
     /*
@@ -60,6 +61,15 @@ class VaultEditController extends AbstractController
             $qrCode = $qrService->getQrCode($qrContent);  
             $identity->setQrCode($qrCode);
 
+            if(isset($validatedPayload->userPublicId) && $validatedPayload->userPublicId)
+            {     
+                $this->sharedService->sendFcmNotification(
+                    'vaultEdit',
+                    $validatedPayload->userPublicId,
+                    $qrContent
+                );  
+            }   
+
             return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
@@ -75,14 +85,13 @@ class VaultEditController extends AbstractController
     #[RequireJson]
     public function vaultEditCredential(
         Request $request,
-        SharedService $sharedService,
         AccessRegistryVaultService $accessRegistryVaultService
         ): JsonResponse
     {
         $payloadKey = PayloadKeys::VAULT_EDIT_CREDENTIAL;
 
         try {
-            $process = $sharedService->getProcessId($request,  $payloadKey, true);
+            $process = $this->sharedService->getProcessId($request,  $payloadKey, true);
 
             if(!$process) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
@@ -109,13 +118,12 @@ class VaultEditController extends AbstractController
     public function vaultDeleteState(
         Request $request,
         AccessRegistryRegistrationService $accessRegistryRegistrationService,
-        SharedService $sharedService
     ): JsonResponse {
         $payloadKey = PayloadKeys::VAULT_EDIT_STATE;
         $processKey = PayloadKeys::VAULT_EDIT_PROCESS_ID;
 
         try {
-            $processId = $sharedService->getProcessId($request, $payloadKey);
+            $processId = $this->sharedService->getProcessId($request, $payloadKey);
 
             if(!$processId) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');

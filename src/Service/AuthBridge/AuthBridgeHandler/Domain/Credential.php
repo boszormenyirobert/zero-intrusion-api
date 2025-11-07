@@ -32,7 +32,7 @@ class Credential
             $user = $authBridgeResponse->getData();
            
             if ($authBridgeResponse->isProcessCheck()) {
-                $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'domain');
+                $decryptedLogin = $this->crypterDatabaseLoginService->decryptFromDatabase($user, 'application');
               //  $this->loginDatabaseService->removeUserLogin($user);
                 
                 $mappedUserData = $this->mapUserData($decryptedLogin, $authBridgeResponse);

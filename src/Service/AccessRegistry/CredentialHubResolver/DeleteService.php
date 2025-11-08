@@ -36,12 +36,16 @@ class DeleteService
 
         foreach ($collecion as $page) {
 
-            if ($page['encrypted']->getPublicId() === $user['publicId'] && $page['decrypted']->getDomain() === $user['domain']) {
+            if ($page['encrypted']->getPublicId() === $user['publicId'] && 
+                $page['decrypted']->getDomain() === $user['domain'] &&
+                $page['decrypted']->getTargetId() === $user['targetId']
+            ) {
                 $newCombination = false;
                 $deleteUserItem = $this->accessRegistryRepository->findOneBy(
                     [
                         'domain' => $page['encrypted']->getDomain(),
-                        'publicId' => $page['encrypted']->getPublicId()
+                        'publicId' => $page['encrypted']->getPublicId(),
+                        'targetId' => $page['encrypted']->getTargetId()
                     ]
                 );
                 $this->entityManager->remove($deleteUserItem);

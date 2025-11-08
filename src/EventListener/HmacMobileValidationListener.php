@@ -88,6 +88,15 @@ class HmacMobileValidationListener
            $processKey => $processId
         ]);
 
+        if (!$process) {
+            $this->logger->critical('Invalid processId. The process id missing from the auth bridge table');
+            $event->setController(fn() => new JsonResponse([
+                'success' => false,
+                'error' => 'Invalid or expired HMAC from the extension',
+            ], 403));
+            $event->stopPropagation();
+        }
+
         if (!$process || !$this->isHmacValid($authHeader, $process)) {
             $this->logger->critical('Invalid HMAC Mobile authentication.');
             $event->setController(fn() => new JsonResponse([

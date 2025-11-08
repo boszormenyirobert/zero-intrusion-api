@@ -62,10 +62,10 @@ class Fetch
     }
     private function mapDomain(object $a): array
     {
-        $this->logger->critical("Mapping domain credential", (array)$a  );
+        $this->logger->critical("Mapping domain credential", (array)$a);
+        
         return [
-            'userName' => $a->userName,
-            'userPassword' => $a->userPassword,
+            'credential' => $a->decrypted,
             'description' => $a->description,
             'targetId' => $a->targetId
         ];

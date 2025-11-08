@@ -30,6 +30,7 @@ class DomainDeleteService
             $validatedPayload['domain'] ?? null,
             $validatedPayload['type'] ?? null,
             $validatedPayload['source'] ?? null,
+            $validatedPayload['targetId'] ?? null,
             $processId
         );
     }

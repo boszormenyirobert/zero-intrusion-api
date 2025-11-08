@@ -29,7 +29,8 @@ class DomainDeleteController extends AbstractController
         private LoggerInterface $logger,
         private PayloadValidator $payloadValidator,
         private ResponseHelper $responseHelper,
-        private ValidatorInterface $validator
+        private ValidatorInterface $validator,
+        private SharedService $sharedService
     ) {}
 
     /**
@@ -66,7 +67,14 @@ class DomainDeleteController extends AbstractController
             }
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
-
+            if(isset($validatedPayload->userPublicId) && $validatedPayload->userPublicId)
+            { 
+                $this->sharedService->sendFcmNotification(
+                    'domainDelete',
+                    $validatedPayload->userPublicId,
+                    $qrContent
+                );
+            }
             return $this->responseHelper->createSuccessResponse($identity->toRemoveProcessArray());
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
@@ -84,13 +92,12 @@ class DomainDeleteController extends AbstractController
     public function domainDeleteCredential(
         Request $request,
         DomainDeleteService $domainDeleteService,
-        SharedService $sharedService
         ): JsonResponse
     {
          $payloadKey = PayloadKeys::DOMAIN_DELETE_CREDENTIAL;
 
         try {
-            $process = $sharedService->getProcessId($request, $payloadKey, true);
+            $process = $this->sharedService->getProcessId($request, $payloadKey, true);
 
             if(!$process) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
@@ -120,13 +127,12 @@ class DomainDeleteController extends AbstractController
     public function domainDeleteState(
         Request $request,
         AccessRegistryRegistrationService $stateService,
-        SharedService $sharedService
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_DELETE_STATE;
         $processKey = PayloadKeys::REMOVE_PROCESS_ID;
 
         try {
-            $processId = $sharedService->getProcessId($request, $payloadKey);
+            $processId = $this->sharedService->getProcessId($request, $payloadKey);
 
             if(!$processId) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');

@@ -94,6 +94,10 @@ class SharedService
     
     public function sendFcmNotification($source, $userPublicId, $qrContent){
         $descriptions = [
+            'domainDelete' => [
+                'title' => 'From domain delete',
+                'body' => 'Forwarded the QR content, ordered by the user publicId',
+            ],
             'domainRead' => [
                 'title' => 'From domain read',
                 'body' => 'Forwarded the QR content, ordered by the user publicId',

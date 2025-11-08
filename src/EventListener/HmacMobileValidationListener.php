@@ -89,6 +89,8 @@ class HmacMobileValidationListener
         ]);
 
         if (!$process) {
+            $this->logger->critical('Invalid processId. Incoming from Mobile HMAC validation. : ' . $processId);
+            $this->logger->critical('Processkey from Mobile HMAC validation. : ' . $processKey);
             $this->logger->critical('Invalid processId. The process id missing from the auth bridge table');
             $event->setController(fn() => new JsonResponse([
                 'success' => false,

@@ -62,7 +62,7 @@ class DomainDeleteController extends AbstractController
 
             if (count($errors) > 0) {                
                 foreach ($errors as $error) {
-                    echo $error->getPropertyPath() . ': ' . $error->getMessage();
+                   // echo $error->getPropertyPath() . ': ' . $error->getMessage();
                 }
             }
             $qrCode = $qrService->getQrCode($qrContent);
@@ -94,6 +94,7 @@ class DomainDeleteController extends AbstractController
         DomainDeleteService $domainDeleteService,
         ): JsonResponse
     {
+        $this->logger->critical('DomainDeleteController: domainDeleteCredential processId ');
          $payloadKey = PayloadKeys::DOMAIN_DELETE_CREDENTIAL;
 
         try {
@@ -102,7 +103,6 @@ class DomainDeleteController extends AbstractController
             if(!$process) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
-            $this->logger->critical('DomainDeleteController: domainDeleteCredential processId ' . $process);
             $response = $domainDeleteService->deleteDomain($process);
             
             return $this->json([

@@ -74,6 +74,7 @@ class VaultDeleteController extends AbstractController
         VaultDeleteService $vaultDeleteService
         ): JsonResponse
     {
+        $this->logger->critical('vaultDeleteCredential: vaultDeleteCredential  ' );    
         $payloadKey = PayloadKeys::VAULT_DELETE_CREDENTIAL;
 
         try {

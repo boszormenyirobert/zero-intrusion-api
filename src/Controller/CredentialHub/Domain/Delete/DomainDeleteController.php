@@ -67,11 +67,11 @@ class DomainDeleteController extends AbstractController
             }
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
-            if(isset($validatedPayload->userPublicId) && $validatedPayload->userPublicId)
+            if(isset($validatedPayload['userPublicId']) && $validatedPayload['userPublicId'])
             { 
                 $this->sharedService->sendFcmNotification(
                     'domainDelete',
-                    $validatedPayload->userPublicId,
+                    $validatedPayload['userPublicId'],
                     $qrContent
                 );
             }

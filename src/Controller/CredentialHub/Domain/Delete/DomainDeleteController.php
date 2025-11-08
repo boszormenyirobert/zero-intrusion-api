@@ -95,7 +95,7 @@ class DomainDeleteController extends AbstractController
             if(!$process) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
-
+            $this->logger->critical('DomainDeleteController: domainDeleteCredential processId '.$process );
             $response = $domainDeleteService->deleteDomain($process);
             
             return $this->json([

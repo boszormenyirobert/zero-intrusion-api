@@ -28,7 +28,9 @@ final class RegistryRegistration
 
     private function addOrUpdateRegistry($result, $userData, $update, $type)
     {
-        //$targetId = $this->getSubString(50);
+        if($update === "new"){
+            $targetId = $this->getSubString(50);
+        } 
         $this->logger->critical("Generated Target ID: " . json_encode($userData));
 
         $targetId = $userData['targetId'];;
@@ -36,9 +38,9 @@ final class RegistryRegistration
         if ($result['newCombination'] === false && $update) {
             $this->accessRegistryDomainService->deleteDomainRegistraions($userData);
         }
-
-        //$userData['targetId'] = $targetId;
-
+        if($update === "new"){
+                $userData['targetId'] = $targetId;
+        }
         return $this->accessRegistryDomainService->createDomain($userData, $type);
     }
 

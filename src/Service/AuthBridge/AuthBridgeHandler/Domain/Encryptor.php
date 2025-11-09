@@ -105,17 +105,6 @@ class Encryptor
         $authBridge->setApplications($databaseEncryptedCredentialsList);
         $this->loginDatabaseService->addUserLogin($authBridge); 
 
-        /**         
-            foreach ($credentialsCollection as $credentialData) {
-                $newAuthBridge = clone $authBridge;
-                $newAuthBridge->setUserCredential($this->crypterDatabaseLoginService->encryptData($credentialData['decrypted'], $iv));
-                $newAuthBridge->setDescription($this->crypterDatabaseLoginService->encryptData($credentialData['description'], $iv));
-                $newAuthBridge->setTargetId($credentialData['targetId']);
-                $newAuthBridge->setProcessState(true);
-                $newAuthBridge->setPublicId($user['publicId']);   
-                $this->loginDatabaseService->addUserLogin($newAuthBridge); 
-            } 
-        */
         return true;
     }
 

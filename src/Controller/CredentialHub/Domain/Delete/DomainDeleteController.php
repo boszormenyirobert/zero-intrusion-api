@@ -57,7 +57,7 @@ class DomainDeleteController extends AbstractController
 
             /** @var DomainDeleteQrContentDTO */
             $qrContent = $domainDeleteService->getQrContent($validatedPayload, $identity->getXExtensionAuthOne(), $identity->getRemoveProcessId());
-
+            $this->logger->critical('DomainDeleteController: domainDeleteQrIdentity QR Content: ' . json_encode($qrContent));   
             $errors = $this->validator->validate($qrContent);
 
             if (count($errors) > 0) {                

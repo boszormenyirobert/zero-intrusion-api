@@ -19,6 +19,9 @@ class DomainDeleteQrContentDTO implements QrInterface
     public ?string $source;
 
     #[Assert\NotBlank]
+    public ?string $targetId;
+
+    #[Assert\NotBlank]
     public ?string $removeProcessId;
 
     public function __construct(
@@ -26,12 +29,14 @@ class DomainDeleteQrContentDTO implements QrInterface
         ?string $domain,
         ?string $type,
         ?string $source,
+        ?string $targetId,
         ?string $removeProcessId
     ) {
         $this->xExtensionAuthOne = $xExtensionAuthOne;
         $this->domain = $domain;
         $this->type = $type;
         $this->source = $source;
+        $this->targetId = $targetId;
         $this->removeProcessId = $removeProcessId;
     }
 }

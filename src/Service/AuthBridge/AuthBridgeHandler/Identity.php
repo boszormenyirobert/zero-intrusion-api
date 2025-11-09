@@ -62,7 +62,7 @@ class Identity
         $authBridge->setProcessState(false);
 
         if($processType === 'removeProcessId'){
-            $authBridge->setRemoveProcessId($processId);
+        //    $authBridge->setRemoveProcessId($processId);
         } else if($processType === 'registrationProcessId'){
             $authBridge->setRegistrationProcessId($processId);
         }

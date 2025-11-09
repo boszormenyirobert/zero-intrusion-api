@@ -131,6 +131,8 @@ final class CrypterDatabaseLoginService
             $encryptedSecret->setApplicationProcessId($secretData['applicationProcessId']); //Read
         } else if ($type === 'registrationProcessId') {
             $encryptedSecret->setRegistrationProcessId($secretData['registrationProcessId']); //Write -domain and vault
+        } else if ($type === 'removeProcessId') {
+            $encryptedSecret->setRemoveProcessId($secretData['removeProcessId']); //Delete -domain 
         }
         $encryptedSecret->setIv(base64_encode($iv));
 

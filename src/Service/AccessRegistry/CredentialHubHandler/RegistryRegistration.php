@@ -28,12 +28,14 @@ final class RegistryRegistration
 
     private function addOrUpdateRegistry($result, $userData, $update, $type)
     {
+        $this->logger->critical("Value of update: " . $update);   
         if($update === "new"){
             $targetId = $this->getSubString(50);
-        } 
-        $this->logger->critical("Generated Target ID: " . json_encode($userData));
+        } else {
+            $targetId = $userData['targetId'];
+        }
 
-        $targetId = $userData['targetId'];;
+        $this->logger->critical("Generated Target ID: " . json_encode($userData));      
 
         if ($result['newCombination'] === false && $update) {
             $this->accessRegistryDomainService->deleteDomainRegistraions($userData);

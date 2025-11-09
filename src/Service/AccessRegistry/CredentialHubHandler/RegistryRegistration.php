@@ -30,19 +30,13 @@ final class RegistryRegistration
     {
         $this->logger->critical("Value of update: " . $update);   
         if($update === "new"){
-            $targetId = $this->getSubString(50);
-        } else {
-            $targetId = $userData['targetId'];
-        }
+            $userData['targetId'] = $this->getSubString(50);
+        } 
 
-        $this->logger->critical("Generated Target ID: " . json_encode($userData));      
-
-        if ($result['newCombination'] === false && $update) {
+        if ($update === "update") {
             $this->accessRegistryDomainService->deleteDomainRegistraions($userData);
         }
-        if($update === "new"){
-                $userData['targetId'] = $targetId;
-        }
+
         return $this->accessRegistryDomainService->createDomain($userData, $type);
     }
 

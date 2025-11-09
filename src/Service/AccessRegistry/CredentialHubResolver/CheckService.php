@@ -37,7 +37,10 @@ final class CheckService
 
         foreach ($decryptedUserPages as $registratedPage) {
 
-            if ($registratedPage->getPublicId() === $user['publicId'] && $registratedPage->getDomain() === $user['domain']) {
+            if ($registratedPage->getPublicId() === $user['publicId'] && 
+                $registratedPage->getDomain() === $user['domain']&& 
+                $registratedPage->getTargetId() === $user['targetId']
+            ) {
                 $decryptedPage = $registratedPage;
                 break;
             }

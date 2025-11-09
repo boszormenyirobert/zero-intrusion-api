@@ -29,7 +29,7 @@ final class RegistryRegistration
     private function addOrUpdateRegistry($result, $userData, $update, $type)
     {
         //$targetId = $this->getSubString(50);
-        $targetId = $result['targetId'];;
+        $targetId = $userData['targetId'];;
 
         if ($result['newCombination'] === false && $update) {
             $this->accessRegistryDomainService->deleteDomainRegistraions($userData);

@@ -35,6 +35,9 @@ class SharedRegistrationQrDTO implements QrInterface
     #[Assert\Length(max: 255)]
     public ?string $application = null;    
 
+    #[Assert\Length(max: 255)]
+    public ?string $targetId = null;   
+
     public function __construct(
         ?string $userName,
         ?string $userPassword,
@@ -43,7 +46,8 @@ class SharedRegistrationQrDTO implements QrInterface
         ?string $type,
         ?string $source,
         ?bool $isNew,
-        ?string $description
+        ?string $description,
+        ?string $targetId
     ) {
         $this->userName = $userName;
         $this->userPassword = $userPassword;
@@ -53,6 +57,7 @@ class SharedRegistrationQrDTO implements QrInterface
         $this->source = $source;
         $this->isNew = $isNew;
         $this->description = $description;
+        $this->targetId = $targetId;
     }
 
     public function setDomain(?string $domain): void

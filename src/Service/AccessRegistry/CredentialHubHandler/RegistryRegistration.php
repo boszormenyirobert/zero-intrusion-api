@@ -28,13 +28,14 @@ final class RegistryRegistration
 
     private function addOrUpdateRegistry($result, $userData, $update, $type)
     {
-        $targetId = $this->getSubString(50);
+        //$targetId = $this->getSubString(50);
+        $targetId = $result['targetId'];;
 
         if ($result['newCombination'] === false && $update) {
             $this->accessRegistryDomainService->deleteDomainRegistraions($userData);
         }
 
-        $userData['targetId'] = $targetId;
+        //$userData['targetId'] = $targetId;
 
         return $this->accessRegistryDomainService->createDomain($userData, $type);
     }

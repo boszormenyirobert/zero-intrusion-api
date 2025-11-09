@@ -18,6 +18,8 @@ class Credential
     ) {}
 
     /**
+     * deprecated
+     * 
      * Retrieves user credentials by domainProcessId.
      *
      * @param string $domainProcessId

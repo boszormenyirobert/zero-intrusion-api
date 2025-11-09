@@ -32,7 +32,7 @@ class AuthBridgeService
         return $this->authBridgeHandler->persistDecryptedUserDataForWeb($user);
     }    
 
-    // Called by extension checker: DomainRead
+    // deprecated
     public function getUserCredentialsByDomainProcessId($domainProcessId): array
     {
         return $this->credential->getUserCredentialsByDomainProcessId($domainProcessId);
@@ -54,9 +54,9 @@ class AuthBridgeService
         return $this->identity->generateRequestIdentity($processType);
     }
 
-    public function fetchApplicationsFromAccessTable($applicationProcessId, $processType): array
+    public function fetchFromAccessTable($applicationProcessId, $processType): array
     {
-        return $this->fetch->fetchApplicationsFromAccessTable($applicationProcessId, $processType);
+        return $this->fetch->fetchFromAccessTable($applicationProcessId, $processType);
     }
 
     public function updateProcessState(string $processKey, string $processId): void

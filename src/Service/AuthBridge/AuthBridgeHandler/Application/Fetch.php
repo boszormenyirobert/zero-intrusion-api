@@ -19,12 +19,12 @@ class Fetch
         private RegistryState $registryState
     ) {}
 
-    public function fetchApplicationsFromAccessTable($applicationProcessId, $processType): array
+    public function fetchFromAccessTable($applicationProcessId, $processType): array
     {
         $process = $processType === 'application' ? 'applicationProcessId' : 'domainProcessId';
         $encryptedUser = $this->authBridgeRepository->findOneBy([$process => $applicationProcessId]);
 
-
+        // TODO => Rename column "applications" to "credentials" => This store the list of credentials by domain or a user application credentials
         $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabase($encryptedUser, "applications");
 
         $process = $this->registryState->registrationState($applicationProcessId, $process);

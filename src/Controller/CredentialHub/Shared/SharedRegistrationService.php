@@ -21,7 +21,7 @@ class SharedRegistrationService
             $validatedPayload->source,
             $validatedPayload->isNew,
             $validatedPayload->description,
-            $validatedPayload->userPublicId,
+            $validatedPayload->userPublicId ?? null,
             $validatedPayload->targetId ?? null
         );
     }

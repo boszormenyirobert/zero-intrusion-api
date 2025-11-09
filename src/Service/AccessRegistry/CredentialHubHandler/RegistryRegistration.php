@@ -20,7 +20,7 @@ final class RegistryRegistration
 
 
         if (!empty($result) && $result['newCombination'] === false && $update === "new" && $zeroIntrusionRegistration == false) {
-            return false;
+        //    return false;
         }
 
         return $this->addOrUpdateRegistry($result, $userData, $update, $type);

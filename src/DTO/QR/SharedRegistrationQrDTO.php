@@ -25,7 +25,7 @@ class SharedRegistrationQrDTO implements QrInterface
     public ?string $source;
 
     #[Assert\NotNull]
-    public ?bool $isNew;
+    public ?string $isNew;
 
     public ?string $description;
     
@@ -48,7 +48,7 @@ class SharedRegistrationQrDTO implements QrInterface
         ?string $xExtensionAuthOne,
         ?string $type,
         ?string $source,
-        ?bool $isNew,
+        ?string $isNew,
         ?string $description,
         ?string $userPublicId,
         ?string $targetId

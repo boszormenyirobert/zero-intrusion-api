@@ -29,7 +29,7 @@ final class RegistryRegistration
     private function addOrUpdateRegistry($result, $userData, $update, $type)
     {
         //$targetId = $this->getSubString(50);
-        $this->logger->info("Generated Target ID: " . json_encode($userData));
+        $this->logger->critical("Generated Target ID: " . json_encode($userData));
 
         $targetId = $userData['targetId'];;
 

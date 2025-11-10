@@ -151,7 +151,7 @@ class VaultReadController extends AbstractController
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
 
-            $response = $this->authBridgeService->fetchApplicationsFromAccessTable($processId, 'application');
+            $response = $this->authBridgeService->fetchFromAccessTable($processId, 'application');
 
             return $this->responseHelper->createSuccessResponse(
                 array_merge(

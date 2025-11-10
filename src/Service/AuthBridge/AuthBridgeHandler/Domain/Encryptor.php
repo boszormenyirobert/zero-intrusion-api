@@ -93,7 +93,7 @@ class Encryptor
         $dbEncryptedCredentials = [];
         foreach ($credentialsCollection as $credentialData) {
             $encryptedCredential = new AccessRegistry();
-            $encryptedCredential->setUserCredential($credentialData['decrypted']);
+            $encryptedCredential->setUserCredential($credentialData['decrypted'],$user['email']);
             $encryptedCredential->setDescription($credentialData['description']);
             $encryptedCredential->setTargetId($credentialData['targetId']);
             $dbEncryptedCredentials[] = $encryptedCredential; 

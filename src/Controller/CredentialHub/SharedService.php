@@ -9,6 +9,8 @@ use App\Service\QrService\QrService;
 use App\Controller\PayloadValidator\PayloadValidator;
 use Psr\Log\LoggerInterface;
 use App\Service\Firebase\FirebaseService;
+use App\Repository\IdentityRepository;
+use App\Service\Identity\Database\CrypterDatabaseIdentityService;
 
 class SharedService
 {
@@ -17,6 +19,8 @@ class SharedService
             private QrService $qrService,
             private PayloadValidator $payloadValidator,
             private FirebaseService $firebaseService,
+            private IdentityRepository $identityRepository,
+            private CrypterDatabaseIdentityService $crypterDatabaseIdentityService,
             private LoggerInterface $logger
     ) {}
 
@@ -130,4 +134,12 @@ class SharedService
             );               
         }
     }
+
+    public function getUserEmailByPublicId(string $userPublicId): ?string
+    {
+        $identity = $this->identityRepository->findOneBy(['publicId' => $userPublicId]);
+        $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
+
+        return $email;
+    }   
 }

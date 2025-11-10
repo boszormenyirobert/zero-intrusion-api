@@ -64,7 +64,7 @@ final class CrypterDatabaseIdentityService
         return $decrypted;
     }
 
-    private function decryptData(string $value, string $iv): string
+    public function decryptData(string $value, string $iv): string
     {
         $decoded = base64_decode($value);
         $decrypted = openssl_decrypt($decoded, $this->cipher, $this->key, 0, $iv);

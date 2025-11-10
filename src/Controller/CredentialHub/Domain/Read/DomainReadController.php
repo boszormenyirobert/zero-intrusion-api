@@ -153,11 +153,14 @@ class DomainReadController extends AbstractController
             }
 
             $response = $authBridgeService->fetchFromAccessTable($processId, 'domain');
+            // Get email by publicId from the Identity table
+            $email = $this->sharedService->getUserEmailByPublicId($response['process']['userPublicId']);
             return $this->responseHelper->createSuccessResponse(
                 array_merge(
-                    ['domainList' => $response['response']], 
-                    $response['process'])
-                );
+                    ['domainList' => $response['response']],
+                    $response['process'],
+                    ['email' => $email]
+                ));
         } catch (\Exception $e) {
             $this->logger->critical('Error: ' . $e->getMessage());
             return $this->responseHelper->handleException($e, ['login_process_check' => false]);            

@@ -135,9 +135,11 @@ class SharedService
         }
     }
 
-    public function getUserEmailByPublicId(string $userPublicId): ?string
+    public function getUserEmailByPublicId($processId, $type): ?string
     {
-        $identity = $this->identityRepository->findOneBy(['publicId' => $userPublicId]);
+        $response = $this->authBridgeService->fetchFromAccessTable($processId, $type);
+        $targetId = $response['targetId'];
+        $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
         $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
 
         return $email;

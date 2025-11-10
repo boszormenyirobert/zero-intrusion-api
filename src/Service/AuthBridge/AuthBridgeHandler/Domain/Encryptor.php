@@ -92,9 +92,8 @@ class Encryptor
         $iv = base64_decode($authBridge->getIv());
         $dbEncryptedCredentials = [];
         foreach ($credentialsCollection as $credentialData) {
-            $this->logger->critical('The user email: ' . $user['email']);
             $encryptedCredential = new AccessRegistry();
-            $encryptedCredential->setUserCredential($credentialData['decrypted'],$user['email']);
+            $encryptedCredential->setUserCredential($credentialData['decrypted']);
             $encryptedCredential->setDescription($credentialData['description']);
             $encryptedCredential->setTargetId($credentialData['targetId']);
             $dbEncryptedCredentials[] = $encryptedCredential; 

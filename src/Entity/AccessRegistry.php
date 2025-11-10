@@ -124,9 +124,9 @@ class AccessRegistry
         return $this->userCredential;
     }
 
-    public function setUserCredential(string $userCredential, string $userEmail): static
+    public function setUserCredential(string $userCredential): static
     {
-        $this->userCredential = $userCredential . ':' . $userEmail;
+        $this->userCredential = $userCredential;
 
         return $this;
     }

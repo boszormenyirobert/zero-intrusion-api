@@ -156,7 +156,7 @@ $this->logger->critical('Identity email (encrypted 1)', [
     'publicId' => $identity->getPublicId(),
     'email_encrypted' => $identity->getEmail(),
 ]);                      
-                        $id = $this->crypterDatabaseIdentityService->decryptFromDatabase($identity);
+                        $id = $this->crypterDatabaseIdentityService->decryptFromDatabaseDevice($identity);
                         $this->logger->critical('Identity email (decrypted 2): ' . $id->getEmail());
                         return $id->getEmail();
                     }

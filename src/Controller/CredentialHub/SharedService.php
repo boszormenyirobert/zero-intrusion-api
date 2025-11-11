@@ -144,7 +144,7 @@ class SharedService
             // get the first targetId
             $targetId = $source['response'][0]['targetId']; 
             $publicId = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);
-            $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
+            $identity = $this->identityRepository->findOneBy(['publicId' => $publicId]);
             if ($identity) {
                 $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
                 return $email;

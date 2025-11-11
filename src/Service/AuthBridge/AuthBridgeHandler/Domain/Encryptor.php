@@ -55,7 +55,8 @@ class Encryptor
             $decryptedCredentials[] = [
                 'decrypted' => $decrypted,
                 'description' => $app['description'],
-                'targetId' => $app['targetId']
+                'targetId' => $app['targetId'],
+                'email' => $user['email']
             ];
         }
         

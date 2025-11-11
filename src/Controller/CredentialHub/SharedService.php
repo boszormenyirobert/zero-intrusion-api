@@ -136,13 +136,11 @@ class SharedService
     }
 
     // PublicId in bridge is an vuln.
-    public function getUserEmailByPublicId(array $source = []): ?string
+    public function getUserEmailByTargetId(array $source = []): ?string
     {       
-        $this->logger->critical('getUserEmailByPublicId input: ' . json_encode($source));
-        
-        // Ha van response és legalább egy credential
         if (isset($source['response'][0]['targetId'])) {
-            $targetId = $source['response'][0]['targetId']; // Első credential targetId-ja
+            // get the first targetId
+            $targetId = $source['response'][0]['targetId']; 
             $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
             
             if ($identity) {
@@ -151,6 +149,6 @@ class SharedService
             }
         }
 
-        return "boszormenyirobert@yahoo.com"; // fallback
+        return null;
     }   
 }

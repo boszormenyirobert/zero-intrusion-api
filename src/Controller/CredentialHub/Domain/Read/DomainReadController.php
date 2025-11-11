@@ -154,11 +154,8 @@ class DomainReadController extends AbstractController
 
             $response = $authBridgeService->fetchFromAccessTable($processId, 'domain');
            
-            $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response, 'domain');
-           
-            if (!is_array($toAutoNotification)) {
-                $toAutoNotification = $toAutoNotification ? [$toAutoNotification] : [];
-            }
+            /** @var array{email: ?string, publicId: ?string} $toAutoNotification */
+            $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response);
             return $this->responseHelper->createSuccessResponse(
                 array_merge(
                     ['domainList' => $response['response']],

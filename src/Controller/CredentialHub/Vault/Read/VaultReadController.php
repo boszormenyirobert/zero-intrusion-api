@@ -152,7 +152,8 @@ class VaultReadController extends AbstractController
             }
 
             $response = $this->authBridgeService->fetchFromAccessTable($processId, 'application');
- $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response, 'domain');
+            /** @var array{email: ?string, publicId: ?string} $toAutoNotification */
+            $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response);
             return $this->responseHelper->createSuccessResponse(
                 array_merge(
                     ['applicationList' => $response['response']],

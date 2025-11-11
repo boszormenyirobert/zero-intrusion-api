@@ -147,10 +147,9 @@ class SharedService
      *  - Decrypts the Identity using CrypterDatabaseIdentityService.
      *  - Returns the decrypted email address and publicId.
      *
-     * @param array $source Payload array containing 'response' with 'targetId'.
-     * @return string|null The decrypted email if found, or null otherwise.
-     */
-    public function getUserEmailByTargetId(array $source = []): array
+     * @return array{email: ?string, publicId: ?string}
+     */    
+    public function getUserEmailByTargetId(array $source = []):array
     { 
         if (isset($source['response'][0]) ) {
 

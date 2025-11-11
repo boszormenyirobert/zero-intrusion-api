@@ -57,7 +57,8 @@ class Fetch
             'application' => $a->application,
             'userCredential' => $a->userCredential,
             'description' => $a->description,
-            'targetId' => $a->targetId
+            'targetId' => $a->targetId,
+            'userPublicId' => $a->userPublicId
         ];
     }
     private function mapDomain(object $a): array

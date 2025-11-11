@@ -153,13 +153,17 @@ class DomainReadController extends AbstractController
             }
 
             $response = $authBridgeService->fetchFromAccessTable($processId, 'domain');
-            // Get email by publicId from the Identity table
-            $email = $this->sharedService->getUserEmailByTargetId($response, 'domain');
+           
+            $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response, 'domain');
+           
+            if (!is_array($toAutoNotification)) {
+                $toAutoNotification = $toAutoNotification ? [$toAutoNotification] : [];
+            }
             return $this->responseHelper->createSuccessResponse(
                 array_merge(
                     ['domainList' => $response['response']],
                     $response['process'],
-                    ['email' => $email]
+                    $toAutoNotification
                 ));
         } catch (\Exception $e) {
             $this->logger->critical('Error: ' . $e->getMessage());

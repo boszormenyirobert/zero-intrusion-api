@@ -137,8 +137,20 @@ class SharedService
         }
     }
 
-    // PublicId in bridge is an vuln.
-    public function getUserEmailByTargetId(array $source = []): ?string
+    /**
+     * Retrieves the decrypted email and the user PublicId of a user based on a targetId provided in the payload.
+     *
+     * This function:
+     *  - Extracts the 'targetId' from the given payload array. (credentials)
+     *  - Looks up the corresponding user in the AccessRegistryRepository.
+     *  - Finds the associated Identity entity via the user's publicId.
+     *  - Decrypts the Identity using CrypterDatabaseIdentityService.
+     *  - Returns the decrypted email address and publicId.
+     *
+     * @param array $source Payload array containing 'response' with 'targetId'.
+     * @return string|null The decrypted email if found, or null otherwise.
+     */
+    public function getUserEmailByTargetId(array $source = []): array
     { 
         if (isset($source['response'][0]) ) {
 
@@ -150,23 +162,16 @@ class SharedService
                      /** @var \App\Entity\Identity $identity */
                     $identity = $this->identityRepository->findOneBy(['publicId' => $user->getPublicId()]);
                     if ($identity) {
-                        $this->logger->critical('Found identity by publicId: ' . $identity->getPublicId());
-$this->logger->critical('Identity email (encrypted 1)', [
-    'id' => $identity->getId(),
-    'publicId' => $identity->getPublicId(),
-    'email_encrypted' => $identity->getEmail(),
-]);                      
                         $id = $this->crypterDatabaseIdentityService->decryptFromDatabaseDevice($identity);
                         $this->logger->critical('Identity email (decrypted 2): ' . $id->getEmail());
-                        return $id->getEmail();
+                        return ['email' => $id->getEmail(), 'publicId' => $id->getPublicId()];
                     }
                 }
             } catch (\Exception $e) {
                 $this->logger->error('Error retrieving user email: ' . $e->getMessage());
             }
-
         }
 
-        return null;
+        return ['email' => null, 'publicId' => null];
     }   
 }

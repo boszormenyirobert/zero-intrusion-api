@@ -141,9 +141,9 @@ class SharedService
     public function getUserEmailByTargetId(array $source = []): ?string
     {       
          $this->logger->critical('Found response: ' . json_encode($source['response']));
-        if (isset($source['response']) ) {
+        if (isset($source['response'][0]) ) {
 
-            $targetId = $source['response']['targetId'] ?? null;            
+            $targetId = $source['response'][0]['targetId'] ?? null;            
             $this->logger->critical('Found targetId: ' . json_encode($source['response']));
             $user = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);
             $this->logger->critical('Found response: ' . json_encode($source['response']));

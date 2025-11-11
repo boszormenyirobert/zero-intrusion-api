@@ -30,6 +30,7 @@ class Fetch
         $process = $this->registryState->registrationState($applicationProcessId, $process);
         
         return [
+            'publicId' => $encryptedUser->getPublicId(),
             'process' => $process->toVaultStateArray(),
             'response' => $decrypted ? $this->buildResponseFromApplications($decrypted->getApplications(), $processType) : false
         ];        
@@ -57,8 +58,7 @@ class Fetch
             'application' => $a->application,
             'userCredential' => $a->userCredential,
             'description' => $a->description,
-            'targetId' => $a->targetId,
-            'userPublicId' => $a->userPublicId
+            'targetId' => $a->targetId
         ];
     }
     private function mapDomain(object $a): array

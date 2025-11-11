@@ -17,12 +17,19 @@ class ValidationHandler
         private SodiumService $sodiumService,
     ) {}
 
+    // Each user-credential double encrypted
+    // First with user secret and second with general database key
+    // This function validate the request by privateId, and return with the user secret if valid
     public function checkExtensionRequestValidation(array $user): ValidationDTO
     {
         $userSecretObject = $this->identityRepository->findOneBy(['publicId' => $user['publicId']]);
+        
+        // This is the secret which saved also in the mobile application
+        // Only with this secret can be the user-credential decrypted
         $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($userSecretObject);
         $userSecret = $decrypted->getSecret();
 
+        // Decrypt the user secret by the general database key
         $dbPrivateId = $this->sodiumService->sodiumDecrypt($decrypted->getPrivateId(), $userSecret);
         $requestPrivateId = $this->sodiumService->sodiumDecrypt($user['privateId'], $userSecret);
         

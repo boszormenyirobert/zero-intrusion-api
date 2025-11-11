@@ -25,6 +25,7 @@ class Encryptor
         private ApplicationEncryptor $applicationEncryptor
     ) {}
 
+    // Set decrypted values for domain login
     public function setDecryptedValuesForDomain(array $user, string $userSecret): bool
     {
         $credentialsCollection = $this->findDecryptedCredential($user, $userSecret);
@@ -80,6 +81,9 @@ class Encryptor
         return ['decrypted' => $decrypted];
     }    
 
+    // Update the login entry with decrypted credentials
+    // Write back the encrypted credentials to the database
+    // To the encryption use the iv saved in the AuthBridge entry and the general database key
     private function updateLoginEntry(array $user, array $credentialsCollection): bool
     {
         $authBridge = $this->authBridgeRepository->findOneBy(['domainProcessId' => $user['domainProcessId']]);

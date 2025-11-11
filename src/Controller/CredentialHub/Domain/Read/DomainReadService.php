@@ -45,6 +45,7 @@ class DomainReadService
             return false;
         }
 
+        // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {
             'corporate' => $this->handleCorporateSource($user),
             'extension' => $this->authBridgeService->persistDecryptedUserData($user),

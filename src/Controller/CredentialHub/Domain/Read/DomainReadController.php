@@ -83,7 +83,7 @@ class DomainReadController extends AbstractController
                     $this->logger->critical('domainReadQrIdentity: ' . $error->getMessage());
                 }
             }
-            
+
             // Generate a base64-encoded PNG QR code from input data.
             $qrCode = $qrService->getQrCode($qrContent);
 
@@ -110,9 +110,9 @@ class DomainReadController extends AbstractController
     /**
      * Called by Mobile App
      * 
-     * Find domain in the AccessRegistry by PublicId and domain name
-     * Move into the AuthBridge table the related record by domainProcessId
-     * Updated the Record with the credentials
+     * Find and decrypt to the domains related credentials in the AccessRegistry by PublicId
+     * Encrypt and move into the AuthBridge table the related record by domainProcessId
+     * Decrypt and Update the Record with the credentials
      *
      * @param Request $request
      * @return JsonResponse
@@ -130,6 +130,8 @@ class DomainReadController extends AbstractController
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $user = $validatedPayload[$payloadKey];
+
+            // Process the credential read request
             $response = $domainReadService->processCredentialRead($user);
 
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);

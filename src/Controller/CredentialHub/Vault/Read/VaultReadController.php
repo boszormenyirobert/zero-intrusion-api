@@ -152,12 +152,14 @@ class VaultReadController extends AbstractController
             }
 
             $response = $this->authBridgeService->fetchFromAccessTable($processId, 'application');
-
+ $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response, 'domain');
             return $this->responseHelper->createSuccessResponse(
                 array_merge(
-                    ['applicationList' => $response['response']], 
-                    $response['process'])
-                );
+                    ['applicationList' => $response['response']],
+                    $response['process'],
+                    $toAutoNotification
+                )
+            );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }

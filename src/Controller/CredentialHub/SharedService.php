@@ -144,7 +144,7 @@ class SharedService
             $targetId = $source['response']['targetId'] ?? null;            
             $this->logger->critical('Found targetId: ' . json_encode($source['response']));
             $user = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);
-                        $this->logger->critical('Found targetId: ' . json_encode($source['response']));
+                        $this->logger->critical('Found response: ' . json_encode($source['response']));
 
             $publicId = $this->identityRepository->findOneBy(['publicId' => $user->getPublicId()]) ?? null;
             if ($publicId) {

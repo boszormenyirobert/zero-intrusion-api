@@ -137,12 +137,12 @@ class SharedService
 
     public function getUserEmailByPublicId(array $source = []): ?string
     {       
-        $this->logger->critical('getUserEmailByPublicId input: ' . json_encode($source));
+        $this->logger->critical('getUserEmailByPublicId input: ' . json_encode($source['publicId'] ?? null));
         
      //   $targetId = $response['targetId'];
      //   $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
      //   $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
 
-        return $source['email'] ?? null;
+        return $source['publicId'] ?? null;
     }   
 }

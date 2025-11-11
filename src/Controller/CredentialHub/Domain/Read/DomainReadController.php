@@ -159,7 +159,7 @@ class DomainReadController extends AbstractController
                 array_merge(
                     ['domainList' => $response['response']],
                     $response['process'],
-          //          ['email' => $email]
+                    ['email' => $email]
                 ));
         } catch (\Exception $e) {
             $this->logger->critical('Error: ' . $e->getMessage());

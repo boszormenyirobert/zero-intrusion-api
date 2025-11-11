@@ -143,6 +143,6 @@ class SharedService
      //   $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
      //   $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
 
-        return "boszormenyirobert@yahoo.com";
+        return $source['email'] ?? null;
     }   
 }

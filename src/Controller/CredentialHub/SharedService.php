@@ -142,6 +142,7 @@ class SharedService
     {       
         if (isset($data['domainList'][0]) ) {
             $targetId = $first['targetId'] ?? null;
+            $this->logger->critical('Found targetId: ' . $targetId);
             $publicId = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);
             $identity = $this->identityRepository->findOneBy(['publicId' => $publicId]);
             if ($identity) {

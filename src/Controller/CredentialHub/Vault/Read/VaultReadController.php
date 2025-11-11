@@ -130,6 +130,7 @@ class VaultReadController extends AbstractController
      * Called by Browser-Extension
      * Get User Credentials By applicationProcessId from the AuthBridge
      * Delete the record from the AuthBridge
+     * Get User Email and publicId by targetId for auto-notification
      *
      * @param Request $request
      * @return JsonResponse

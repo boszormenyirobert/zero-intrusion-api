@@ -18,7 +18,7 @@ class RunProcedureCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->conn->executeQuery('CALL deleteUnvalidProcess()');
+        $this->conn->executeQuery('CALL delete_unvalid_process()');
         return Command::SUCCESS;
 
         // crontab php8.2-cli /kunden/homepages/12/.../htdocs/easylogin/bin/console app:run-procedure

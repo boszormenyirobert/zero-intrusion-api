@@ -130,7 +130,8 @@ class DomainReadController extends AbstractController
      * Called by Browser-Extension
      * Get User Credentials By domainProcessId from the AuthBridge
      * Delete the record from the AuthBridge
-     *
+     * Get User Email and publicId by targetId for auto-notification
+     * 
      * @param Request $request
      * @return JsonResponse
      */
@@ -143,7 +144,6 @@ class DomainReadController extends AbstractController
         AuthBridgeService $authBridgeService
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_READ_STATE;
-        $errorResponse = null;
 
         try {
             $processId = $this->sharedService->getProcessId($request, $payloadKey);

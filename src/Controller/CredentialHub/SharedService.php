@@ -151,7 +151,7 @@ class SharedService
                     if ($identity) {
                         $this->logger->critical('Found identity by publicId: ' . $user->getPublicId());
                         $this->logger->critical('Identity email (encrypted): ' . json_encode($identity));
-                        $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
+                        $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIv());
                         $this->logger->critical('Identity email (decrypted): ' . $email);
                         return $email;
                     }

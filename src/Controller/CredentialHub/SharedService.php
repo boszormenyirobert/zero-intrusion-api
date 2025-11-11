@@ -147,11 +147,11 @@ class SharedService
 
             try {
                 if ($user) {
+                     /** @var \App\Entity\Identity $identity */
                     $identity = $this->identityRepository->findOneBy(['publicId' => $user->getPublicId()]);
                     if ($identity) {
                         $this->logger->critical('Found identity by publicId: ' . $identity->getPublicId());
-                        $this->logger->critical('Identity email (encrypted 1): ' . json_encode($identity));
-                        //@Identity $identity
+                        $this->logger->critical('Identity email (encrypted 1): ' . json_encode($identity));                       
                         $id = $this->crypterDatabaseIdentityService->decryptFromDatabase($identity);
                         $this->logger->critical('Identity email (decrypted 2): ' . $id->getEmail());
                         return $id->getEmail();

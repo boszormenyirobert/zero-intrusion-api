@@ -151,7 +151,11 @@ class SharedService
                     $identity = $this->identityRepository->findOneBy(['publicId' => $user->getPublicId()]);
                     if ($identity) {
                         $this->logger->critical('Found identity by publicId: ' . $identity->getPublicId());
-                        $this->logger->critical('Identity email (encrypted 1): ' . json_encode($identity));                       
+$this->logger->critical('Identity email (encrypted 1)', [
+    'id' => $identity->getId(),
+    'publicId' => $identity->getPublicId(),
+    'email_encrypted' => $identity->getEmail(),
+]);                      
                         $id = $this->crypterDatabaseIdentityService->decryptFromDatabase($identity);
                         $this->logger->critical('Identity email (decrypted 2): ' . $id->getEmail());
                         return $id->getEmail();

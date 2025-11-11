@@ -32,7 +32,6 @@ class Fetch
         $this->logger->critical('Fetch process state: ' . $this->serializerInterface->serialize($encryptedUser, 'json'));
 
         return [
-            'publicId' => $encryptedUser->getPublicId(),
             'process' => $process->toVaultStateArray(),
             'response' => $decrypted ? $this->buildResponseFromApplications($decrypted->getApplications(), $processType) : false
         ];        

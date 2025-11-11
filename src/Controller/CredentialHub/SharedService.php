@@ -135,13 +135,16 @@ class SharedService
         }
     }
 
-    public function getUserEmailByPublicId(array $source = []): ?string
+    // PublicId in bridge is an vuln.
+    public function getUserEmailByTargetId(array $source = []): ?string
     {       
-        $this->logger->critical('getUserEmailByPublicId input: ' . json_encode($source['publicId'] ?? null));
+        $firstTargetId = $source['domainList'][0]['targetId'];
         
-     //   $targetId = $response['targetId'];
-     //   $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
-     //   $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
+        $this->logger->critical('getUserEmailByPublicId input: ' . $firstTargetId);
+        
+
+        $identity = $this->identityRepository->findOneBy(['targetId' => $firstTargetId]);
+        $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
 
         return $source['publicId'] ?? null;
     }   

@@ -154,7 +154,7 @@ class DomainReadController extends AbstractController
 
             $response = $authBridgeService->fetchFromAccessTable($processId, 'domain');
             // Get email by publicId from the Identity table
-            $email = $this->sharedService->getUserEmailByPublicId($processId, 'domain');
+            $email = $this->sharedService->getUserEmailByPublicId($response, 'domain');
             return $this->responseHelper->createSuccessResponse(
                 array_merge(
                     ['domainList' => $response['response']],

@@ -135,10 +135,10 @@ class SharedService
         }
     }
 
-    public function getUserEmailByPublicId($processId, $type): ?string
-    {
-        $response = $this->authBridgeService->fetchFromAccessTable($processId, $type);
-        $this->logger->critical('getUserEmailByPublicId response: ' . json_encode($response));
+    public function getUserEmailByPublicId(array $source = []): ?string
+    {       
+        $this->logger->critical('getUserEmailByPublicId input: ' . json_encode($source));
+        
      //   $targetId = $response['targetId'];
      //   $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
      //   $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());

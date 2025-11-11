@@ -10,6 +10,7 @@ use App\Controller\PayloadValidator\PayloadValidator;
 use Psr\Log\LoggerInterface;
 use App\Service\Firebase\FirebaseService;
 use App\Repository\IdentityRepository;
+use App\Repository\AccessRegistryRepository;
 use App\Service\Identity\Database\CrypterDatabaseIdentityService;
 
 class SharedService
@@ -20,6 +21,7 @@ class SharedService
             private PayloadValidator $payloadValidator,
             private FirebaseService $firebaseService,
             private IdentityRepository $identityRepository,
+            private AccessRegistryRepository $accessRegistryRepository,
             private CrypterDatabaseIdentityService $crypterDatabaseIdentityService,
             private LoggerInterface $logger
     ) {}
@@ -141,8 +143,8 @@ class SharedService
         if (isset($source['response'][0]['targetId'])) {
             // get the first targetId
             $targetId = $source['response'][0]['targetId']; 
+            $publicId = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);
             $identity = $this->identityRepository->findOneBy(['targetId' => $targetId]);
-            
             if ($identity) {
                 $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
                 return $email;

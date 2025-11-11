@@ -29,6 +29,8 @@ class Fetch
 
         $process = $this->registryState->registrationState($applicationProcessId, $process);
         
+        $this->logger->critical('Fetch process state: ' . $this->serializerInterface->serialize($encryptedUser, 'json'));
+
         return [
             'publicId' => $encryptedUser->getPublicId(),
             'process' => $process->toVaultStateArray(),

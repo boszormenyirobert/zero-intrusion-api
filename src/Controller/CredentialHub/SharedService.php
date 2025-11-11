@@ -144,15 +144,22 @@ class SharedService
             $targetId = $source['response']['targetId'] ?? null;            
             $this->logger->critical('Found targetId: ' . json_encode($source['response']));
             $user = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);
-                        $this->logger->critical('Found response: ' . json_encode($source['response']));
+            $this->logger->critical('Found response: ' . json_encode($source['response']));
 
-            $publicId = $this->identityRepository->findOneBy(['publicId' => $user->getPublicId()]) ?? null;
-            if ($publicId) {
-                $this->logger->critical('Found identity by publicId: ' . $publicId);
-                $this->logger->critical('Identity email (encrypted): ' . json_encode($identity));
-                $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
-                return $email;
+            try {
+                if ($user) {
+                    $identity = $this->identityRepository->findOneBy(['publicId' => $user->getPublicId()]) ?? null;
+                    if ($identity) {
+                        $this->logger->critical('Found identity by publicId: ' . $user->getPublicId());
+                        $this->logger->critical('Identity email (encrypted): ' . json_encode($identity));
+                        $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
+                        return $email;
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->logger->error('Error retrieving user email: ' . $e->getMessage());
             }
+
         }
 
         return null;

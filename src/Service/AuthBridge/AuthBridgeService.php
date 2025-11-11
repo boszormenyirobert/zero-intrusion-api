@@ -38,17 +38,6 @@ class AuthBridgeService
         return $this->credential->getUserCredentialsByDomainProcessId($domainProcessId);
     }
 
-    /**
-     * Generates a new tokenHash and secret for the browser-extension
-     * Saved in the AuthBridge Database
-     *
-     * @return array An associative array containing the generated keys: publicId, privateId, and secret.
-     */
-    #public function getBrowserExtensionIdentity($processType): array
-    #{
-    #    return $this->identity->getBrowserExtensionIdentity($processType);
-    #}
-
     public function generateRequestIdentity(string $processType): CredentialHubIdentityDTO
     {
         return $this->identity->generateRequestIdentity($processType);

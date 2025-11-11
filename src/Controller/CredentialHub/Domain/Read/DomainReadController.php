@@ -68,9 +68,14 @@ class DomainReadController extends AbstractController
            
             /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
             $identity = $authBridgeService->generateRequestIdentity($processKey);
-            $authToken = $identity->getXExtensionAuthOne();
 
+            // X-Extension-Auth-One used always from mobile application to verify the identity
+            $authToken = $identity->getXExtensionAuthOne();
+            
+            // Generate QR Content from the identity, domain and authToken
             $qrContent = $domainReadService->getQrContent($domain, $authToken, $identity);
+
+            // Validate the QR Content DTO
             $errors = $validator->validate($qrContent);
 
             if (count($errors) > 0) {
@@ -78,17 +83,24 @@ class DomainReadController extends AbstractController
                     $this->logger->critical('domainReadQrIdentity: ' . $error->getMessage());
                 }
             }
-
+            
+            // Generate a base64-encoded PNG QR code from input data.
             $qrCode = $qrService->getQrCode($qrContent);
+
+            // Extend the identity with the generated QR code
             $identity->setQrCode($qrCode);
 
+            // Notify the Mobile App with FCM. Extension get the same response with QR code
             $this->sharedService->sendFcmNotification(
                 'domainRead',
                 $userPublicId,
                 $qrContent
             );
-            $this->logger->critical('Domain Read QR Identity generated for domain: ' . $domain);
-            return $this->responseHelper->createSuccessResponse($identity->toDomainProcessArray());
+            
+            return $this->responseHelper->createSuccessResponse(
+                $identity->toDomainProcessArray()
+            );
+            
         } catch (\Exception $e) {
             $this->logger->critical(\json_encode($e->getMessage()));
             return $this->responseHelper->handleException($e);

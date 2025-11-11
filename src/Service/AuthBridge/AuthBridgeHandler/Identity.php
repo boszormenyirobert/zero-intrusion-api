@@ -2,7 +2,6 @@
 
 namespace App\Service\AuthBridge\AuthBridgeHandler;
 
-use App\Repository\IdentityRepository;
 use App\Service\Crypters\CrypterDatabaseLoginService;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
@@ -12,7 +11,6 @@ use Psr\Log\LoggerInterface;
 class Identity
 {
     public function __construct(
-        private IdentityRepository $identityRepository,
         private CrypterDatabaseLoginService $crypterDatabaseLoginService,
         private LoginDatabaseService $loginDatabaseService,
         private ContainerBagInterface $params,  
@@ -22,12 +20,17 @@ class Identity
     public function generateRequestIdentity(string $processType): CredentialHubIdentityDTO
     {
         $identity = $this->getBrowserExtensionIdentity($processType);
-        $createdAt = $identity->getCreatedAt(); // Database timestamp
+        /* Database timestamp */
+        $createdAt = $identity->getCreatedAt(); 
 
+        // exchange secret for HMAC generation
         $secret =  $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
         $message =  $this->params->get('EXTENSION_REGISTRATION_POOL_MESSAGE');
 
+        //Used by Mobile App to verify the identity: Secure against replay attacks, and tampering
         $identity->setXExtensionAuthOne(hash_hmac('sha256', $message . '|' . $createdAt, $secret));
+        
+        //Used by Extension to verify the identity: Secure against replay attacks, and tampering
         $identity->setXExtensionAuthTwo(hash_hmac('sha1', $message . '|' . $createdAt, $secret));
 
         return $identity;        
@@ -35,13 +38,14 @@ class Identity
 
     public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
     {
-        // $processType : registrationProcessId || removeProcessId || domainProcessId
+        /* $processType : registrationProcessId || removeProcessId || domainProcessId */
         $processId = $this->getGeneratedId();
         $targetId = $this->getGeneratedId();
 
         $validCommunication['secret'] = base64_encode(random_bytes(35));
         $validCommunication[$processType] = $processId;
 
+        // Create AuthBridge and store in DB
         $authBridge = $this->initializeAuthBridge($validCommunication, $processType, $targetId, $processId);
         $createdAuthBridge = $this->loginDatabaseService->addUserLogin($authBridge);
 

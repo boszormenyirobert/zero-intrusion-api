@@ -140,7 +140,9 @@ class SharedService
     // PublicId in bridge is an vuln.
     public function getUserEmailByTargetId(array $source = []): ?string
     {       
+         $this->logger->critical('Found response: ' . json_encode($source['response']));
         if (isset($source['response']) ) {
+
             $targetId = $source['response']['targetId'] ?? null;            
             $this->logger->critical('Found targetId: ' . json_encode($source['response']));
             $user = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);

@@ -74,5 +74,5 @@
     1. Connect from cli to the Database
     2. use database : api
     3. CREATE EVENT delete_unvalid_process ON SCHEDULE EVERY 5 SECOND ON COMPLETION PRESERVE DO   DELETE FROM auth_bridge   WHERE created_at < NOW() - INTERVAL 15 SECOND;
-    4. On the Server: crontabe -e
-    * * * * * sleep 14 php /var/www/html/api/zero-intrusion-api/bin/console app:run-procedure
+    4. On the Server: crontab -e
+    * * * * * php /var/www/html/api/zero-intrusion-api/bin/console app:run-procedure

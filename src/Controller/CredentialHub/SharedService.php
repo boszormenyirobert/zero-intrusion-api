@@ -139,14 +139,11 @@ class SharedService
 
     // PublicId in bridge is an vuln.
     public function getUserEmailByTargetId(array $source = []): ?string
-    {       
-         $this->logger->critical('Found response: ' . json_encode($source['response']));
+    { 
         if (isset($source['response'][0]) ) {
 
-            $targetId = $source['response'][0]['targetId'] ?? null;            
-            $this->logger->critical('Found targetId: ' . json_encode($source['response']));
-            $user = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);
-            $this->logger->critical('Found response: ' . json_encode($source['response']));
+            $targetId = $source['response'][0]['targetId'] ?? null;                        
+            $user = $this->accessRegistryRepository->findOneBy(['targetId' => $targetId]);           
 
             try {
                 if ($user) {
@@ -155,6 +152,7 @@ class SharedService
                         $this->logger->critical('Found identity by publicId: ' . $user->getPublicId());
                         $this->logger->critical('Identity email (encrypted): ' . json_encode($identity));
                         $email = $this->crypterDatabaseIdentityService->decryptData($identity->getEmail(), $identity->getIvEmail());
+                        $this->logger->critical('Identity email (decrypted): ' . $email);
                         return $email;
                     }
                 }

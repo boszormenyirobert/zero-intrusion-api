@@ -96,14 +96,23 @@ final class IdentityService
             $encryptedUpdatedIdentityObject = $this->crypterDatabaseIdentityService->encyptUpdateIdentity($decryptedDatabaseIdentity, $user);
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);
 
+           
+            $this->logger->critical('E-mail: ',  $user['email']);
+            $this->logger->critical('E-mail: ',  $user['phone']);
+            $this->logger->critical('E-mail: ',  $user['fcm_token']);
+            $this->logger->critical('E-mail: ',  $user['privacyPolicy']);
+
+
             $secretManager->setEmail($encryptedUpdatedIdentityObject->getEmail());
             $secretManager->setPhone($encryptedUpdatedIdentityObject->getPhone());
             $secretManager->setPrivacyPolicy($encryptedUpdatedIdentityObject->isPrivacyPolicy());
 
+           
+
             $currentFcmTokens = $secretManager->getFcmToken() ?? [];
             $currentFcmTokens[] = $encryptedUpdatedIdentityObject->getFcmToken();
             $secretManager->setFcmToken($currentFcmTokens);
-            
+
             $this->identityDatabaseService->updateIdentity($secretManager);
         }
     }

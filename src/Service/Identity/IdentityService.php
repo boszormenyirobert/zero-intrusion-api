@@ -90,15 +90,16 @@ final class IdentityService
         // Retrive the decrypted PrivateId from Request --with userIdentity 
         $requestDecryptedPrivateId = $this->sodiumService->sodiumDecrypt($user['privateId'], $secret);
 
-        $this->logger->critical('DEBUG: privateId összehasonlítás', [
-            'requestDecryptedPrivateId' => $requestDecryptedPrivateId,
-            'dbDecryptedPrivateId' => $dbDecryptedPrivateId
-        ]);
         if (\strcmp($requestDecryptedPrivateId, $dbDecryptedPrivateId) == 0) {
-            $this->logger->critical('recovery-settings ', [$user]);
-            /** @varIdentity */
+            $this->logger->critical('recovery-settings 1 ', [$user]);
+           
             $encryptedUpdatedIdentityObject = $this->crypterDatabaseIdentityService->encyptUpdateIdentity($decryptedDatabaseIdentity, $user);
+
+            $this->logger->critical('recovery-settings 2 ', [$user]);
+
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);
+
+            $this->logger->critical('recovery-settings 3 ', [$user]);
 
 $this->logger->critical('E-mail: ', [
     'publicId' => $secretManager->getPublicId(),

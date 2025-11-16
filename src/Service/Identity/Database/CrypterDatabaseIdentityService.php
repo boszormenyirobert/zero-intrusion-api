@@ -57,8 +57,7 @@ final class CrypterDatabaseIdentityService
 
         $decrypted = new Identity();
         $decrypted->setPublicId($value->getPublicId());
-        $decrypted->setPrivateId($value->getPrivateId());
-        $decrypted->setFcmToken($this->decryptData($value->getFcmToken(), $iv));
+        $decrypted->setPrivateId($value->getPrivateId());       
         $decrypted->setSecret($this->decryptData($value->getSecret(), $iv));
 
         return $decrypted;
@@ -66,6 +65,8 @@ final class CrypterDatabaseIdentityService
 
     public function decryptData(string $value, string $iv): string
     {
+        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        
         $decoded = base64_decode($value);
         $decrypted = openssl_decrypt($decoded, $this->cipher, $this->key, 0, $iv);
 

@@ -22,8 +22,11 @@ class FirebaseService
     {
         $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $deviceToken]);
         if($identityEncrypted){
-            $identity = $this->crypterDatabaseIdentityService->decryptFromDatabase($identityEncrypted);
-            $this->sendFcmMessage($identity->getFcmToken(), $title, $body, $qrData);
+            $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
+            foreach ($fcmTokens as $token) {
+                $fcmToken = $this->crypterDatabaseIdentityService->decryptData($token, base64_decode($identityEncrypted->getIv()));
+                $this->sendFcmMessage($fcmToken, $title, $body, $qrData);
+            }
         }
     }
 

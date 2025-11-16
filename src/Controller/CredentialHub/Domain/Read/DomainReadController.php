@@ -43,8 +43,8 @@ class DomainReadController extends AbstractController
      * 
      * Saved in the AuthBridge Database
      * 
-     * Database automatically cleared by cronjob. If row id older than X Min will be deleted.
-     * 
+     * The database is automatically cleaned by a cron-based process:
+     * any row older than X minutes is automatically deleted.     
      * @param Request $request
      * @return JsonResponse
      */

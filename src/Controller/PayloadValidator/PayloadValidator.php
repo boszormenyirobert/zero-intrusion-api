@@ -75,6 +75,15 @@ class PayloadValidator
         return $payload;
     }
 
+    /**
+     * Retrieves the already-parsed JSON payload from the request, validates it,
+     * and optionally checks for a required key. 
+     * Steps:
+     * 1. Fetch the 'json_payload' injected into request attributes.
+     * 2. Validate the payload structure using requestService->validPayload().
+     * 3. If a specific key is required and missing, log the issue and throw MissingKeyException.
+     * 4. On any validation error, log the failure details and rethrow the exception.
+     */    
     public function getValidatedPayload(Request $request, ?string $key = null): array
     {
         try {

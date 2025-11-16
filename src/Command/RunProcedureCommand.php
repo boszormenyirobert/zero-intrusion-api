@@ -16,6 +16,9 @@ class RunProcedureCommand extends Command
         parent::__construct();
     }
 
+    // Optional for use with cron jobs.
+    // The cleanup logic is currently handled by a MySQL EVENT, 
+    // so this command is only needed if manual or external triggering is required.
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->conn->executeQuery('CALL delete_unvalid_process()');

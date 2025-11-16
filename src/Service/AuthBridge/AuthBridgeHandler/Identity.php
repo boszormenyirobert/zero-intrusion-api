@@ -61,23 +61,36 @@ class Identity
      */    
     public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
     {
-        /* $processType : registrationProcessId || removeProcessId || domainProcessId */
+        // Generate unique IDs for process and target
         $processId = $this->getGeneratedId();
-        $targetId = $this->getGeneratedId();
+        $targetId  = $this->getGeneratedId();
 
-        $validCommunication['secret'] = base64_encode(random_bytes(35));
-        $validCommunication[$processType] = $processId;
+        // Prepare communication data
+        $validCommunication = [
+            'secret' => base64_encode(random_bytes(35)),
+            $processType => $processId
+        ];
 
-        // Create AuthBridge and store in DB
+        // Create and persist AuthBridge
         $authBridge = $this->initializeAuthBridge($validCommunication, $processType, $targetId, $processId);
         $createdAuthBridge = $this->loginDatabaseService->addUserLogin($authBridge);
 
+        return $this->mapAuthBridgeToDTO($authBridge, $processType, $processId);
+    }
+
+    /**
+     * Maps an AuthBridge entity into a CredentialHubIdentityDTO for use by browser extensions or mobile apps.
+     * Returns the fully populated CredentialHubIdentityDTO.
+     */    
+    private function mapAuthBridgeToDTO(\App\Entity\AuthBridge $authBridge, string $processType, string $processId): CredentialHubIdentityDTO
+    {
         $identity = new CredentialHubIdentityDTO();
-        $identity->setSecret($validCommunication['secret']);
-        $identity->setCreatedAt($createdAuthBridge->getCreatedAt()->getTimestamp());
-        $identity->setIv($authBridge->getIv());
-        $method = 'set' . ucfirst($processType);        
-        $identity->$method($processId);
+        $identity->setSecret($authBridge->getSecret())
+                ->setCreatedAt($authBridge->getCreatedAt()->getTimestamp())
+                ->setIv($authBridge->getIv());
+
+        $setter = 'set' . ucfirst($processType);
+        $identity->$setter($processId);
 
         return $identity;
     }

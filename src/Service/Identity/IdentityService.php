@@ -76,6 +76,7 @@ final class IdentityService
      */             
     public function updateIdentityRecoverySettings($user)
     {
+        $this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry' => true]);
         // Get user from secretManagerTable => default DB-encrypted
         /** @var Identity */
         $userIdentityObject = $this->secretManagerRepository->findOneBy(['publicId' => $user['publicId']]);

@@ -97,6 +97,7 @@ final class IdentityService
 $this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry 1' => true]);            
             // DB encryption for fcmToken
             $dbEncryptedFcmToken = $this->crypterDatabaseIdentityService->encryptData($user['fcmToken'], base64_decode($decryptedDatabaseIdentity->getIv()));
+            
 $this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry 2' => true]);
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);
 $this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry 3' => true]);

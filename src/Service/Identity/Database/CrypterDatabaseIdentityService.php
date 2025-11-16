@@ -37,7 +37,7 @@ final class CrypterDatabaseIdentityService
         return $encryptedSecret;
     }
 
-    private function encryptData(string $value, string $iv): string
+    public function encryptData(string $value, string $iv): string
     {
         $encrypted = openssl_encrypt($value, $this->cipher, $this->key, 0, $iv);
         if ($encrypted === false) {

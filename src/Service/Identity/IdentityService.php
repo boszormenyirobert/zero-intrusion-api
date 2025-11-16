@@ -76,7 +76,6 @@ final class IdentityService
      */             
     public function updateIdentityRecoverySettings($user)
     {
-        $this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry' => true]);
         // Get user from secretManagerTable => default DB-encrypted
         /** @var Identity */
         $userIdentityObject = $this->secretManagerRepository->findOneBy(['publicId' => $user['publicId']]);
@@ -95,11 +94,12 @@ final class IdentityService
            
             // DB encryption before update database for email and phone
             $encryptedUpdatedIdentityObject = $this->crypterDatabaseIdentityService->encyptUpdateIdentity($decryptedDatabaseIdentity, $user);
+$this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry 1' => true]);            
             // DB encryption for fcmToken
             $dbEncryptedFcmToken = $this->crypterDatabaseIdentityService->encryptData($user['fcmToken'], base64_decode($decryptedDatabaseIdentity->getIv()));
-
+$this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry 2' => true]);
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);
-
+$this->logger->critical('updateIdentityRecoverySettings called with user data: ', ['entry 3' => true]);
             $secretManager->setEmail($encryptedUpdatedIdentityObject->getEmail());
             $secretManager->setPhone($encryptedUpdatedIdentityObject->getPhone());
             $secretManager->setPrivacyPolicy($encryptedUpdatedIdentityObject->isPrivacyPolicy());           

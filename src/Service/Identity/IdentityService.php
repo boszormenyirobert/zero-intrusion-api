@@ -91,16 +91,17 @@ final class IdentityService
 
         if (\strcmp($requestDecryptedPrivateId, $dbDecryptedPrivateId) == 0) {
             $this->logger->critical('recovery-settings ', [$user]);
-            $this->logger->critical('recovery-settings ', [$decryptedDatabaseIdentity]);   
             /** @varIdentity */
             $encryptedUpdatedIdentityObject = $this->crypterDatabaseIdentityService->encyptUpdateIdentity($decryptedDatabaseIdentity, $user);
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);
 
-           $this->logger->critical('E-mail: ',   $secretManager->getPublicId());
-            $this->logger->critical('E-mail: ',  $user['email']);
-            $this->logger->critical('E-mail: ',  $user['phone']);
-            $this->logger->critical('E-mail: ',  $user['fcm_token']);
-            $this->logger->critical('E-mail: ',  $user['privacyPolicy']);
+$this->logger->critical('E-mail: ', [
+    'publicId' => $secretManager->getPublicId(),
+    'email' => $user['email'],
+    'phone' => $user['phone'],
+    'fcm_token' => $user['fcm_token'],
+    'privacyPolicy' => $user['privacyPolicy'],
+]);
 
 
             $secretManager->setEmail($encryptedUpdatedIdentityObject->getEmail());

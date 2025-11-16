@@ -84,8 +84,7 @@ final class CrypterDatabaseIdentityService
         $decryptedDatabaseIdentity->setPrivacyPolicy($secretData['privacyPolicy']);
         $fields = [
             'email'   => 'setEmail',
-            'phone' => 'setPhone',
-            'fcmToken' => 'setFcmToken'
+            'phone' => 'setPhone'            
         ];
 
         foreach ($fields as $field => $setter) {

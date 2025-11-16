@@ -80,7 +80,7 @@ final class IdentityService
         // Get user from secretManagerTable => default DB-encrypted
         /** @var Identity */
         $userIdentityObject = $this->secretManagerRepository->findOneBy(['publicId' => $user['publicId']]);
-        // Encrypt the user 
+        // Encrypt the user => the default DB-decrypted
         /** @var Identity */
         $decryptedDatabaseIdentity = $this->crypterDatabaseLoginService->decryptFromDatabaseIdentity($userIdentityObject);
         // From Database
@@ -93,31 +93,19 @@ final class IdentityService
         if (\strcmp($requestDecryptedPrivateId, $dbDecryptedPrivateId) == 0) {
             $this->logger->critical('recovery-settings 1 ', [$user]);
            
+            // DB encryption before update database for email and phone
             $encryptedUpdatedIdentityObject = $this->crypterDatabaseIdentityService->encyptUpdateIdentity($decryptedDatabaseIdentity, $user);
-
-            $this->logger->critical('recovery-settings 2 ', [$user]);
+            // DB encryption for fcmToken
+            $dbEncryptedFcmToken = $this->crypterDatabaseIdentityService->encryptData($user['fcmToken'], base64_decode($decryptedDatabaseIdentity->getIv()));
 
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);
 
-            $this->logger->critical('recovery-settings 3 ', [$user]);
-
-$this->logger->critical('E-mail: ', [
-    'publicId' => $secretManager->getPublicId(),
-    'email' => $user['email'],
-    'phone' => $user['phone'],
-    'fcm_token' => $user['fcm_token'],
-    'privacyPolicy' => $user['privacyPolicy'],
-]);
-
-
             $secretManager->setEmail($encryptedUpdatedIdentityObject->getEmail());
             $secretManager->setPhone($encryptedUpdatedIdentityObject->getPhone());
-            $secretManager->setPrivacyPolicy($encryptedUpdatedIdentityObject->isPrivacyPolicy());
-
-           
+            $secretManager->setPrivacyPolicy($encryptedUpdatedIdentityObject->isPrivacyPolicy());           
 
             $currentFcmTokens = $secretManager->getFcmToken() ?? [];
-            $currentFcmTokens[] = $encryptedUpdatedIdentityObject->getFcmToken();
+            $currentFcmTokens[] = $dbEncryptedFcmToken;
             $secretManager->setFcmToken($currentFcmTokens);
 
             $this->identityDatabaseService->updateIdentity($secretManager);

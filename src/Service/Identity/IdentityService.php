@@ -96,8 +96,9 @@ final class IdentityService
             $encryptedUpdatedIdentityObject = $this->crypterDatabaseIdentityService->encyptUpdateIdentity($decryptedDatabaseIdentity, $user);
             // DB encryption for fcmToken
             $dbEncryptedFcmToken = $this->crypterDatabaseIdentityService->encryptData($user['fcmToken'], base64_decode($decryptedDatabaseIdentity->getIv()));
+            // Get identity object form DATABASE
             $secretManager = $this->secretManagerRepository->findOneBy(["publicId" => $user['publicId']]);
-
+            // Update fields
             $secretManager->setEmail($encryptedUpdatedIdentityObject->getEmail());
             $secretManager->setPhone($encryptedUpdatedIdentityObject->getPhone());
             $secretManager->setPrivacyPolicy($encryptedUpdatedIdentityObject->isPrivacyPolicy());           
@@ -107,7 +108,7 @@ final class IdentityService
                 $currentFcmTokens[] = $dbEncryptedFcmToken;
             }
             $secretManager->setFcmToken($currentFcmTokens);
-
+            // Update the database
             $this->identityDatabaseService->updateIdentity($secretManager);
         }
     }

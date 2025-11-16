@@ -99,7 +99,7 @@ final class IdentityService
             $secretManager->setEmail($encryptedUpdatedIdentityObject->getEmail());
             $secretManager->setPhone($encryptedUpdatedIdentityObject->getPhone());
             $secretManager->setPrivacyPolicy($encryptedUpdatedIdentityObject->isPrivacyPolicy());
-            $secretManager->setFcmToken($encryptedUpdatedIdentityObject->getFcmToken());
+            $secretManager->setFcmToken([$encryptedUpdatedIdentityObject->getFcmToken()]);
             $this->identityDatabaseService->updateIdentity($secretManager);
         }
     }

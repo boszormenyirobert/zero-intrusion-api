@@ -50,8 +50,8 @@ class Identity
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?BusinessServices $businessService = null;
 
-    #[ORM\Column(length: 500, nullable: true)]
-    private ?string $fcmToken = null;
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $fcmToken = null;
 
     public function getId(): ?int
     {
@@ -154,15 +154,14 @@ class Identity
         return $this;
     }
 
-    public function getFcmToken(): ?string
+    public function getFcmToken(): ?array
     {
         return $this->fcmToken;
     }
 
-    public function setFcmToken(?string $fcmToken): static
+    public function setFcmToken(?array $fcmToken): static
     {
         $this->fcmToken = $fcmToken;
-
         return $this;
     }
 }

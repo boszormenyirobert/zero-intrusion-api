@@ -107,7 +107,7 @@ final class IdentityService
             $currentFcmTokens = $secretManager->getFcmToken() ?? [];
             $currentFcmTokens[] = $dbEncryptedFcmToken;
             $secretManager->setFcmToken($currentFcmTokens);
-
+ $this->logger->critical('recovery-settings 2 ', [$user]);
             $this->identityDatabaseService->updateIdentity($secretManager);
         }
     }

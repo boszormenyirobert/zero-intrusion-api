@@ -17,7 +17,7 @@ class Identity
         private LoggerInterface $logger      
     ) {}
 
-    /**
+/**
      * Generates a secure identity object used by browser extensions and mobile apps.
      * Steps:
      * 1. Retrieves a newly generated identity structure from getBrowserExtensionIdentity().
@@ -28,6 +28,36 @@ class Identity
      *        chosen because the QR-data payload size is limited and SHA-1 is shorter.     
      * 4. Both HMACs protect against tampering and replay attacks.
      * 5. Returns the identity enriched with the additional security fields.
+     */    
+    public function generateRequestIdentity(string $processType): CredentialHubIdentityDTO
+    {
+        $identity = $this->getBrowserExtensionIdentity($processType);
+        /* Database timestamp */
+        $createdAt = $identity->getCreatedAt(); 
+
+        // exchanged secrets for HMAC generation
+        $secret =  $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
+        $message =  $this->params->get('EXTENSION_REGISTRATION_POOL_MESSAGE');
+
+        //Used by Mobile App to verify the identity: Secure against replay attacks, and tampering
+        $identity->setXExtensionAuthOne(hash_hmac('sha256', $message . '|' . $createdAt, $secret));
+        
+        //Used by Extension to verify the identity: Secure against replay attacks, and tampering
+        $identity->setXExtensionAuthTwo(hash_hmac('sha1', $message . '|' . $createdAt, $secret));
+
+        return $identity;        
+    }
+
+    /**
+     * Generates and returns an identity payload for browser-extension workflows.
+     * Steps:
+     * 1. Creates two unique IDs: one for the process and one as the target identifier.
+     * 2. Builds the communication structure containing a secret and the specific process ID
+     *    (e.g. registrationProcessId, removeProcessId, domainProcessId).
+     * 3. Creates and persists a new AuthBridge entity using the generated data.
+     * 4. Maps the stored AuthBridge information into a CredentialHubIdentityDTO,
+     *    dynamically assigning the process ID based on the given processType.
+     * 5. Returns the fully prepared identity object for use by the browser extension.
      */    
     public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
     {

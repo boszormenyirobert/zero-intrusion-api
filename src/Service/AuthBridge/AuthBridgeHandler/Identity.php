@@ -53,53 +53,6 @@ class Identity
     }
 
     /**
-     * Generates and returns an identity payload for browser-extension workflows.
-     * Steps:
-     * 1. Creates two unique IDs: one for the process and one as the target identifier.
-     * 2. Builds the communication structure containing a secret and the specific process ID
-     *    (e.g. registrationProcessId, removeProcessId, domainProcessId).
-     * 3. Creates and persists a new AuthBridge entity using the generated data.
-     * 4. Maps the stored AuthBridge information into a CredentialHubIdentityDTO,
-     *    dynamically assigning the process ID based on the given processType.
-     * 5. Returns the fully prepared identity object for use by the browser extension.
-     */    
-    public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
-    {
-        // Generate unique IDs for process and target
-        $processId = $this->getGeneratedId();
-        $targetId  = $this->getGeneratedId();
-
-        // Prepare communication data
-        $validCommunication = [
-            'secret' => base64_encode(random_bytes(35)),
-            $processType => $processId
-        ];
-
-        // Create and persist AuthBridge
-        $authBridge = $this->initializeAuthBridge($validCommunication, $processType, $targetId, $processId);
-        $createdAuthBridge = $this->loginDatabaseService->addUserLogin($authBridge);
-
-        return $this->mapAuthBridgeToDTO($authBridge, $processType, $processId);
-    }
-
-    /**
-     * Maps an AuthBridge entity into a CredentialHubIdentityDTO for use by browser extensions or mobile apps.
-     * Returns the fully populated CredentialHubIdentityDTO.
-     */    
-    private function mapAuthBridgeToDTO(\App\Entity\AuthBridge $authBridge, string $processType, string $processId): CredentialHubIdentityDTO
-    {
-        $identity = new CredentialHubIdentityDTO();
-        $identity->setSecret($authBridge->getSecret())
-                ->setCreatedAt($authBridge->getCreatedAt()->getTimestamp())
-                ->setIv($authBridge->getIv());
-
-        $setter = 'set' . ucfirst($processType);
-        $identity->$setter($processId);
-
-        return $identity;
-    }
-
-    /**
      * Prepares a new AuthBridge entity for storage in the database.
      * Steps:
      * 1. Encrypts the extension communication data using crypterDatabaseLoginService.

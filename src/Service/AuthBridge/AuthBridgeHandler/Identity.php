@@ -29,23 +29,27 @@ class Identity
      * 4. Both HMACs protect against tampering and replay attacks.
      * 5. Returns the identity enriched with the additional security fields.
      */    
-    public function generateRequestIdentity(string $processType): CredentialHubIdentityDTO
+    public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
     {
-        $identity = $this->getBrowserExtensionIdentity($processType);
-        /* Database timestamp */
-        $createdAt = $identity->getCreatedAt(); 
+        /* $processType : registrationProcessId || removeProcessId || domainProcessId */
+        $processId = $this->getGeneratedId();
+        $targetId = $this->getGeneratedId();
 
-        // exchanged secrets for HMAC generation
-        $secret =  $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
-        $message =  $this->params->get('EXTENSION_REGISTRATION_POOL_MESSAGE');
+        $validCommunication['secret'] = base64_encode(random_bytes(35));
+        $validCommunication[$processType] = $processId;
 
-        //Used by Mobile App to verify the identity: Secure against replay attacks, and tampering
-        $identity->setXExtensionAuthOne(hash_hmac('sha256', $message . '|' . $createdAt, $secret));
-        
-        //Used by Extension to verify the identity: Secure against replay attacks, and tampering
-        $identity->setXExtensionAuthTwo(hash_hmac('sha1', $message . '|' . $createdAt, $secret));
+        // Create AuthBridge and store in DB
+        $authBridge = $this->initializeAuthBridge($validCommunication, $processType, $targetId, $processId);
+        $createdAuthBridge = $this->loginDatabaseService->addUserLogin($authBridge);
 
-        return $identity;        
+        $identity = new CredentialHubIdentityDTO();
+        $identity->setSecret($validCommunication['secret']);
+        $identity->setCreatedAt($createdAuthBridge->getCreatedAt()->getTimestamp());
+        $identity->setIv($authBridge->getIv());
+        $method = 'set' . ucfirst($processType);        
+        $identity->$method($processId);
+
+        return $identity;
     }
 
     /**

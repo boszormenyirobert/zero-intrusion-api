@@ -71,7 +71,7 @@ class Encryptor
                 $user['publicId'],
                 'user-credential-decryption',
                 'encryped-credentials by user secret',
-                json_encode(['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret])
+                ['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret]
             );
 
         return $decryptedCredentials;

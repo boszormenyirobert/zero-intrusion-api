@@ -11,6 +11,7 @@ use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
 use Psr\Log\LoggerInterface;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use App\Service\AuthBridge\AuthBridgeHandler\Application\Encryptor as ApplicationEncryptor;
+use App\Service\Firebase\FirebaseService;
 
 class Encryptor
 {
@@ -22,7 +23,8 @@ class Encryptor
         private CrypterDatabaseLoginService $crypterDatabaseLoginService,
         private LoginDatabaseService $loginDatabaseService,
         private LoggerInterface $logger,
-        private ApplicationEncryptor $applicationEncryptor
+        private ApplicationEncryptor $applicationEncryptor,
+        private FirebaseService $firebaseService
     ) {}
 
     // Set decrypted values for domain login
@@ -62,7 +64,14 @@ class Encryptor
             ];
         }
             $this->logger->critical("Decrypting credential for credential: " . json_encode($encryptedCredentialsByUserSecret),[]);
-        
+            
+            $this->firebaseService->manageFcm(
+                $user['publicId'],
+                'user-credential-decryption',
+                'encryped-credentials by user secret',
+                json_encode($encryptedCredentialsByUserSecret)
+            );
+
         return $decryptedCredentials;
     }
 

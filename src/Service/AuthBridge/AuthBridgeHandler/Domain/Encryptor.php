@@ -55,7 +55,7 @@ class Encryptor
         $decryptedCredentials = [];
         $encryptedCredentialsByUserSecret = [];
         foreach ($apps as $app) {
-            $encryptedCredentialsByUserSecret[] = ['credential' => $app['credential']];
+            $encryptedCredentialsByUserSecret[] = $app['credential'];
             $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
             $decryptedCredentials[] = [
                 'decrypted' => $decrypted,
@@ -63,7 +63,9 @@ class Encryptor
                 'targetId' => $app['targetId']
             ];
         }
-            $this->logger->critical("Decrypting credential for credential: " . json_encode($encryptedCredentialsByUserSecret),[]);
+            $this->logger->critical("Decrypting credential for credential: " . json_encode(
+               ['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret]
+            ),[]);
 
             $this->firebaseService->manageFcm(
                 $user['publicId'],

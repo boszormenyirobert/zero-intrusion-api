@@ -54,7 +54,6 @@ class Encryptor
         $encryptedCredentialsByUserSecret = [];
         foreach ($apps as $app) {
             $encryptedCredentialsByUserSecret[] = $app['credential'];
-            $this->logger->critical("Decrypting credential for credential: " . $encryptedCredentialsByUserSecret);
             $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
             $decryptedCredentials[] = [
                 'decrypted' => $decrypted,
@@ -62,6 +61,7 @@ class Encryptor
                 'targetId' => $app['targetId']
             ];
         }
+            $this->logger->critical("Decrypting credential for credential: " . json_encode($encryptedCredentialsByUserSecret),[]);
         
         return $decryptedCredentials;
     }

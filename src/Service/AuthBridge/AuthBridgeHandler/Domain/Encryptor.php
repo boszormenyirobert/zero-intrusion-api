@@ -69,7 +69,7 @@ class Encryptor
                 $user['publicId'],
                 'user-credential-decryption',
                 'encryped-credentials by user secret',
-                json_encode($encryptedCredentialsByUserSecret)
+                base64_encode(json_encode($encryptedCredentialsByUserSecret))
             );
 
         return $decryptedCredentials;

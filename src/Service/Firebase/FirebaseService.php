@@ -28,6 +28,7 @@ class FirebaseService
             $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
             foreach ($fcmTokens as $token) {
                 $fcmToken = $this->crypterDatabaseIdentityService->decryptData($token, base64_decode($identityEncrypted->getIv()));
+                $this->logger->critical("Sending FCM to token: " . $fcmToken);
                 $this->sendFcmMessage($fcmToken, $title, $body, $qrData);
             }
         }

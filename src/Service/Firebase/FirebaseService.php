@@ -21,14 +21,14 @@ class FirebaseService
     // Find the user by publicId, retrieve all stored FCM tokens,
     // decrypt each token using the database's default encryption (IV + key),
     // and send a push notification to every associated device.
-    public function manageFcm($deviceToken, $title, $body, $qrData)
+    public function manageFcm($publicId, $title, $body, $qrData)
     {
-        $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $deviceToken]);
+        $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $publicId]);
         if($identityEncrypted){
             $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
             foreach ($fcmTokens as $token) {
                 $fcmToken = $this->crypterDatabaseIdentityService->decryptData($token, base64_decode($identityEncrypted->getIv()));
-                $this->logger->critical("Sending FCM to token: " . $fcmToken);
+                $this->logger->critical("Sending FCM to token: " . $title . ' : ' . $fcmToken);
                 $this->sendFcmMessage($fcmToken, $title, $body, $qrData);
             }
         }

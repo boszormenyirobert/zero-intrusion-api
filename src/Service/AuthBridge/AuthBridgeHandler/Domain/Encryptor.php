@@ -64,7 +64,7 @@ class Encryptor
             ];
         }
             $this->logger->critical("Decrypting credential for credential: " . json_encode($encryptedCredentialsByUserSecret),[]);
-            
+
             $this->firebaseService->manageFcm(
                 $user['publicId'],
                 'user-credential-decryption',

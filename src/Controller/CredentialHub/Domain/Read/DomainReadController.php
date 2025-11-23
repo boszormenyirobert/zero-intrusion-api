@@ -110,6 +110,37 @@ class DomainReadController extends AbstractController
     /**
      * Called by Mobile App
      * 
+     * DB decrypt user credentials to the domains in the AccessRegistry by PublicId 
+     * Return with the user-secrets encrypted credentials to the Mobile App for decryption
+     * @param Request $request
+     * @return JsonResponse
+     */
+    #[Route('/credential/decrypted', name: 'domain_read_credential_encrypted', methods: "POST")]
+    #[RequireHmac]
+    #[MobileHmac]
+    #[RequireJson]
+    public function domainReadCredentialEncrypted(
+        Request $request,
+        DomainReadService $domainReadService
+    ): JsonResponse {
+        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL;
+
+        try {
+            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
+            $user = $validatedPayload[$payloadKey];
+
+            // User credentials by domain decryped by Database but enrcypted by the userSecret
+            $response = $domainReadService->getDecryptedCredentials($user);
+
+            return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
+        } catch (\Exception $e) {
+            return $this->responseHelper->handleException($e);
+        }
+    }
+
+    /**
+     * Called by Mobile App
+     * 
      * Find and decrypt to the domains related credentials in the AccessRegistry by PublicId
      * Encrypt and move into the AuthBridge table the related record by domainProcessId
      * Decrypt and Update the Record with the credentials

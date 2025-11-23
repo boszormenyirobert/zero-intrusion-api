@@ -26,6 +26,11 @@ class AuthBridgeService
     {
         return $this->authBridgeHandler->persistDecryptedUserData($user);
     }
+    
+    public function getDecryptedUserData(array $user): bool
+    {
+        return $this->authBridgeHandler->getDecryptedUserData($user);
+    }
 
     public function persistDecryptedUserDataForWeb(array $user): array
     {

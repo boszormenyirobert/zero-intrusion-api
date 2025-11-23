@@ -38,6 +38,27 @@ class Encryptor
         
         return $this->updateLoginEntry($user, $credentialsCollection);
     }
+
+    public function getDecryptedCredentials(array $user, string $userSecret): ?array
+    {
+        $pages = $this->accessRegistryRepository->findBy(
+            ['publicId' => $user['publicId']
+        ]);
+        
+        $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
+
+        if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {
+            $this->logger->critical("No matching credential found for domain: " . $user['domain']);
+            return [];
+        }
+
+        $decryptedCredentialsByUserSecret = [];
+        foreach ($apps as $app) {
+            $decryptedCredentialsByUserSecret[] = $app['credential'];
+        }
+
+        return $decryptedCredentialsByUserSecret;
+    }   
         
     private function findDecryptedCredential(array $user, string $userSecret): array
     {

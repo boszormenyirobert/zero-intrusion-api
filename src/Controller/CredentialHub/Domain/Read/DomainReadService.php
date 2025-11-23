@@ -53,6 +53,23 @@ class DomainReadService
         };
     }
 
+    public function getDecryptedCredentials(array $user): bool
+    {
+        if (
+            !isset($user['type'], $user['source']) ||
+            !in_array($user['type'], ['domain-login', 'system_hub_login'], true)
+        ) {
+            return false;
+        }
+
+        // the mobile source is extension, because the initial process is started by the extension
+        return match ($user['source']) {
+            'corporate' => $decryptedResponse = $this->authBridgeService->persistDecryptedUserDataForWeb($user),
+            'extension' => $this->authBridgeService->getDecryptedUserData($user),
+            default => false,
+        };
+    }
+
     private function handleCorporateSource(array $user): bool
     {
         $decryptedResponse = $this->authBridgeService->persistDecryptedUserDataForWeb($user);

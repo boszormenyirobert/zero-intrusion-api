@@ -163,6 +163,7 @@ class HmacMobileValidationListener
             'vault_delete_credential' => 'removeProcessId',       
             'vault_edit_credential' => 'registrationProcessId',
             'user_registration' => 'registrationProcessId',
+            'domain_read_credential_encrypted' => 'domainProcessId',
             default => null,
         };
     }

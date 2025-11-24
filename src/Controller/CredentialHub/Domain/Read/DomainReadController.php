@@ -123,7 +123,10 @@ class DomainReadController extends AbstractController
         $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL;
  
         try {
+
             $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1');
+            
+$this->logger->critical('Request content: ' . $request->getContent());
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  2');
             $user = $validatedPayload[$payloadKey];

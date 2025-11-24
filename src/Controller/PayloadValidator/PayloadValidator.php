@@ -11,7 +11,8 @@ class PayloadValidator
 {
     const ALLOWED_INTEGRITY_KEYS = [
         'domain_read_qr_identity' =>'domain_read_qr_identity',
-        'domain_read_credential' => 'domain_read_credential',        
+        'domain_read_credential' => 'domain_read_credential',       
+        'domain_read_credential_encrypted' => 'domain_read_credential_encrypted',   
         'domain_read_state' => 'domain_read_state',
 
         'domain_delete_qr_identity' => 'domain_delete_qr_identity',

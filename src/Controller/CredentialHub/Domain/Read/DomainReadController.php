@@ -127,13 +127,11 @@ class DomainReadController extends AbstractController
  
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
-            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  2');
             $user = $validatedPayload[$payloadKey];
             // User credentials by domain decryped by Database but enrcypted by the userSecret
             $response = $domainReadService->getDecryptedCredentials($user);
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
-            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  3' . $e->getMessage()   );
             return $this->responseHelper->handleException($e);
         }
     }

@@ -62,7 +62,7 @@ class PayloadValidator
     public function validatePayload(Request $request, ?string $key = null): array
     {
         $payload = $this->getValidatedPayload($request);
-$this->logger->critical($key . \json_encode($payload)   );
+$this->logger->critical('--------------------------------------------------'. \json_encode($payload)   );
         if ($key && !isset(self::ALLOWED_INTEGRITY_KEYS[$key])) {
             $this->logger->critical($key . ' is now whitelisted');
             throw new MissingKeyException(sprintf('Not authorized integrity key: ', $key));

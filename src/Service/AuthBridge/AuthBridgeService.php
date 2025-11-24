@@ -32,7 +32,7 @@ class AuthBridgeService
         return $this->authBridgeHandler->getDecryptedUserData($user);
     }
 
-    public function getDecryptedUserDataToMobileRequest(array $user): bool
+    public function getDecryptedUserDataToMobileRequest(array $user): array
     {
         return $this->authBridgeHandler->getDecryptedUserDataToMobileRequest($user);
     }    

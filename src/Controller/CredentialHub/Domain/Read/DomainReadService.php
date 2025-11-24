@@ -53,7 +53,7 @@ class DomainReadService
         };
     }
 
-    public function getDecryptedCredentials(array $user): bool
+    public function getDecryptedCredentials(array $user): array
     {
         if (
             !isset($user['type'], $user['source']) ||

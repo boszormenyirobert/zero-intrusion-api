@@ -27,11 +27,10 @@ class AuthBridgeHandler
     {
         // Validate the extension request by user privateId
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
-        $this->logger->critical('Validation result => credentials decrypted in the mobile application: ' . json_encode($user['credentials']));
 
         if ($validation->getValid()) {
             return $user['type'] === 'domain-login'
-                ? $user['credentials']
+                ? $this->encryptor->setDecryptedValuesForDomain($user, $validation->getUserSecret())
                 : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
         }
 

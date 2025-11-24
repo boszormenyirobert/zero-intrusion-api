@@ -88,7 +88,7 @@ class PayloadValidator
     public function getValidatedPayload(Request $request, ?string $key = null): array
     {
         try {
-            $this->logger->critical('------------------------------------------------------------Payload:', ['payload' => $payload]);            
+            $this->logger->critical('------------------------------------------------------------Payload:', ['payload' => $request]);            
             $payload = $request->attributes->get('json_payload');
             $validatedPayload = $this->requestService->validPayload($payload);
             $this->logger->critical('Validated payload: ' . json_encode($validatedPayload));

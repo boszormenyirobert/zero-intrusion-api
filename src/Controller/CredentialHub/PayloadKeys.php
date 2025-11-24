@@ -12,6 +12,7 @@ final class PayloadKeys
     public const DOMAIN_READ_QR_IDENTITY = 'domain_read_qr_identity';
     public const DOMAIN_PROCESS_ID = 'domainProcessId';
     public const DOMAIN_READ_CREDENTIAL = 'domain_read_credential';
+    public const DOMAIN_READ_CREDENTIAL_DECRYPTED = 'domain_read_credential_decrypted';
     public const DOMAIN_READ_STATE = 'domain_read_state';
 
     public const VAULT_READ_QR_IDENTITY = 'vault_read_qr_identity';

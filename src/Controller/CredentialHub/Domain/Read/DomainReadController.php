@@ -115,12 +115,12 @@ class DomainReadController extends AbstractController
      * @param Request $request
      * @return JsonResponse
      */
-    #[Route('/credential/decrypted', name: 'domain_read_credential_encrypted', methods: "POST")]
-    public function domainReadCredentialEncrypted(
+    #[Route('/credential/decrypted', name: 'domain_read_credential_decrypted', methods: "POST")]
+    public function domainReadCredentialDecrypted(
         Request $request,
         DomainReadService $domainReadService
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL;
+        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL_DECRYPTED;
 
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);

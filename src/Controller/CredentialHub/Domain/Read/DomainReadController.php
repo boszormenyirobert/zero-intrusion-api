@@ -121,16 +121,17 @@ class DomainReadController extends AbstractController
         DomainReadService $domainReadService
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED;
+ 
+        $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1' . $request->getContent() );
+        $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1' . $payloadKey );
 
         try {
-            $this->logger->critical('DomainReadController: domainReadCredentialDecrypted processId  1');
+            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1');
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
-            $this->logger->critical('DomainReadController: domainReadCredentialDecrypted processId  2');
+            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  2');
             $user = $validatedPayload[$payloadKey];
-$this->logger->critical('DomainReadController: domainReadCredentialDecrypted processId  3');
             // User credentials by domain decryped by Database but enrcypted by the userSecret
             $response = $domainReadService->getDecryptedCredentials($user);
-$this->logger->critical('DomainReadController: domainReadCredentialDecrypted processId  4');
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

@@ -131,7 +131,7 @@ class DomainReadController extends AbstractController
             $response = $domainReadService->getDecryptedCredentials($user);
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
-            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  3');
+            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  3' . $e->getMessage()   );
             return $this->responseHelper->handleException($e);
         }
     }

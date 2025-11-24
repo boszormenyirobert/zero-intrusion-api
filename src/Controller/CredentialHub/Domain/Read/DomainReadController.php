@@ -122,9 +122,6 @@ class DomainReadController extends AbstractController
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED;
  
-        $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1' . $request->getContent() );
-        $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1' . $payloadKey );
-
         try {
             $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1');
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);

@@ -61,8 +61,6 @@ class PayloadValidator
      */
     public function validatePayload(Request $request, ?string $key = null): array
     {
-$this->logger->critical('--------------------------------------------------'. \json_encode($request)   );
-
         $payload = $this->getValidatedPayload($request);
 
         if ($key && !isset(self::ALLOWED_INTEGRITY_KEYS[$key])) {
@@ -92,6 +90,7 @@ $this->logger->critical('--------------------------------------------------'. \j
         try {
             $payload = $request->attributes->get('json_payload');
             $validatedPayload = $this->requestService->validPayload($payload);
+            $this->logger->critical('Validated payload: ' . json_encode($validatedPayload));
             if ($key && !isset($validatedPayload[$key])) {
                 $this->logger->critical(sprintf('Property "%s" missing', $key));
                 throw new MissingKeyException(sprintf('Property "%s" missing', $key));

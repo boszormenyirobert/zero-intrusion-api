@@ -64,6 +64,7 @@ class RequestService
 
     public function validPayload($payload)
     {
+        $this->logger->critical('Type of payload: ' . gettype($payload));
         $this->crypterService->setData($payload['zeroIntrusionProyApi']);
         
         return json_decode($this->crypterService->decryptData(), true);

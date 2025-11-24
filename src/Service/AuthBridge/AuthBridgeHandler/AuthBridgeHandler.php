@@ -56,13 +56,13 @@ class AuthBridgeHandler
         // Validate the extension request by user privateId
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
 
-        if ($validation->getValid()) {
+        
             return $user['type'] === 'domain-login'
                 ? $this->encryptor->getDecryptedCredentials($user, $validation->getUserSecret())
                 : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
-        }
+        
 
-        return $validation->getValid();
+       
     }    
 
     public function persistDecryptedUserDataForWeb(array $user): ?array

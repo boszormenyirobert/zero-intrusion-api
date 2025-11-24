@@ -123,7 +123,7 @@ class DomainReadController extends AbstractController
         Request $request,
         DomainReadService $domainReadService
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL;
+        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED;
  
         try {
 

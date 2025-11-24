@@ -142,7 +142,16 @@ class Encryptor
         
         //$databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
          $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);
+$this->logger->critical("Re-encrypting credentials for database storage: " . json_encode(
+            ['type'=> 'database-credential-encryption', 'credentials' => $databaseEncryptedCredentialsList]
+         ),[]);
 
+         $this->firebaseService->manageFcm(
+             $user['publicId'],
+             'database-credential-encryption',
+             'encrypted-credentials for database storage',
+             ['type'=> 'database-credential-encryption', 'credentials' => $databaseEncryptedCredentialsList]
+         );
         $authBridge->setProcessState(true);
         $authBridge->setApplications($databaseEncryptedCredentialsList);
         $this->loginDatabaseService->addUserLogin($authBridge); 

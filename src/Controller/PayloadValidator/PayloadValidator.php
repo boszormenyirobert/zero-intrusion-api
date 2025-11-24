@@ -62,6 +62,7 @@ class PayloadValidator
     public function validatePayload(Request $request, ?string $key = null): array
     {
         $payload = $this->getValidatedPayload($request);
+            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1.1');
 
         if ($key && !isset(self::ALLOWED_INTEGRITY_KEYS[$key])) {
             $this->logger->critical($key . ' is now whitelisted');
@@ -72,6 +73,7 @@ class PayloadValidator
             $this->logger->critical($key . ' is missing in the payload');
             throw new MissingKeyException(sprintf('Property "%s" missing: ', $key));
         }
+            $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1.2');
 
         return $payload;
     }

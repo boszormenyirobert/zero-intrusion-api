@@ -128,17 +128,20 @@ class Encryptor
             return false;
         }
 
+        // $user['credentials'] is the decrypted credentials collection from the mobile application
+
         $iv = base64_decode($authBridge->getIv());
         $dbEncryptedCredentials = [];
         foreach ($credentialsCollection as $credentialData) {
             $encryptedCredential = new AccessRegistry();
-            $encryptedCredential->setUserCredential($user['credentials']);
+            $encryptedCredential->setUserCredential($credentialData['decrypted']);
             $encryptedCredential->setDescription($credentialData['description']);
             $encryptedCredential->setTargetId($credentialData['targetId']);
             $dbEncryptedCredentials[] = $encryptedCredential; 
         } 
         
-        $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
+        //$databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
+         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($user['credentials'], $iv);
 
         $authBridge->setProcessState(true);
         $authBridge->setApplications($databaseEncryptedCredentialsList);

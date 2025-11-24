@@ -97,6 +97,7 @@ class PayloadValidator
                 $this->logger->critical(sprintf('Property "%s" missing', $key));
                 throw new MissingKeyException(sprintf('Property "%s" missing', $key));
             }
+            $this->logger->critical('------------------------------------------------------------getValidatedPayload success');
 
             return $validatedPayload;
         } catch (\Exception $e) {

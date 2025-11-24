@@ -141,7 +141,7 @@ class Encryptor
         } 
         
         //$databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
-         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($user['credentials'], $iv);
+         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);
 
         $authBridge->setProcessState(true);
         $authBridge->setApplications($databaseEncryptedCredentialsList);

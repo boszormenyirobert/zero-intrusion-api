@@ -65,7 +65,7 @@ class DomainReadService
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {
             'corporate' => $decryptedResponse = $this->authBridgeService->persistDecryptedUserDataForWeb($user),
-            'extension' => $this->authBridgeService->getDecryptedUserData($user),
+            'extension' => $this->authBridgeService->getDecryptedUserDataToMobileRequest($user),
             default => false,
         };
     }

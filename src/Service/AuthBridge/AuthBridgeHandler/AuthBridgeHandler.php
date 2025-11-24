@@ -51,6 +51,20 @@ class AuthBridgeHandler
         return $validation->getValid();
     }
 
+    public function getDecryptedUserDataToMobileRequest(array $user): array|bool
+    {
+        // Validate the extension request by user privateId
+        $validation = $this->validationHandler->checkExtensionRequestValidation($user);
+
+        if ($validation->getValid()) {
+            return $user['type'] === 'domain-login'
+                ? $this->encryptor->getDecryptedCredentials($user, $validation->getUserSecret())
+                : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
+        }
+
+        return $validation->getValid();
+    }    
+
     public function persistDecryptedUserDataForWeb(array $user): ?array
     {
         $response = new ValidationDTO(false);

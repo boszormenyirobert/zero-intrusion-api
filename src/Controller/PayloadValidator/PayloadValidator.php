@@ -88,14 +88,14 @@ class PayloadValidator
     public function getValidatedPayload(Request $request, ?string $key = null): array
     {
         try {
-            $this->logger->critical('------------------------------------------------------------Payload:', ['payload' => $request]);            
             $payload = $request->attributes->get('json_payload');
             $validatedPayload = $this->requestService->validPayload($payload);
-            $this->logger->critical('Validated payload: ' . json_encode($validatedPayload));
+            $this->logger->critical('-------------------------Validated payload: ' . json_encode($validatedPayload));
             if ($key && !isset($validatedPayload[$key])) {
                 $this->logger->critical(sprintf('Property "%s" missing', $key));
                 throw new MissingKeyException(sprintf('Property "%s" missing', $key));
             }
+            $this->logger->critical('------------------------Return -Validated payload: ' . json_encode($validatedPayload));
 
             return $validatedPayload;
         } catch (\Exception $e) {

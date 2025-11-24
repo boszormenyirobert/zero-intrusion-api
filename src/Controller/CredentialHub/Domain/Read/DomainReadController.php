@@ -120,7 +120,7 @@ class DomainReadController extends AbstractController
         Request $request,
         DomainReadService $domainReadService
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED;
+        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL;
  
         try {
             $this->logger->critical('------------------------------------------------------------DomainReadController: domainReadCredentialDecrypted processId  1');

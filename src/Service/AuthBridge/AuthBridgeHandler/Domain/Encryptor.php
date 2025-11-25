@@ -54,7 +54,11 @@ class Encryptor
 
         $decryptedCredentialsByUserSecret = [];
         foreach ($apps as $app) {
-            $decryptedCredentialsByUserSecret[] = $app['credential'];
+            $decryptedCredentialsByUserSecret[] = [
+                'credential' =>$app['credential'],
+                'targetId' => $app['targetId'],
+                'description' => $app['description'],
+            ];
         }
 
         return $decryptedCredentialsByUserSecret;

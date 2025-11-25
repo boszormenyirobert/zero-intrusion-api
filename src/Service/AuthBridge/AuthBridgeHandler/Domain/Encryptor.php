@@ -83,6 +83,10 @@ class Encryptor
         $decryptedCredentials = [];
         $encryptedCredentialsByUserSecret = [];
         foreach ($apps as $app) {
+                        $this->logger->critical("Iteration on user-mobile app: " . json_encode(
+               ['type'=> 'user-credential-decryption', 'app' => $app]
+            ),[]);
+
           //  $encryptedCredentialsByUserSecret[] = $app['credential'];
           //  $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
             $decryptedCredentials[] = [
@@ -92,7 +96,7 @@ class Encryptor
             ];
         }
             $this->logger->critical("Decrypting credential for credential: " . json_encode(
-               ['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret]
+               ['type'=> 'user-credential-decryption', 'credentials' => $decryptedCredentials]
             ),[]);
 
         /** Deprecated

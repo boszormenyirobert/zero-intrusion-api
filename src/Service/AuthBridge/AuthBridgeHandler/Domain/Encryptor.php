@@ -153,7 +153,7 @@ class Encryptor
      //       $this->logger->critical("Credential data - from mobile: " . $credential, []);
      //    }
 
-        $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($dbEncryptedCredentials, true), $iv);
+        $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($dbEncryptedCredentials, $iv);
         $this->logger->critical("dbEncryptedCredentials: " . $databaseEncryptedCredentialsList);
 
         // $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);

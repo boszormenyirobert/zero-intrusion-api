@@ -154,8 +154,8 @@ class Encryptor
      //       $this->logger->critical("Credential data - from mobile: " . $credential, []);
      //    }
 
-        //$databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
-         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);
+        $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($dbEncryptedCredentials, $iv);
+        // $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);
 /** Deprecated
 *         $this->firebaseService->manageFcm(
 *             $user['publicId'],

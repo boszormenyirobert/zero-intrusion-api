@@ -44,7 +44,7 @@ class Encryptor
         $pages = $this->accessRegistryRepository->findBy(
             ['publicId' => $user['publicId']
         ]);
-        
+        $this->logger->critical("Mobile response: " . json_encode($user), []);
         $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
 
         if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {

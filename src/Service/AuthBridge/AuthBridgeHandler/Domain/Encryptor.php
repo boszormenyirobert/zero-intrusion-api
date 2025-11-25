@@ -152,7 +152,7 @@ class Encryptor
      //Deprecated   foreach($user['credentials'] as $credential) {
      //       $this->logger->critical("Credential data - from mobile: " . $credential, []);
      //    }
-            $this->logger->critical("dbEncryptedCredentials: " . json_encode($dbEncryptedCredentials));
+            $this->logger->critical("dbEncryptedCredentials: " . json_encode($dbEncryptedCredentials,true));
 
         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($dbEncryptedCredentials, $iv);
         // $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);

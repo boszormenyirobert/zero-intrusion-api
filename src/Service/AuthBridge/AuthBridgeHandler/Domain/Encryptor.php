@@ -139,12 +139,13 @@ class Encryptor
             $encryptedCredential->setTargetId($credentialData['targetId']);
             $dbEncryptedCredentials[] = $encryptedCredential; 
         } 
-        
+
+        $this->logger->critical("Re-encrypting credentials for database storage: " . json_encode(
+            ['type'=> 'database-credential-encryption', 'credentials' => $user['credentials']]
+         ),[]);
+
         //$databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
          $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);
-$this->logger->critical("Re-encrypting credentials for database storage: " . json_encode(
-            ['type'=> 'database-credential-encryption', 'credentials' => $databaseEncryptedCredentialsList]
-         ),[]);
 
          $this->firebaseService->manageFcm(
              $user['publicId'],

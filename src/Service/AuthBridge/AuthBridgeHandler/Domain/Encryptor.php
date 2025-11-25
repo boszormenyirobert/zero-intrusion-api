@@ -71,14 +71,15 @@ class Encryptor
         ]);
         
         $this->logger->critical("Mobile response: " . json_encode($user['credentials']), []);
-
-        $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
-
-        if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {
-            $this->logger->critical("No matching credential found for domain: " . $user['domain']);
-            return [];
-        }
-
+/** Deprecated
+*       $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
+*
+*        if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {
+*            $this->logger->critical("No matching credential found for domain: " . $user['domain']);
+*            return [];
+*        }
+ */
+        $apps = $user['credentials'];
         $decryptedCredentials = [];
         $encryptedCredentialsByUserSecret = [];
         foreach ($apps as $app) {

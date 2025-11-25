@@ -141,7 +141,7 @@ class Encryptor
         } 
 
         $this->logger->critical("Re-encrypting credentials for database storage: " . json_encode(
-            ['type'=> 'database-credential-encryption', 'credentials' => $user['credentials']['credentials']]
+            ['type'=> 'database-credential-encryption', 'credentials' => gettype($user['credentials'])]
          ),[]);
 
         //$databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);

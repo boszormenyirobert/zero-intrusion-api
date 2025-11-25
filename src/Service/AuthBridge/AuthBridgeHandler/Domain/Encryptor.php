@@ -84,7 +84,7 @@ class Encryptor
         $encryptedCredentialsByUserSecret = [];
         foreach ($apps as $app) {
                         $this->logger->critical("Iteration on user-mobile app: " . json_encode(
-               ['type'=> 'user-credential-decryption', 'app' => $app]
+               ['type'=> 'user-credential-decryption', 'credential' => $app['credential']]
             ),[]);
 
           //  $encryptedCredentialsByUserSecret[] = $app['credential'];

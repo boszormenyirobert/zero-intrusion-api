@@ -37,6 +37,7 @@ class AuthBridgeHandler
         return $validation->getValid();
     }
 
+    // Deprecated fs, use getDecryptedUserDataToMobileRequest instead
     public function getDecryptedUserData(array $user): bool
     {
         // Validate the extension request by user privateId
@@ -58,7 +59,7 @@ class AuthBridgeHandler
 
         if ($validation->getValid()) {
             return $user['type'] === 'domain-login'
-                ? $this->encryptor->getDecryptedCredentials($user, $validation)
+                ? $this->encryptor->getDecryptedCredentials($user)
                 : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
         }
 

@@ -64,8 +64,6 @@ class Fetch
     }
     private function mapDomain(object $a): array
     {
-                            $this->logger->critical("JSON object to array: " . json_encode($a));
-
         return [
             'credential' => $a->userCredential,
             'description' => $a->description,

@@ -39,7 +39,9 @@ class Encryptor
         return $this->updateLoginEntry($user, $credentialsCollection);
     }
 
-    public function getDecryptedCredentials(array $user, $userSecret): ?array
+    // Extract the credentials, description and targetId from the database by publicId and domain
+    // Decrypt by database key    
+    public function getDecryptedCredentials(array $user): ?array
     {
         $pages = $this->accessRegistryRepository->findBy(
             ['publicId' => $user['publicId']

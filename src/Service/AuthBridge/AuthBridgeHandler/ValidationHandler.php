@@ -24,8 +24,10 @@ class ValidationHandler
     {
         $userSecretObject = $this->identityRepository->findOneBy(['publicId' => $user['publicId']]);
         
-        // This is the secret which saved also in the mobile application
+        // This is the secret which saved in the mobile application (after NFC verification from the DB will be deleted)
         // Only with this secret can be the user-credential decrypted
+        
+        // The user-secret used to decrypt the privateId from the mobile request and also the encrypt the user-credentials => TODO: ADDING SEPARATE HMAC_CREDENTIAL_SECRET
         $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($userSecretObject);
         $userSecret = $decrypted->getSecret();
 

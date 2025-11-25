@@ -128,6 +128,7 @@ class DomainReadController extends AbstractController
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $user = $validatedPayload[$payloadKey];
+            
             // User credentials by domain decryped by Database but enrcypted by the userSecret
             $response = $domainReadService->getDecryptedCredentials($user);
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
@@ -197,8 +198,6 @@ class DomainReadController extends AbstractController
 
             $response = $authBridgeService->fetchFromAccessTable($processId, 'domain');
             
-            $this->logger->critical('DomainReadController: domainReadState processId ' . json_encode($response));
-
             /** @var array{email: ?string, publicId: ?string} $toAutoNotification */
             $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response);
             return $this->responseHelper->createSuccessResponse(

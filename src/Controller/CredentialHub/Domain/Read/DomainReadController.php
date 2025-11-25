@@ -196,7 +196,9 @@ class DomainReadController extends AbstractController
             }
 
             $response = $authBridgeService->fetchFromAccessTable($processId, 'domain');
-           
+            
+            $this->logger->critical('DomainReadController: domainReadState processId ' . json_encode($processId));
+
             /** @var array{email: ?string, publicId: ?string} $toAutoNotification */
             $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response);
             return $this->responseHelper->createSuccessResponse(

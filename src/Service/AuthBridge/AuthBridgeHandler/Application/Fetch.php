@@ -67,7 +67,7 @@ class Fetch
                             $this->logger->critical("JSON object to array: " . json_encode($a));
 
         return [
-            'credential' => $a->decrypted,
+            'credential' => $a->userCredential,
             'description' => $a->description,
             'targetId' => $a->targetId
         ];

@@ -140,11 +140,7 @@ class Encryptor
             $dbEncryptedCredentials[] = $encryptedCredential; 
         } 
 
-        $this->logger->critical("Re-encrypting credentials for database storage: " . json_encode(
-            ['type'=> 'database-credential-encryption', 'credentials' => gettype($user['credentials']), 'credentials' => $user['credentials']]
-         ),[]);
-         
-         foreach($user['credentials'] as $credential) {
+        foreach($user['credentials'] as $credential) {
             $this->logger->critical("Credential data - from mobile: " . $credential, []);
          }
 

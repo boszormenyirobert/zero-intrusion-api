@@ -138,7 +138,6 @@ class Encryptor
         }
 
         // $user['credentials'] is the decrypted credentials collection from the mobile application
-            $this->logger->critical("CredentialsCollection: " . json_encode($credentialsCollection));
 
         $iv = base64_decode($authBridge->getIv());
         $dbEncryptedCredentials = [];
@@ -153,6 +152,7 @@ class Encryptor
      //Deprecated   foreach($user['credentials'] as $credential) {
      //       $this->logger->critical("Credential data - from mobile: " . $credential, []);
      //    }
+            $this->logger->critical("dbEncryptedCredentials: " . json_encode($dbEncryptedCredentials));
 
         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($dbEncryptedCredentials, $iv);
         // $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);

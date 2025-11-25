@@ -150,9 +150,9 @@ class Encryptor
             $dbEncryptedCredentials[] = $encryptedCredential; 
         } 
 
-        foreach($user['credentials'] as $credential) {
-            $this->logger->critical("Credential data - from mobile: " . $credential, []);
-         }
+     //Deprecated   foreach($user['credentials'] as $credential) {
+     //       $this->logger->critical("Credential data - from mobile: " . $credential, []);
+     //    }
 
         //$databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($credentialsCollection, $iv);
          $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);

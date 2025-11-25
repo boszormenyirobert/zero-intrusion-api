@@ -39,7 +39,7 @@ class Encryptor
         return $this->updateLoginEntry($user, $credentialsCollection);
     }
 
-    public function getDecryptedCredentials(array $user, string $userSecret): ?array
+    public function getDecryptedCredentials(array $user, string $userSecret =""): ?array
     {
         $pages = $this->accessRegistryRepository->findBy(
             ['publicId' => $user['publicId']

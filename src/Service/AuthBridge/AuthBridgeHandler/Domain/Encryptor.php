@@ -70,6 +70,8 @@ class Encryptor
             ['publicId' => $user['publicId']
         ]);
         
+        $this->logger->critical("Mobile response: " . json_encode($user), []);
+        
         $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
 
         if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {
@@ -92,13 +94,14 @@ class Encryptor
                ['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret]
             ),[]);
 
-            $this->firebaseService->manageFcm(
-                $user['publicId'],
-                'user-credential-decryption',
-                'encryped-credentials by user secret',
-                ['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret]
-            );
-
+        /** Deprecated
+          *  $this->firebaseService->manageFcm(
+          *      $user['publicId'],
+          *      'user-credential-decryption',
+          *      'encryped-credentials by user secret',
+          *      ['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret]
+          *  );
+        */
         return $decryptedCredentials;
     }
 

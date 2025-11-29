@@ -28,8 +28,9 @@ class VaultReadService
 
     public function getDecryptedCredentials(string $publicId): array{
         $applicationList = [];
-        $getPages = $this->accessRegistryRepository->findBy(['public_id' => $publicId]);
+        $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
         $this->logger->critical('Encrypting application data for database storage.' . json_encode($publicId));
+        $this->logger->critical('Encrypting application data for database storage.' . json_encode(\count($getPages)));
 
         foreach ($getPages as $userPage) {
             if ($userPage->getApplication() !== null) {

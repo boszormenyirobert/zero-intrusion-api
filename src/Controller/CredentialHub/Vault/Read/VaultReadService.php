@@ -37,7 +37,7 @@ class VaultReadService
                 $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($userPage->getUserCredential())));
 
                 $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($userPage, "application");
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted)));
+                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getUserCredential())));
 
                 $applicationList[] = $decrypted;
             }

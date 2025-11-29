@@ -24,6 +24,7 @@ class Credential
         $state = false;
         // deprecated
         // $userApplicationList = $this->listBuilder->buildDecryptedApplicationList($user['publicId'], $userSecret);
+        $this->logger->critical("Setting decrypted values for application process ID: " . json_encode($user));
         $userApplicationList = $user['credential'];
         
         $process = $this->authBridgeRepository->findOneBy([

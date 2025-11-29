@@ -77,6 +77,7 @@ final class CrypterDatabaseAccessRegistryService
 
     public function encyptDataObjectApplication(array $userData): AccessRegistry
     {
+        $this->logger->critical('Encrypting application data for database storage.' . json_encode($userData));
         $iv = openssl_random_pseudo_bytes(16);
         $this->key = $this->params->get('DATABASE_HASH_SECRET');
 

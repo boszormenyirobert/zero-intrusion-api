@@ -10,7 +10,7 @@ class VaultReadService
     public function __construct(
         private AccessRegistryRepository $accessRegistryRepository
     ) {}
-    
+
     public function getQrContent($type, $source, $mobilXExtensionAuth, $identity): VaultReadQrContentDTO
     {
         return new VaultReadQrContentDTO(
@@ -22,7 +22,7 @@ class VaultReadService
         );
     }
 
-    public function getDecryptedCredentials(array $user): array{
+    public function getDecryptedCredentials(array $publicId): array{
         $applicationList = [];
         $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
         foreach ($getPages as $userPage) {

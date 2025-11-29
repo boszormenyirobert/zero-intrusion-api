@@ -118,7 +118,7 @@ class DomainReadController extends AbstractController
     #[RequireHmac]
     #[MobileHmac]
     #[RequireJson]
-    #[Route('/credential/decrypted', name: 'domain_read_credential_decrypted', methods: "POST")]
+    #[Route('/credential/decrypted', name: 'domain_read_credential_encrypted', methods: "POST")]
     public function domainReadCredentialDecrypted(
         Request $request,
         DomainReadService $domainReadService

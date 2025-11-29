@@ -32,13 +32,11 @@ class VaultReadService
         foreach ($getPages as $userPage) {
             if ($userPage->getApplication() !== null) {
                 $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($userPage, "application");
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getUserCredential())));
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getApplication())));
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getPublicId())));
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getTargetId())));
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getUserCredential())));                
 
-                $applicationList[] = $decrypted;
+                $applicationList[] = [
+                    'userCredential' => $decrypted->getUserCredential(), 
+                    'description' => $decrypted->getDescription()       
+                ];
             }
         }
 

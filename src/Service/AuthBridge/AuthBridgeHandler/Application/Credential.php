@@ -23,7 +23,7 @@ class Credential
     {
         $state = false;
         $userApplicationList = $this->listBuilder->buildDecryptedApplicationList($user['publicId'], $userSecret);
-        $this->logger->info("Decrypted application list: " . json_encode($user));
+        $this->logger->critical("Decrypted application list: " . json_encode($user));
         $process = $this->authBridgeRepository->findOneBy([
             'applicationProcessId' => $user['applicationProcessId']
         ]);

@@ -28,6 +28,7 @@ class VaultReadService
     public function getDecryptedCredentials(string $publicId): array{
         $applicationList = [];
         $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
+        return $getPages;
         foreach ($getPages as $userPage) {
             if ($userPage->getApplication() !== null) {
                 $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($userPage, "application");

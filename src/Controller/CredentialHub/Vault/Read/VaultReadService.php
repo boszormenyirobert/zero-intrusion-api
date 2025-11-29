@@ -3,9 +3,14 @@
 namespace App\Controller\CredentialHub\Vault\Read;
 
 use App\DTO\QR\VaultReadQrContentDTO;
+use App\Repository\AccessRegistryRepository;
 
 class VaultReadService
 {
+    public function __construct(
+        private AccessRegistryRepository $accessRegistryRepository
+    ) {}
+    
     public function getQrContent($type, $source, $mobilXExtensionAuth, $identity): VaultReadQrContentDTO
     {
         return new VaultReadQrContentDTO(

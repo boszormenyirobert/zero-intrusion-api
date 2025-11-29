@@ -36,7 +36,8 @@ class VaultReadService
                 $applicationList[] = [
                     'credential' => $decrypted->getUserCredential(), 
                     'description' => $decrypted->getDescription(),
-                    'targetId' => $decrypted->getTargetId()    
+                    'targetId' => $decrypted->getTargetId(),
+                    'application' => $decrypted->getApplication()  
                 ];
             }
         }

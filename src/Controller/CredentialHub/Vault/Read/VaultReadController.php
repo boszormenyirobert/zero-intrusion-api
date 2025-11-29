@@ -113,6 +113,7 @@ class VaultReadController extends AbstractController
             
             // User credentials by domain decryped by Database but enrcypted by the userSecret
             $response = $vaultReadService->getDecryptedCredentials($user['publicId']);
+            $this->logger->critical('Vault Read Decrypted Credentials for response: ' .response);
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

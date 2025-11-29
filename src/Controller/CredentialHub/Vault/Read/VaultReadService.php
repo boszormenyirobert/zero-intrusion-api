@@ -22,7 +22,7 @@ class VaultReadService
         );
     }
 
-    public function getDecryptedCredentials(array $publicId): array{
+    public function getDecryptedCredentials(string $publicId): array{
         $applicationList = [];
         $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
         foreach ($getPages as $userPage) {

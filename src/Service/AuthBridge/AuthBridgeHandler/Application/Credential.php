@@ -21,9 +21,6 @@ class Credential
 
     public function setDecryptedValuesForApplication(array $user, string $userSecret): bool
     {
-        $pages = $this->accessRegistryRepository->findBy(
-            ['publicId' => $user['publicId']
-        ]);
         $apps = $user['credentials'];
         $decryptedCredentials = [];
         foreach ($apps as $app) {

@@ -101,7 +101,7 @@ class VaultReadController extends AbstractController
     #[MobileHmac]
     #[RequireJson]
     #[Route('/credential/decrypted', name: 'vault_read_credential_decrypted', methods: "POST")]
-    public function domainReadCredentialDecrypted(
+    public function vaultReadCredentialDecrypted(
         Request $request,
         VaultReadService $vaultReadService
     ): JsonResponse {

@@ -21,6 +21,7 @@ class Credential
 
     public function setDecryptedValuesForApplication(array $user, string $userSecret): bool
     {
+        $this->logger->critical("Setting decrypted values for application process ID: " . json_encode($user));  
         $apps = $user['credentials'];
         $decryptedCredentials = [];
         foreach ($apps as $app) {

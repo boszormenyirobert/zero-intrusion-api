@@ -55,6 +55,7 @@ class Fetch
     // convert json object to array
     private function mapApplication(object $a): array
     {
+        $this->logger->critical("Mapping application data for database storage application !!! :" . json_encode($a));
         return [
             'application' => $a->application,
             'userCredential' => $a->userCredential,

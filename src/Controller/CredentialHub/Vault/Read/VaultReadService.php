@@ -34,8 +34,8 @@ class VaultReadService
                 $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($userPage, "application");
 
                 $applicationList[] = [
-                    'userCredential' => $decrypted->getUserCredential(), 
-                    'description' => $decrypted->getDescription()       
+                    'userCredential' => $decrypted['userCredential'], 
+                    'description' => $decrypted['description']       
                 ];
             }
         }

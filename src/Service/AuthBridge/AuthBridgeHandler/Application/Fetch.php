@@ -57,9 +57,7 @@ class Fetch
     {
         $this->logger->critical("Mapping application data for database storage application !!! :" . json_encode($a));
         return [            
-            'userCredential' => $a->credential,
-            'description' => $a->description,
-            'targetId' => $a->targetId
+            'userCredential' => $a->credential
         ];
     }
     private function mapDomain(object $a): array

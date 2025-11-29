@@ -30,9 +30,9 @@ class VaultReadService
         $applicationList = [];
         $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
         $this->logger->critical('Encrypting application data for database storage.' . json_encode($publicId));
-        $this->logger->critical('Encrypting application data for database storage.' . json_encode(\count($getPages)));
-
         foreach ($getPages as $userPage) {
+                    $this->logger->critical('Encrypting application data for database storage.' . json_encode(($userPage)));
+
             if ($userPage->getApplication() !== null) {
                 $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($userPage, "application");
                 $applicationList[] = $decrypted;

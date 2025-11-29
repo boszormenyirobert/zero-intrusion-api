@@ -4,13 +4,14 @@ namespace App\Controller\CredentialHub\Vault\Read;
 
 use App\DTO\QR\VaultReadQrContentDTO;
 use App\Repository\AccessRegistryRepository;
-use App\Service\Crypters\CrypterDatabaseUserService;
+use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
+
 
 class VaultReadService
 {
     public function __construct(
         private AccessRegistryRepository $accessRegistryRepository,
-        private CrypterDatabaseUserService $crypterDatabaseUserService
+        private CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService
     ) {}
 
     public function getQrContent($type, $source, $mobilXExtensionAuth, $identity): VaultReadQrContentDTO
@@ -29,7 +30,7 @@ class VaultReadService
         $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
         foreach ($getPages as $userPage) {
             if ($userPage->getApplication() !== null) {
-                $decrypted = $this->crypterDatabaseUserService->decryptFromDatabase($userPage, "application");
+                $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($userPage, "application");
                 $applicationList[] = $decrypted;
             }
         }

@@ -22,6 +22,7 @@ class Credential
     public function setDecryptedValuesForApplication(array $user, string $userSecret): bool
     {
         $state = false;
+        // deprecated
         // $userApplicationList = $this->listBuilder->buildDecryptedApplicationList($user['publicId'], $userSecret);
         $userApplicationList = $user['credential'];
         

@@ -14,7 +14,8 @@ class ListBuilder
         private SodiumService $sodiumService
     ) {}
 
-    public function buildDecryptedApplicationList(string $publicId, string $userSecret): array
+    // deprecated 
+/*     public function buildDecryptedApplicationList(string $publicId, string $userSecret): array
     {
         $applicationList = [];
         $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
@@ -30,5 +31,6 @@ class ListBuilder
         }
 
         return $applicationList;
-    }
+    } 
+*/
 }

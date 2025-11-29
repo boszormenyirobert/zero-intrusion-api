@@ -164,6 +164,7 @@ class HmacMobileValidationListener
             'vault_edit_credential' => 'registrationProcessId',
             'user_registration' => 'registrationProcessId',
             'domain_read_credential_encrypted' => 'domainProcessId',
+            'vault_read_credential_encrypted' => 'applicationProcessId',
             default => null,
         };
     }

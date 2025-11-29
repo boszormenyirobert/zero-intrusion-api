@@ -120,7 +120,7 @@ final class CrypterDatabaseAccessRegistryService
             return $this->getDecryptedAccessRegistryDomain($value, $description);
 
         } else if ($type === "application") {
-            $this->logger->critical('Decrypting application data from database for publicId: ' . json_encode($value));
+            $this->logger->critical('Decrypting application data from database for publicId: ' . json_encode($value->getApplication()));
             return $this->getDecryptedAccessRegistryApplication($value);
         }
 

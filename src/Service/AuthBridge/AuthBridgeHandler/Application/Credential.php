@@ -28,7 +28,8 @@ class Credential
             $decryptedCredentials[] = [
                 'decrypted' => $app['credential'],
                 'description' => $app['description'],
-                'targetId' => $app['targetId']
+                'targetId' => $app['targetId'],
+                'application' => $app['application']
             ];
         }
 

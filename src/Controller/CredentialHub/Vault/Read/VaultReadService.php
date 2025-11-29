@@ -31,17 +31,19 @@ class VaultReadService
         $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
         foreach ($getPages as $userPage) {
             if ($userPage->getApplication() !== null) {
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($userPage->getApplication())));
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($userPage->getPublicId())));
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($userPage->getTargetId())));
-                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($userPage->getUserCredential())));
-
                 $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($userPage, "application");
                 $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getUserCredential())));
+                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getApplication())));
+                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getPublicId())));
+                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getTargetId())));
+                $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($decrypted->getUserCredential())));                
 
                 $applicationList[] = $decrypted;
             }
         }
+
+        $this->logger->critical('Encrypting application data for database storage application !!! :' . json_encode(($applicationList[0]->getUserCredential())));                
+
         return $applicationList;
     }
 }

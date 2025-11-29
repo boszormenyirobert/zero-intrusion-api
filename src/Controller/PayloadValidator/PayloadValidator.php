@@ -25,6 +25,7 @@ class PayloadValidator
 
         'vault_read_qr_identity' => 'vault_read_qr_identity',
         'vault_read_credential' => 'vault_read_credential',
+        'vault_read_credential_encrypted' => 'vault_read_credential_encrypted',
         'vault_read_state' => 'vault_read_state',
 
         'vault_edit_qr_identity' => 'vault_edit_qr_identity',

@@ -21,18 +21,31 @@ class Credential
 
     public function setDecryptedValuesForApplication(array $user, string $userSecret): bool
     {
+        $pages = $this->accessRegistryRepository->findBy(
+            ['publicId' => $user['publicId']
+        ]);
+        $apps = $user['credentials'];
+        $decryptedCredentials = [];
+        foreach ($apps as $app) {
+            $decryptedCredentials[] = [
+                'decrypted' => $app['credential'],
+                'description' => $app['description'],
+                'targetId' => $app['targetId']
+            ];
+        }
+
         $state = false;
         // deprecated
         // $userApplicationList = $this->listBuilder->buildDecryptedApplicationList($user['publicId'], $userSecret);
         $this->logger->critical("Setting decrypted values for application process ID: " . json_encode($user));
-        $userApplicationList = $user['credentials'];
+        
         
         $process = $this->authBridgeRepository->findOneBy([
             'applicationProcessId' => $user['applicationProcessId']
         ]);
 
         if($process){
-            $encrypted = $this->encryptor->encrypt($userApplicationList, base64_decode($process->getIv()));
+            $encrypted = $this->encryptor->encrypt($decryptedCredentials, base64_decode($process->getIv()));
             $process->setApplications($encrypted);
             $process->setProcessState(true);
 

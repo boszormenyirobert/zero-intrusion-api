@@ -72,7 +72,6 @@ class Encryptor
             ['publicId' => $user['publicId']
         ]);
         
-        $this->logger->critical("Mobile response: " . json_encode($user['credentials']), []);
         /** Deprecated
         *       $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
         *

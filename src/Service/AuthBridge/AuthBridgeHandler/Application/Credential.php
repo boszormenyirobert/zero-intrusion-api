@@ -22,7 +22,7 @@ class Credential
     public function setDecryptedValuesForApplication(array $user, string $userSecret): bool
     {
         $state = false;
-        //$userApplicationList = $this->listBuilder->buildDecryptedApplicationList($user['publicId'], $userSecret);
+        $userApplicationList = $this->listBuilder->buildDecryptedApplicationList($user['publicId'], $userSecret);
         $this->logger->info("Decrypted application list: " . json_encode($user));
         $process = $this->authBridgeRepository->findOneBy([
             'applicationProcessId' => $user['applicationProcessId']

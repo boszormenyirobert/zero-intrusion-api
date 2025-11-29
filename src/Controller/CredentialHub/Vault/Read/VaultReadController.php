@@ -35,7 +35,7 @@ class VaultReadController extends AbstractController
     /**
      * Called by Browser-Extension
      * 
-     * This is used to create a browser extension VAULT identity
+     * This is used to read a browser extension VAULT identity
      *
      * Generate two HMAC and applicationProcessId
      * Generated HMAC added to the extension Header as X-Extension-Auth  to verify the identity
@@ -44,7 +44,7 @@ class VaultReadController extends AbstractController
      * 
      * Saved in the AuthBridge Database
      * 
-     * Database automatically cleared by cronjob. If row id older than X Min will be deleted.
+     * Database automatically cleared by cronjob. If row id older than X Sec will be deleted.
      * 
      * @param Request $request
      * @return JsonResponse
@@ -84,6 +84,36 @@ class VaultReadController extends AbstractController
             }     
 
             return $this->responseHelper->createSuccessResponse($identity->toApplicationProcessArray());
+        } catch (\Exception $e) {
+            return $this->responseHelper->handleException($e);
+        }
+    }
+
+    /**
+     * Called by Mobile App
+     * 
+     * DB decrypt user credentials to the domains in the AccessRegistry by PublicId 
+     * Return with the user-secrets encrypted credentials to the Mobile App for decryption
+     * @param Request $request
+     * @return JsonResponse
+     */
+    #[RequireHmac]
+    #[MobileHmac]
+    #[RequireJson]
+    #[Route('/credential/decrypted', name: 'vault_read_credential_decrypted', methods: "POST")]
+    public function domainReadCredentialDecrypted(
+        Request $request,
+        VaultReadService $vaultReadService
+    ): JsonResponse {
+        $payloadKey = PayloadKeys::VAULT_READ_CREDENTIAL_ENCRYPTED;
+ 
+        try {
+            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
+            $user = $validatedPayload[$payloadKey];
+            
+            // User credentials by domain decryped by Database but enrcypted by the userSecret
+            $response = $vaultReadService->getDecryptedCredentials($user);
+            return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }

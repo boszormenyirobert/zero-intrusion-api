@@ -18,6 +18,7 @@ final class PayloadKeys
     public const VAULT_READ_QR_IDENTITY = 'vault_read_qr_identity';
     public const VAULT_PROCESS_ID = 'applicationProcessId';
     public const VAULT_READ_CREDENTIAL = 'vault_read_credential';
+    public const VAULT_READ_CREDENTIAL_ENCRYPTED = 'vault_read_credential_encrypted';
     public const VAULT_READ_STATE = 'vault_read_state';
 
     public const VAULT_DELETE_QR_IDENTITY = 'vault_delete_qr_identity';
@@ -28,7 +29,5 @@ final class PayloadKeys
     public const VAULT_EDIT_QR_IDENTITY = 'vault_edit_qr_identity';
     public const VAULT_EDIT_CREDENTIAL = 'vault_edit_credential';
     public const VAULT_EDIT_STATE = 'vault_edit_state';
-    public const VAULT_EDIT_PROCESS_ID = 'registrationProcessId';      
-   
-
+    public const VAULT_EDIT_PROCESS_ID = 'registrationProcessId';
 }

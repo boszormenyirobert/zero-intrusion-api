@@ -16,4 +16,16 @@ class VaultReadService
             $identity->getIv()
         );
     }
+
+    public function getDecryptedCredentials(array $user): array{
+        $applicationList = [];
+        $getPages = $this->accessRegistryRepository->findBy(['publicId' => $publicId]);
+        foreach ($getPages as $userPage) {
+            if ($userPage->getApplication() !== null) {
+                $decrypted = $this->crypterDatabaseUserService->decryptFromDatabase($userPage, "application");
+                $applicationList[] = $decrypted;
+            }
+        }
+        return $applicationList;
+    }
 }

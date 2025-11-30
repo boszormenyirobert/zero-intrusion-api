@@ -53,10 +53,30 @@ class Encryptor
             $this->logger->critical("No matching credential found for domain: " . $user['domain']);
             return [];
         }
-        
-        return $this->formatCredentials(['credentials' => $apps], 'credential');
+
+        $decryptedCredentialsByUserSecret = [];
+        foreach ($apps as $app) {
+            $decryptedCredentialsByUserSecret[] = [
+                'credential' =>$app['credential'],
+                'targetId' => $app['targetId'],
+                'description' => $app['description'],
+            ];
+        }
+
+    //        return $this->formatCredentials(['credentials' => $apps], 'credential');
+
+        return $decryptedCredentialsByUserSecret;
     }   
         
+    private function formatCredentials(array $user, string $credentialKey): array
+    {
+        return array_map(fn($app) => [
+            $credentialKey   => $app['credential'],
+            'description' => $app['description'],
+            'targetId'    => $app['targetId'],
+        ], $user['credentials']);
+    }
+
     public function findDecryptedCredentialForWeb(array $user, string $userSecret): ?array
     {
         $pages = $this->accessRegistryRepository->findBy([
@@ -71,7 +91,8 @@ class Encryptor
             return null;
         }
 
-        return ['decrypted' =>$this->sodiumService->sodiumDecrypt($app['credential'], $userSecret)];
+        $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
+        return ['decrypted' => $decrypted];
     }    
 
     // Update the login entry with decrypted credentials
@@ -140,14 +161,5 @@ class Encryptor
         }
         $this->logger->critical('credential not found to the domain'); 
         return null;       
-    } 
-    
-    private function formatCredentials(array $user, string $credentialKey): array
-    {
-        return array_map(fn($app) => [
-            $credentialKey   => $app['credential'],
-            'description' => $app['description'],
-            'targetId'    => $app['targetId'],
-        ], $user['credentials']);
     }    
 }

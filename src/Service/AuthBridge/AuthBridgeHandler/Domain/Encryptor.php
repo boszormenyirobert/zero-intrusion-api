@@ -54,18 +54,7 @@ class Encryptor
             return [];
         }
 
-        $decryptedCredentialsByUserSecret = [];
-        foreach ($apps as $app) {
-            $decryptedCredentialsByUserSecret[] = [
-                'credential' =>$app['credential'],
-                'targetId' => $app['targetId'],
-                'description' => $app['description'],
-            ];
-        }
-
-    //        return $this->formatCredentials(['credentials' => $apps], 'credential');
-
-        return $decryptedCredentialsByUserSecret;
+        return $this->formatCredentials(['credentials' => $apps], 'credential');       
     }   
         
     private function formatCredentials(array $user, string $credentialKey): array

@@ -80,8 +80,7 @@ class Encryptor
             return null;
         }
 
-        $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
-        return ['decrypted' => $decrypted];
+        return ['decrypted' =>$this->sodiumService->sodiumDecrypt($app['credential'], $userSecret)];
     }    
 
     // Update the login entry with decrypted credentials

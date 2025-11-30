@@ -5,7 +5,6 @@ namespace App\Service\AuthBridge\AuthBridgeHandler\Application;
 use App\Repository\AuthBridgeRepository;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use App\Service\AuthBridge\AuthBridgeHandler\Application\Encryptor;
-use App\Service\AuthBridge\AuthBridgeHandler\Application\ListBuilder;
 use Psr\Log\LoggerInterface;
 
 class Credential
@@ -14,14 +13,12 @@ class Credential
 
         private AuthBridgeRepository $authBridgeRepository,
         private LoginDatabaseService $loginDatabaseService,
-        private ListBuilder $listBuilder,
         private LoggerInterface $logger,
         private Encryptor $encryptor,
     ) {}
 
-    public function setDecryptedValuesForApplication(array $user, string $userSecret): bool
+    public function setDecryptedValuesForApplication(array $user): bool
     {
-        $this->logger->critical("Setting decrypted values for application process ID: " . json_encode($user));  
         $apps = $user['credentials'];
         $decryptedCredentials = [];
         foreach ($apps as $app) {
@@ -34,10 +31,6 @@ class Credential
         }
 
         $state = false;
-        // deprecated
-        // $userApplicationList = $this->listBuilder->buildDecryptedApplicationList($user['publicId'], $userSecret);
-        $this->logger->critical("Setting decrypted values for application process ID: " . json_encode($user));
-        
         
         $process = $this->authBridgeRepository->findOneBy([
             'applicationProcessId' => $user['applicationProcessId']
@@ -51,7 +44,6 @@ class Credential
             $this->loginDatabaseService->addUserLogin($process);
             $state = true;
         }
-        $this->logger->critical("Setting decrypted values for application process state: " . json_encode($state));
 
         return $state;
     }

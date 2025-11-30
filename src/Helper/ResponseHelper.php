@@ -33,7 +33,6 @@ class ResponseHelper
             }
         }
         
-        $this->logger->critical('Success response data', $logData);
         return new JsonResponse(array_merge($responseData, ['success' => true]));
     }
 

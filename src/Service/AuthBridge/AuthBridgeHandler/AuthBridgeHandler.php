@@ -30,7 +30,7 @@ class AuthBridgeHandler
 
         if ($validation->getValid()) {
             return $user['type'] === 'domain-login'
-                ? $this->encryptor->setDecryptedValuesForDomain($user, $validation->getUserSecret())
+                ? $this->encryptor->setDecryptedValuesForDomain($user)
                 : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
         }
 
@@ -60,7 +60,7 @@ class AuthBridgeHandler
         if ($validation->getValid()) {
             return $user['type'] === 'domain-login'
                 ? $this->encryptor->getDecryptedCredentials($user)
-                : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
+                : $this->applicationCredential->setDecryptedValuesForApplication($user);
         }
 
         return [];

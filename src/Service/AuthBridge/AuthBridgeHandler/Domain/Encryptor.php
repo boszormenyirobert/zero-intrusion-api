@@ -28,9 +28,9 @@ class Encryptor
     ) {}
 
     // Set decrypted values for domain login
-    public function setDecryptedValuesForDomain(array $user, string $userSecret): bool
+    public function setDecryptedValuesForDomain(array $user): bool
     {
-        $credentialsCollection = $this->findDecryptedCredential($user, $userSecret);
+        $credentialsCollection = $this->findDecryptedCredential($user);
 
         if (!$credentialsCollection) {
             return false;
@@ -66,45 +66,24 @@ class Encryptor
         return $decryptedCredentialsByUserSecret;
     }   
         
-    private function findDecryptedCredential(array $user, string $userSecret): array
+    private function findDecryptedCredential(array $user): array
     {
         $pages = $this->accessRegistryRepository->findBy(
             ['publicId' => $user['publicId']
         ]);
         
-        /** Deprecated
-        *       $apps = $this->extractCredentialsForDomain($pages, $user['domain']);
-        *
-        *        if (!$apps || (sizeof($apps) === 1 &&!$apps[0]['credential'])) {
-        *            $this->logger->critical("No matching credential found for domain: " . $user['domain']);
-        *            return [];
-        *        }
-        */
         $apps = $user['credentials'];
         $decryptedCredentials = [];
         $encryptedCredentialsByUserSecret = [];
         foreach ($apps as $app) {
 
-          //  $encryptedCredentialsByUserSecret[] = $app['credential'];
-          //  $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
             $decryptedCredentials[] = [
                 'decrypted' => $app['credential'],
                 'description' => $app['description'],
                 'targetId' => $app['targetId']
             ];
         }
-            $this->logger->critical("Decrypting credential for credential: " . json_encode(
-               ['type'=> 'user-credential-decryption', 'credentials' => $decryptedCredentials]
-            ),[]);
 
-        /** Deprecated
-          *  $this->firebaseService->manageFcm(
-          *      $user['publicId'],
-          *      'user-credential-decryption',
-          *      'encryped-credentials by user secret',
-          *      ['type'=> 'user-credential-decryption', 'credentials' => $encryptedCredentialsByUserSecret]
-          *  );
-        */
         return $decryptedCredentials;
     }
 
@@ -138,8 +117,6 @@ class Encryptor
             return false;
         }
 
-        // $user['credentials'] is the decrypted credentials collection from the mobile application
-
         $iv = base64_decode($authBridge->getIv());
         $dbEncryptedCredentials = [];
         foreach ($credentialsCollection as $credentialData) {
@@ -150,17 +127,11 @@ class Encryptor
             $dbEncryptedCredentials[] = $encryptedCredential; 
         } 
 
-     //Deprecated   foreach($user['credentials'] as $credential) {
-     //       $this->logger->critical("Credential data - from mobile: " . $credential, []);
-     //    }
 
         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($dbEncryptedCredentials, $iv);
-        $this->logger->critical("dbEncryptedCredentials: " . $databaseEncryptedCredentialsList);
-
-        // $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt(json_decode($user['credentials'], true), $iv);
-         
         $authBridge->setProcessState(true);
         $authBridge->setApplications($databaseEncryptedCredentialsList);
+
         $this->loginDatabaseService->addUserLogin($authBridge); 
 
         return true;

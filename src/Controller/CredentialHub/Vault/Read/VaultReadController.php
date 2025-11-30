@@ -140,6 +140,7 @@ class VaultReadController extends AbstractController
         $payloadKey = PayloadKeys::VAULT_READ_CREDENTIAL;
 
         try {
+            // included validation of payload
             $process = $sharedService->getProcessId($request, $payloadKey, true); 
             if(!$process) {
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
@@ -176,6 +177,7 @@ class VaultReadController extends AbstractController
         $payloadKey = PayloadKeys::VAULT_READ_STATE;
 
         try {
+            // included validation of payload
             $processId = $sharedService->getProcessId($request, $payloadKey);
 
             if(!$processId) {

@@ -57,15 +57,6 @@ class Encryptor
         return $this->formatCredentials(['credentials' => $apps], 'credential');
     }   
         
-    private function formatCredentials(array $user, string $credentialKey): array
-    {
-        return array_map(fn($app) => [
-            $credentialKey   => $app['credential'],
-            'description' => $app['description'],
-            'targetId'    => $app['targetId'],
-        ], $user['credentials']);
-    }
-
     public function findDecryptedCredentialForWeb(array $user, string $userSecret): ?array
     {
         $pages = $this->accessRegistryRepository->findBy([
@@ -149,5 +140,14 @@ class Encryptor
         }
         $this->logger->critical('credential not found to the domain'); 
         return null;       
+    } 
+    
+    private function formatCredentials(array $user, string $credentialKey): array
+    {
+        return array_map(fn($app) => [
+            $credentialKey   => $app['credential'],
+            'description' => $app['description'],
+            'targetId'    => $app['targetId'],
+        ], $user['credentials']);
     }    
 }

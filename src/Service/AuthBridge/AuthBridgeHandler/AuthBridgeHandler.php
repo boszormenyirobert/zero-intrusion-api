@@ -25,7 +25,7 @@ class AuthBridgeHandler
 
     public function persistDecryptedUserData(array $user): bool
     {
-        // Validate the extension request by user privateId
+        // Validate the extension request by user privateId.
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
 
         if ($validation->getValid()) {

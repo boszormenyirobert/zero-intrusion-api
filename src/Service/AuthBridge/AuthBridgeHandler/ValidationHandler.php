@@ -22,23 +22,22 @@ class ValidationHandler
     // This function validate the request by privateId, and return with the user secret if valid
     public function checkExtensionRequestValidation(array $user): ValidationDTO
     {
-        $userSecretObject = $this->identityRepository->findOneBy(['publicId' => $user['publicId']]);
+        $userIntegritySecretObject = $this->identityRepository->findOneBy(['publicId' => $user['publicId']]);
         
-        // This is the secret which saved in the mobile application (after NFC verification from the DB will be deleted)
-        // Only with this secret can be the user-credential decrypted
+        // This is the secret which is responsible to data-integrity and data-decryption
+        // The user-credential encrypted by the credential_secret, which is deleted from the database after NFC write
         
-        // The user-secret used to decrypt the privateId from the mobile request and also the encrypt the user-credentials => TODO: ADDING SEPARATE HMAC_CREDENTIAL_SECRET
-        $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($userSecretObject);
-        $userSecret = $decrypted->getSecret();
+        $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($userIntegritySecretObject);
+        $userIntegritySecret = $decrypted->getSecret();
 
         // Decrypt the user secret by the general database key
-        $dbPrivateId = $this->sodiumService->sodiumDecrypt($decrypted->getPrivateId(), $userSecret);
-        $requestPrivateId = $this->sodiumService->sodiumDecrypt($user['privateId'], $userSecret);
+        $dbPrivateId = $this->sodiumService->sodiumDecrypt($decrypted->getPrivateId(), $userIntegritySecret);
+        $requestPrivateId = $this->sodiumService->sodiumDecrypt($user['privateId'], $userIntegritySecret);
         
         if (\strcmp($requestPrivateId, $dbPrivateId) === 0) {
             $this->logger->critical('PrivateId is valid');
             
-            return new ValidationDTO(true, $userSecret);
+            return new ValidationDTO(true, $userIntegritySecret);
         }
 
         $this->logger->critical('Unvalid PrivateId');

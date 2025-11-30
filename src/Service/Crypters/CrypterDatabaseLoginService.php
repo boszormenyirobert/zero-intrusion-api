@@ -100,7 +100,7 @@ final class CrypterDatabaseLoginService
 
         $decrypted = new identity();
         $decrypted->setPrivateId($this->decryptData($value->getPrivateId(), $iv));
-        $decrypted->setSecret($this->decryptData($value->getSecret(), $iv));
+        $decrypted->setSecret($this->decryptData($value->getSecret(), $iv)); // userIntegritySecret
         $decrypted->setPublicId($value->getPublicId());
         $decrypted->setIv($value->getIv());
 

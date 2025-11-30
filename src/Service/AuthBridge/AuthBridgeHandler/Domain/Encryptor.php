@@ -30,7 +30,7 @@ class Encryptor
     // Set decrypted values for domain login
     public function setDecryptedValuesForDomain(array $user): bool
     {
-        $credentialsCollection = $this->findDecryptedCredential($user);
+        $credentialsCollection = $this->formatCredentials($user);
 
         if (!$credentialsCollection) {
             return false;
@@ -54,37 +54,16 @@ class Encryptor
             return [];
         }
 
-        $decryptedCredentialsByUserSecret = [];
-        foreach ($apps as $app) {
-            $decryptedCredentialsByUserSecret[] = [
-                'credential' =>$app['credential'],
-                'targetId' => $app['targetId'],
-                'description' => $app['description'],
-            ];
-        }
-
-        return $decryptedCredentialsByUserSecret;
+        return $this->formatCredentials(['credentials' => $apps]);
     }   
         
-    private function findDecryptedCredential(array $user): array
+    private function formatCredentials(array $user): array
     {
-        $pages = $this->accessRegistryRepository->findBy(
-            ['publicId' => $user['publicId']
-        ]);
-        
-        $apps = $user['credentials'];
-        $decryptedCredentials = [];
-        $encryptedCredentialsByUserSecret = [];
-        foreach ($apps as $app) {
-
-            $decryptedCredentials[] = [
-                'decrypted' => $app['credential'],
-                'description' => $app['description'],
-                'targetId' => $app['targetId']
-            ];
-        }
-
-        return $decryptedCredentials;
+        return array_map(fn($app) => [
+            'decrypted'   => $app['credential'],
+            'description' => $app['description'],
+            'targetId'    => $app['targetId'],
+        ], $user['credentials']);
     }
 
     public function findDecryptedCredentialForWeb(array $user, string $userSecret): ?array

@@ -129,7 +129,7 @@ class DomainReadController extends AbstractController
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $user = $validatedPayload[$payloadKey];
             
-            // User credentials by domain decryped by Database but enrcypted by the userSecret
+            // User credentials by domain, decrypted by Database but still encrypted by the userSecret
             $response = $domainReadService->getDecryptedCredentials($user);
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {

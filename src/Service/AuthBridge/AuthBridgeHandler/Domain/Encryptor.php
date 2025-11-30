@@ -53,19 +53,8 @@ class Encryptor
             $this->logger->critical("No matching credential found for domain: " . $user['domain']);
             return [];
         }
-
-        $decryptedCredentialsByUserSecret = [];
-        foreach ($apps as $app) {
-            $decryptedCredentialsByUserSecret[] = [
-                'credential' =>$app['credential'],
-                'targetId' => $app['targetId'],
-                'description' => $app['description'],
-            ];
-        }
-
-            return $this->formatCredentials(['credentials' => $apps], 'credential');
-
-    //    return $decryptedCredentialsByUserSecret;
+        
+        return $this->formatCredentials(['credentials' => $apps], 'credential');
     }   
         
     private function formatCredentials(array $user, string $credentialKey): array

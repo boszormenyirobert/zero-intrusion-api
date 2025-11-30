@@ -63,7 +63,11 @@ class Encryptor
             ];
         }
 
-        return $decryptedCredentialsByUserSecret;
+            return $this->formatCredentials([
+                'credentials' => $apps
+            ]);
+
+    //    return $decryptedCredentialsByUserSecret;
     }   
         
     private function formatCredentials(array $user): array

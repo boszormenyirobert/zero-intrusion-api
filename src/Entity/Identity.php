@@ -36,6 +36,9 @@ class Identity
     private ?string $secret = null;
 
     #[ORM\Column(length: 800)]
+    private ?string $credentialSecret = null;    
+
+    #[ORM\Column(length: 800)]
     private ?string $privateId = null;
 
     #[ORM\Column(length: 255)]
@@ -90,6 +93,17 @@ class Identity
     public function setSecret(string $secret): static
     {
         $this->secret = $secret;
+
+        return $this;
+    }
+    public function getCredentialSecret(): ?string
+    {
+        return $this->credentialSecret;
+    }
+
+    public function setCredentialSecret(string $credentialSecret): static
+    {
+        $this->credentialSecret = $credentialSecret;
 
         return $this;
     }

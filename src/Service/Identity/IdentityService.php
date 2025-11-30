@@ -26,7 +26,7 @@ final class IdentityService
 
 
     /**
-     * Generates a new key for the user, including a public ID, private ID, and secret.
+     * Generates a new key for the user, including a public ID, private ID, and (integrity)secret, credentialSecret.
      * The private ID is encrypted using the secret before being stored in the database.
      *
      * @return IdentityKeyDTO
@@ -39,7 +39,8 @@ final class IdentityService
         $identityKey = new IdentityKeyDTO(
             $setOfIds['shared_publicId'],
             $this->sodiumService->sodiumEncrypt($setOfIds['shared_privateId'], $setOfIds['shared_secret']),
-            $setOfIds['shared_secret']
+            $setOfIds['shared_secret'],
+            $setOfIds['credentialSecret']
         );
 
         // Encrypt the IdentityKeyDTO object with the global database encryption
@@ -49,9 +50,8 @@ final class IdentityService
         // Set the unencrypted privateId in the IdentityKeyDTO object before returning
         $identityKey->setPrivateId($setOfIds['shared_privateId']);
 
-
         $total = $this->secretManagerRepository->count();
-        $this->logger->critical("Registrator Public ID: " . $total);
+        $this->logger->critical("To the HUB Regitstration the registrator Public ID: " . $total);
         if($total === 1){
             $first = $this->secretManagerRepository->findBy([], ['id' => 'ASC'], 1)[0] ?? null;
             $this->logger->critical("Registrator Public ID: " . $first->getPublicId());
@@ -64,7 +64,8 @@ final class IdentityService
         return [
             'shared_publicId' => base64_encode(random_bytes(35)),
             'shared_privateId' => base64_encode(random_bytes(35)),
-            'shared_secret' => base64_encode(random_bytes(35))
+            'shared_secret' => base64_encode(random_bytes(35)),
+            'credentialSecret' => base64_encode(random_bytes(35))
         ];
     }
 

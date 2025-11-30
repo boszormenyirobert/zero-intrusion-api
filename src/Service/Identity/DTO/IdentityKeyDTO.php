@@ -8,6 +8,7 @@ class IdentityKeyDTO
     private string $publicId;
     private string $privateId;
     private string $secret;
+    private string $credentialSecret;
     private string $email = '--not-define-registration-process-one' ;
     private string $phone = '--not-define-registration-process-one';
     private string $fcmToken = '';
@@ -15,11 +16,13 @@ class IdentityKeyDTO
     public function __construct(
         string $publicId,
         string $privateId,
-        string $secret
+        string $secret,
+        string $credentialSecret
     ) {
         $this->publicId = $publicId;
         $this->privateId = $privateId;
         $this->secret = $secret;
+        $this->credentialSecret = $credentialSecret;
     }
 
     public function toIdentityArray(): array
@@ -28,6 +31,7 @@ class IdentityKeyDTO
             'publicId' => $this->publicId,
             'privateId' => $this->privateId,
             'secret' => $this->secret,
+            'credentialSecret' => $this->credentialSecret,
             'email' =>  $this->email,
             'phone' =>  $this->phone,
         ];
@@ -41,6 +45,7 @@ class IdentityKeyDTO
             'publicId' => $this->publicId,
             'privateId' => $this->privateId,
             'secret' => $this->secret,
+            'credentialSecret' => $this->credentialSecret,
             'email' =>  $this->email,
             'phone' =>  $this->phone,
         ];

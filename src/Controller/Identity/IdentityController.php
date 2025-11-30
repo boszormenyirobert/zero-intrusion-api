@@ -35,7 +35,7 @@ class IdentityController extends AbstractController
     /* Called by Mobil forwarded by ProxyApi
      * 
      * First step in the device registration.
-     * Generate a publicId and a privateId and secret, and save after encryption in the Database
+     * Generate a publicId and a privateId and (integrity)secret, credentialSecret and save after encryption in the Database
      */
     #[Route('/new', name: 'create_secret', methods: "POST")]
     #[RequireHmac]

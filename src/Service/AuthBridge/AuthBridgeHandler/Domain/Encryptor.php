@@ -30,7 +30,7 @@ class Encryptor
     // Set decrypted values for domain login
     public function setDecryptedValuesForDomain(array $user): bool
     {
-        $credentialsCollection = $this->formatCredentials($user);
+        $credentialsCollection = $this->formatCredentials($user, 'decrypted');
 
         if (!$credentialsCollection) {
             return false;
@@ -64,16 +64,17 @@ class Encryptor
         }
 
             return $this->formatCredentials([
-                'credentials' => $apps
+                'credentials' => $apps,
+                $credentialKey = 'credential'
             ]);
 
     //    return $decryptedCredentialsByUserSecret;
     }   
         
-    private function formatCredentials(array $user): array
+    private function formatCredentials(array $user, string $credentialKey): array
     {
         return array_map(fn($app) => [
-            'decrypted'   => $app['credential'],
+            $credentialKey   => $app['credential'],
             'description' => $app['description'],
             'targetId'    => $app['targetId'],
         ], $user['credentials']);

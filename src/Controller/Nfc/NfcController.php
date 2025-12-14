@@ -33,6 +33,7 @@ class NfcController extends AbstractController
         Request $request,
         JwtService $jwtService
         ) {
+            $this->logger->critical('NFC USERS CALLED');
             return ['users' => ['3boszormenyirobert@yahoo.com','3vilagteteje@freemail.hu']];
 
             $headers =  $request->headers->all();

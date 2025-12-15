@@ -103,7 +103,7 @@ final class CrypterDatabaseLoginService
         $decrypted->setSecret($this->decryptData($value->getSecret(), $iv)); // userIntegritySecret => Secret will be deleted after NFC-card activation
         $decrypted->setPublicId($value->getPublicId());
         $decrypted->setIv($value->getIv());
-
+        $decrypted->setEmail($this->decryptData($value->getEmail(), $iv));
         return $decrypted;
     }
 

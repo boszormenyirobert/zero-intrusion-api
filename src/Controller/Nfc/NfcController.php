@@ -10,13 +10,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
-use App\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Cookie;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use App\DTO\RegistrationProcessDTO;
 use Symfony\Component\HttpFoundation\Response;
-use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
-use App\Service\JWT\JwtService;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Controller\PayloadValidator\PayloadValidator;
 use App\Attribute\RequireHmac;
@@ -26,10 +23,7 @@ class NfcController extends AbstractController
 {
     public function __construct(
         private LoggerInterface $logger,
-        private JWTEncoderInterface $jwtEncoder,
         private UserService $userService,
-        private JwtService $jwtService,
-        private UserRepository $userRepository,
         private PayloadValidator $payloadValidator 
     ) {}
 

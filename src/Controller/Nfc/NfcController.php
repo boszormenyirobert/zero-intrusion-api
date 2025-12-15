@@ -44,6 +44,7 @@ class NfcController extends AbstractController
 
             $this->logger->critical('NFC USERS CALLED 1');
             $validatedPayload = $this->requestService->validPayload($payload);
+            $this->logger->critical('NFC USERS CALLED 1.1');
             $payloadArray = $validatedPayload['get_registrated_business'];
 
 

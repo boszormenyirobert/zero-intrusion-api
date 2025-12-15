@@ -102,7 +102,7 @@ class NfcController extends AbstractController
                  * Secret has to be stored in the database, because it is for the secure communication between Handy Device and API
                  **/
                 
-                $nfcEncryptionKey = $this->utilityHelper->generateKey('nfc'); // This key will be stored in the database for each user
+                $nfcEncryptionKey = UtilityHelper::generateKey('nfc'); // This key will be stored in the database for each user
                  $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
 
                 $rawUserData = [

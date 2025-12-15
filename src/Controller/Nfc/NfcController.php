@@ -55,7 +55,7 @@ class NfcController extends AbstractController
 
             $response = ['users' => ['boszormenyirobert@yahoo.com']];
 
-            return $this->responseHelper->createSuccessResponse(
+            return $this->json(
                  $response
             );
         }

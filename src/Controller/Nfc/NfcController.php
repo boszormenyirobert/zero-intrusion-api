@@ -37,7 +37,7 @@ class NfcController extends AbstractController
         ) {
 
             $this->logger->critical('NFC USERS CALLED 1');
-            $payload = $this->requestService->requestControll($request);
+           $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
 
             if (array_key_exists('error', $payload)) {
                  $this->logger->critical('NFC USERS CALLED 2');

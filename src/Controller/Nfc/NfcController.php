@@ -48,8 +48,7 @@ class NfcController extends AbstractController
 
             $this->logger->critical('NFC USERS CALLED 2' . json_encode($validatedPayload));
             $this->logger->critical('NFC USERS CALLED 3');
-            return ['users' => ['3boszormenyirobert@yahoo.com','3vilagteteje@freemail.hu']];
-
+return $this->json(['users' => ['3boszormenyirobert@yahoo.com','3vilagteteje@freemail.hu']]);
             $headers =  $request->headers->all();
 
             $corporateIentification = json_decode($request->getContent(), true);       

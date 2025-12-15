@@ -29,11 +29,22 @@ class NfcController extends AbstractController
     ) {}
 
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
+    #[RequireHmac]
+    #[RequireJson]
     public function getNfcUsers(
         Request $request,
         JwtService $jwtService
         ) {
-            $this->logger->critical('NFC USERS CALLED');
+
+            $this->logger->critical('NFC USERS CALLED 1');
+            $payload = $this->requestService->requestControll($request);
+
+            if (array_key_exists('error', $payload)) {
+                 $this->logger->critical('NFC USERS CALLED 2');
+                return $this->json($payload);        
+            }
+
+            $this->logger->critical('NFC USERS CALLED 3');
             return ['users' => ['3boszormenyirobert@yahoo.com','3vilagteteje@freemail.hu']];
 
             $headers =  $request->headers->all();

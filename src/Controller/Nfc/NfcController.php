@@ -103,7 +103,7 @@ class NfcController extends AbstractController
                  **/
                 
                 $nfcEncryptionKey = UtilityHelper::generateKey('nfc'); // This key will be stored in the database for each user
-                 $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
+                $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
 
                 $rawUserData = [
                     'publicId' => $decryptedUser->getPublicId(),
@@ -112,6 +112,7 @@ class NfcController extends AbstractController
                     'credentialSecret' => $decryptedUser->getCredentialSecret()
                 ];  
                 
+                try{
                 $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
                 $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
                 
@@ -119,6 +120,9 @@ class NfcController extends AbstractController
                     'email' => $decryptedUser->getEmail(),
                     'nfcData' => $encryptedUserData            
                 ];
+                }catch(\Exception $e){
+                    $this->logger->critical('NFC USERS ENCRYPTION ERROR ' . $e->getMessage());  
+                }
             }
 
 

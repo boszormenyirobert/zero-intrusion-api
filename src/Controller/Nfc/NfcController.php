@@ -88,7 +88,6 @@ class NfcController extends AbstractController
                 );
             }
             
-            // TODO : Fetch NFC users from database
             $usersEncrypted = $this->identityRepository->findAll();
             $users = [];
             
@@ -106,7 +105,9 @@ class NfcController extends AbstractController
                  * Secret has to be stored in the database, because it is for the secure communication between Handy Device and API
                  **/
                 
-                $nfcEncryptionKey = UtilityHelper::generateKey('nfc'); // This key will be stored in the database for each user
+                // $nfcEncryptionKey = UtilityHelper::generateKey('nfc'); // This key will be stored in the database for each user
+                $nfcEncryptionKey = "MyTestEncryptionKey123"; // TODO remove test key
+
                 $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
                 
                 $rawUserData = [
@@ -117,13 +118,13 @@ class NfcController extends AbstractController
                 ];  
                 
                 try{
-                $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
-                $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
-                
-                $users[] = [
-                    'email' => $decryptedUser->getEmail(),
-                    'nfcData' => $encryptedUserData            
-                ];
+                    $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
+                    $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
+                    
+                    $users[] = [
+                        'email' => $decryptedUser->getEmail(),
+                        'nfcData' => $encryptedUserData            
+                    ];
                 }catch(\Exception $e){
                     $this->logger->critical('NFC USERS ENCRYPTION ERROR ' . $e->getMessage());  
                 }
@@ -134,5 +135,40 @@ class NfcController extends AbstractController
             return $this->json(
                  $response
             );
+        }
+
+        #[Route('/api/nfc/decrypt', name: 'api_nfc_decrypt', methods: "POST")]
+        #[RequireHmac]
+        #[RequireJson]
+        public function NfcDecryptCardData(
+        Request $request
+        ) {
+            $payloadKey = PayloadKeys::API_NFC_DECRYPT;
+            // Controll the request coming from the HUB and validate HMAC ~ Data integrity (shared secret HUB - API)
+            $payload = $this->requestService->requestControll($request);
+            // Get decrypted payload
+            $validatedPayload = $this->requestService->validPayload($payload);
+            // Access to the paylaoad by shared payloadKey
+            $payloadArray = $validatedPayload[$payloadKey];
+
+            // Compare payload corporatePublicId and the corporateAuthentication with the database records
+            $corporateId = $payloadArray['publicId'];
+            $message = $payloadArray['message'];
+
+            $this->logger->critical('Message ' . json_encode($message));
+
+            $corporateId = $this->corporateIdentityRepository->findOneBy([
+                'corporateId' =>  $corporateId,
+                'corporateIdKey' =>  $corporateIdKey
+            ]);
+
+            if (!$corporateId) {
+                $this->logger->critical('NFC USERS CALLED - CORPORATE ID NOT FOUND ' . json_encode($payloadArray));
+
+                return $this->json(
+                    $this->responseHelper->createErrorResponse('NFC Users 001: Corporate identity not found.', 404)
+                );
+            }
+
         }
 }

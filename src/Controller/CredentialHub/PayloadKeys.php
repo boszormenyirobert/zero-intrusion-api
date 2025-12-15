@@ -32,4 +32,5 @@ final class PayloadKeys
     public const VAULT_EDIT_PROCESS_ID = 'registrationProcessId';
 
     public const API_NFC_USERS = 'api_nfc_users';
+    public const API_NFC_DECRYPT = 'api_nfc_decrypt';
 }

@@ -12,7 +12,7 @@ use App\Attribute\RequireHmac;
 use App\Attribute\RequireJson;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Service\Shared\RequestService;
-
+use App\Helper\ResponseHelper;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -30,7 +30,8 @@ class NfcController extends AbstractController
         private LoggerInterface $logger,
         private UserService $userService,
         private PayloadValidator $payloadValidator ,
-        private RequestService $requestService
+        private RequestService $requestService,
+        private ResponseHelper $responseHelper,
     ) {}
 
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
@@ -52,16 +53,10 @@ class NfcController extends AbstractController
             $this->logger->critical('NFC USERS CALLED 2' . json_encode($payloadArray));
             $this->logger->critical('NFC USERS CALLED 3');
 
-            $headers =  $request->headers->all();
+            $response = ['users' => ['boszormenyirobert@yahoo.com']];
 
-            $corporateIentification = json_decode($request->getContent(), true);       
-
-            $process = "api_nfc_users"; 
-
-            $corporateIentification['hmac'] = $headers['x-client-auth'];
-
-            $response = $this->userService->getNfcUsers($process, $corporateIentification);
-
-            return $this->json($response);
+            return $this->responseHelper->createSuccessResponse(
+                 $response
+            );
         }
 }

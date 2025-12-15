@@ -52,6 +52,10 @@ class NfcController extends AbstractController
         private SodiumService $sodiumService
     ) {}
 
+    /**
+     * Used by the Desktop Application to fetch all NFC users
+     * On the Desktop Application the encrypted NFC data will be written on the NFC card by the selected user
+     */
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
@@ -104,7 +108,7 @@ class NfcController extends AbstractController
                 
                 $nfcEncryptionKey = UtilityHelper::generateKey('nfc'); // This key will be stored in the database for each user
                 $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
-
+                
                 $rawUserData = [
                     'publicId' => $decryptedUser->getPublicId(),
                     'privateId' => $decryptedUser->getPrivateId(),
@@ -123,10 +127,7 @@ class NfcController extends AbstractController
                 }catch(\Exception $e){
                     $this->logger->critical('NFC USERS ENCRYPTION ERROR ' . $e->getMessage());  
                 }
-            }
-
-
-            $this->logger->critical('NFC USERS CALLED 2' . json_encode($nfcData));
+            }           
 
             $response = ['users' => $users];
 

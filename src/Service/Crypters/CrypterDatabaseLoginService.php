@@ -105,12 +105,15 @@ final class CrypterDatabaseLoginService
         $decrypted->setIv($value->getIv());
         $decrypted->setEmail($this->decryptData($value->getEmail(), $iv));
         $decrypted->setCredentialSecret($this->decryptData($value->getCredentialSecret(), $iv));
-        
+
         return $decrypted;
     }
 
     private function decryptData(string $value, string $iv): string
     {
+        if(!$value){
+            return '';
+        }
         $this->key = $this->params->get('DATABASE_HASH_SECRET');
         $decoded = base64_decode($value);
         $decrypted = openssl_decrypt($decoded, $this->cipher, $this->key, 0, $iv);

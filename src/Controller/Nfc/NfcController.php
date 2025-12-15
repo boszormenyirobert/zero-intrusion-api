@@ -36,14 +36,12 @@ class NfcController extends AbstractController
         JwtService $jwtService
         ) {
 
+            $payloadKey = PayloadKeys::API_NFE_USERS;
+
             $this->logger->critical('NFC USERS CALLED 1');
            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
 
-            if (array_key_exists('error', $payload)) {
-                 $this->logger->critical('NFC USERS CALLED 2');
-                return $this->json($payload);        
-            }
-
+            $this->logger->critical('NFC USERS CALLED 2' . json_encode($validatedPayload));
             $this->logger->critical('NFC USERS CALLED 3');
             return ['users' => ['3boszormenyirobert@yahoo.com','3vilagteteje@freemail.hu']];
 

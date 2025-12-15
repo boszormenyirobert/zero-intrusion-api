@@ -158,10 +158,15 @@ class NfcController extends AbstractController
 
             $nfcDataArray = $payloadArray['nfcData'];
 
-            $this->logger->critical('NFC DECRYPT CALLED 0' . $nfcDataArray );
+            // Decode the JSON string to an array
             $decode = \json_decode($nfcDataArray, true);
-            $this->logger->critical('Email: ' . json_encode($decode['Email']));
-            $this->logger->critical('NfcData: ' . json_decode($decode['NfcData'], JSON_THROW_ON_ERROR));
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $this->logger->critical('NFC DECRYPT ERROR: Invalid JSON in nfcData: ' . $nfcDataArray);
+            } else {
+                $this->logger->critical('Email: ' . $decode['Email']);
+                $this->logger->critical('NfcData: ' . $decode['NfcData']);
+            }
 
             $decryptedUserData = $this->sodiumService
                 ->sodiumDecrypt($nfcDataArray['NfcData'], $nfcEncryptionKey);

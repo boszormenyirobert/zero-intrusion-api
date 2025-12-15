@@ -28,8 +28,9 @@ class NfcController extends AbstractController
         private LoggerInterface $logger,
         private JWTEncoderInterface $jwtEncoder,
         private UserService $userService,
-        JwtService $jwtService,
+        private JwtService $jwtService,
         private UserRepository $userRepository,
+        private PayloadValidator $payloadValidator 
     ) {}
 
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]

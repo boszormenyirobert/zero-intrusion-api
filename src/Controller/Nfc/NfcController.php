@@ -153,12 +153,16 @@ class NfcController extends AbstractController
             $payloadArray = $validatedPayload[$payloadKey];
             
             $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
-            
-            // Compare payload corporatePublicId and the corporateAuthentication with the database records
-            $corporateId = $payloadArray['publicId'];
-            $message = $payloadArray['message'];
+            $nfcEncryptionKey = "MyTestEncryptionKey123";
 
-            $this->logger->critical('Message ' . json_encode($message));
+            // Compare payload corporatePublicId and the corporateAuthentication with the database records
+            $email = $payloadArray['Email'];
+            $nfcData = $payloadArray['NfcData'];
+            $header = $payloadArray['hmac'];
+
+            $decryptedUserData = $this->sodiumService->sodiumDecrypt($nfcData, $nfcEncryptionKey);
+
+            $this->logger->critical('Message ' . json_encode($decryptedUserData));
 
             $corporateId = $this->corporateIdentityRepository->findOneBy([
                 'corporateId' =>  $corporateId,
@@ -172,6 +176,9 @@ class NfcController extends AbstractController
                     $this->responseHelper->createErrorResponse('NFC Users 001: Corporate identity not found.', 404)
                 );
             }
-
+            $response = ['decryptedData' => $decryptedUserData];
+            return $this->json(
+                 $response
+            );
         }
 }

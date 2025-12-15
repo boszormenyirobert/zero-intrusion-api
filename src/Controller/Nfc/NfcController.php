@@ -169,17 +169,24 @@ class NfcController extends AbstractController
                 } else {
                     $nfcEmail = $decode['Email'] ?? null;
                     $nfcEncryptedData = $decode['NfcData'] ?? null;
-                    $this->logger->critical('Email: ' . $nfcEmail);
-                    $this->logger->critical('NfcData: ' . $nfcEncryptedData);
                 }
             } elseif (is_array($nfcDataArray)) {
                 $nfcEmail = $nfcDataArray['Email'] ?? null;
                 $nfcEncryptedData = $nfcDataArray['NfcData'] ?? null;
-                $this->logger->critical('Email: ' . $nfcEmail);
-                $this->logger->critical('NfcData: ' . $nfcEncryptedData);
             } else {
                 $this->logger->critical('NFC DECRYPT ERROR: Unexpected nfcData type');
             }
+
+            // Only attempt decryption if we have the encrypted data
+            $decryptedUserData = null;
+            if ($nfcEncryptedData !== null) {
+                $decryptedUserData = $this->sodiumService->sodiumDecrypt($nfcEncryptedData, $nfcEncryptionKey);
+            }
+
+            $this->logger->critical('NFC DECRYPT CALLED 3');
+            $this->logger->critical('Email: ' . $nfcEmail);
+            $this->logger->critical('NfcData: ' . $nfcEncryptedData);
+            $this->logger->critical('Message ' . json_encode($decryptedUserData));
 
             // Only attempt decryption if we have the encrypted data
             $decryptedUserData = null;

@@ -88,7 +88,11 @@ class NfcController extends AbstractController
                 $this->logger->critical('NFC identity' . json_encode($identity));
                 $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);
                 $users[] = [
-                    'email' => $decryptedUser->getEmail(),                    
+                    'email' => $decryptedUser->getEmail(),
+                    'publicId' => $decryptedUser->getPublicId(),
+                    'privateId' => $decryptedUser->getPrivateId(),
+                    'secret' => $decryptedUser->getSecret(),
+                    'credentialSecret' => $decryptedUser->getCredentialSecret()              
                 ];
             }
 

@@ -104,6 +104,8 @@ final class CrypterDatabaseLoginService
         $decrypted->setPublicId($value->getPublicId());
         $decrypted->setIv($value->getIv());
         $decrypted->setEmail($this->decryptData($value->getEmail(), $iv));
+        $decrypted->setCredentialSecret($this->decryptData($value->getCredentialSecret(), $iv));
+        
         return $decrypted;
     }
 

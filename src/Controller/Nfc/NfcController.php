@@ -157,26 +157,35 @@ class NfcController extends AbstractController
 
 
 
-$nfcDataArray = $payloadArray['nfcData'];
 
-if (is_string($nfcDataArray)) {
-    $decode = json_decode($nfcDataArray, true);
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        $this->logger->critical('NFC DECRYPT ERROR: Invalid JSON in nfcData: ' . $nfcDataArray);
-        // handle error
-    } else {
-        $this->logger->critical('Email: ' . $decode['Email']);
-        $this->logger->critical('NfcData: ' . $decode['NfcData']);
-    }
-} elseif (is_array($nfcDataArray)) {
-    $this->logger->critical('Email: ' . $nfcDataArray['Email']);
-    $this->logger->critical('NfcData: ' . $nfcDataArray['NfcData']);
-} else {
-    $this->logger->critical('NFC DECRYPT ERROR: Unexpected nfcData type');
-}
+            $nfcDataArray = $payloadArray['nfcData'];
+            $nfcEmail = null;
+            $nfcEncryptedData = null;
 
-            $decryptedUserData = $this->sodiumService
-                ->sodiumDecrypt($nfcDataArray['NfcData'], $nfcEncryptionKey);
+            if (is_string($nfcDataArray)) {
+                $decode = json_decode($nfcDataArray, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    $this->logger->critical('NFC DECRYPT ERROR: Invalid JSON in nfcData: ' . $nfcDataArray);
+                } else {
+                    $nfcEmail = $decode['Email'] ?? null;
+                    $nfcEncryptedData = $decode['NfcData'] ?? null;
+                    $this->logger->critical('Email: ' . $nfcEmail);
+                    $this->logger->critical('NfcData: ' . $nfcEncryptedData);
+                }
+            } elseif (is_array($nfcDataArray)) {
+                $nfcEmail = $nfcDataArray['Email'] ?? null;
+                $nfcEncryptedData = $nfcDataArray['NfcData'] ?? null;
+                $this->logger->critical('Email: ' . $nfcEmail);
+                $this->logger->critical('NfcData: ' . $nfcEncryptedData);
+            } else {
+                $this->logger->critical('NFC DECRYPT ERROR: Unexpected nfcData type');
+            }
+
+            // Only attempt decryption if we have the encrypted data
+            $decryptedUserData = null;
+            if ($nfcEncryptedData !== null) {
+                $decryptedUserData = $this->sodiumService->sodiumDecrypt($nfcEncryptedData, $nfcEncryptionKey);
+            }
 
 $this->logger->critical('NFC DECRYPT CALLED 3');
             $this->logger->critical('Message ' . json_encode($decryptedUserData));

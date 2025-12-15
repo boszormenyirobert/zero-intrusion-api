@@ -18,6 +18,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use App\Service\JWT\JwtService;
 use App\Controller\CredentialHub\PayloadKeys;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Attribute\RequireHmac;
+use App\Attribute\RequireJson;
 
 class NfcController extends AbstractController
 {

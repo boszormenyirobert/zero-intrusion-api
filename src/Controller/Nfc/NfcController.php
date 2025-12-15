@@ -157,7 +157,7 @@ class NfcController extends AbstractController
             $this->logger->critical('NFC DECRYPT CALLED 1' . json_encode($payloadArray) );
 
             $nfcDataArray = $payloadArray['nfcData'];
-
+            $this->logger->critical('NFC DECRYPT CALLED 1' . json_encode($nfcDataArray) );
             $this->logger->critical('Email: ' . $nfcDataArray['Email']);
             $this->logger->critical('NfcData: ' . json_decode($nfcDataArray['NfcData'], JSON_THROW_ON_ERROR));
 

@@ -30,4 +30,6 @@ final class PayloadKeys
     public const VAULT_EDIT_CREDENTIAL = 'vault_edit_credential';
     public const VAULT_EDIT_STATE = 'vault_edit_state';
     public const VAULT_EDIT_PROCESS_ID = 'registrationProcessId';
+
+    public const API_NFC_USERS = 'api_nfc_users';
 }

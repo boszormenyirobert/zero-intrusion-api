@@ -49,7 +49,7 @@ class IdentityService
             $configPath = $this->params->get('OPENSSL_CNF');;
 
             if (!file_exists($configPath)) {
-                $this->logger->critical("Nem találom az openssl.cnf fájlt: $configPath\n");
+                $this->logger->critical("The openssl.cnf file is missing: $configPath\n");
             }
 
             putenv("OPENSSL_CONF=$configPath");

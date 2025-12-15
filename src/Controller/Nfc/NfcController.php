@@ -24,6 +24,8 @@ use App\Helper\ResponseHelper;
 use App\Repository\CorporateIdentityRepository;
 use App\Repository\IdentityRepository;
 use App\Service\Crypters\CrypterDatabaseLoginService;
+use App\Helper\UtilityHelper;
+use App\Service\Crypters\SodiumService;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -45,7 +47,9 @@ class NfcController extends AbstractController
         private ResponseHelper $responseHelper,
         private CorporateIdentityRepository $corporateIdentityRepository,
         private IdentityRepository $identityRepository,
-        private CrypterDatabaseLoginService $crypterDatabaseLoginService
+        private CrypterDatabaseLoginService $crypterDatabaseLoginService,
+        private UtilityHelper $utilityHelper,
+        private SodiumService $sodiumService
     ) {}
 
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
@@ -87,17 +91,37 @@ class NfcController extends AbstractController
             foreach ($usersEncrypted as $identity) {
                 $this->logger->critical('NFC identity' . json_encode($identity));
                 $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);
-                $users[] = [
-                    'email' => $decryptedUser->getEmail(),
+
+                /**
+                 * TODO
+                 * 
+                 * Create from the [publicId, privateId, secret, credentialSecret] key => value an encrypted string 
+                 * save the encryption key in the database, and send only the encrypted string to the Desktop Application
+                 * Encrypted string will be written on the NFC-card
+                 * Delete the credentialSecret from the database after NFC-card activation
+                 * Secret has to be stored in the database, because it is for the secure communication between Handy Device and API
+                 **/
+                
+                $nfcEncryptionKey = $this->utilityHelper->generateKey('nfc'); // This key will be stored in the database for each user
+                
+                $rawUserData = [
                     'publicId' => $decryptedUser->getPublicId(),
                     'privateId' => $decryptedUser->getPrivateId(),
                     'secret' => $decryptedUser->getSecret(),
-                    'credentialSecret' => $decryptedUser->getCredentialSecret()              
+                    'credentialSecret' => $decryptedUser->getCredentialSecret()
+                ];  
+                
+                $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
+                $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
+                
+                $users[] = [
+                    'email' => $decryptedUser->getEmail(),
+                    'nfcData' => $encryptedUserData            
                 ];
             }
 
 
-            $this->logger->critical('NFC USERS CALLED 2' . json_encode($users));
+            $this->logger->critical('NFC USERS CALLED 2' . json_encode($nfcData));
 
             $response = ['users' => $users];
 

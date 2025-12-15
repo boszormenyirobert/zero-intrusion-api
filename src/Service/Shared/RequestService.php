@@ -62,6 +62,7 @@ class RequestService
         return $payload;
     }
 
+    // Every request accepted only from the HUB application with the key: zeroIntrusionProyApi
     public function validPayload($payload)
     {
         $this->crypterService->setData($payload['zeroIntrusionProyApi']);

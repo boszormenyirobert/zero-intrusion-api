@@ -91,6 +91,7 @@ class PayloadValidator
             $payload = $request->attributes->get('json_payload');
             $validatedPayload = $this->requestService->validPayload($payload);
 
+            // Every request have a specific key by api-endpoint
             if ($key && !isset($validatedPayload[$key])) {
                 $this->logger->critical(sprintf('Property "%s" missing', $key));
                 throw new MissingKeyException(sprintf('Property "%s" missing', $key));

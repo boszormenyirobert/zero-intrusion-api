@@ -1,7 +1,9 @@
 <?php
 
 /**
- * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
+ * Identity => Describe an USER, USER DEVICE
+ * 
+ * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
  */
 
 namespace App\Controller\Identity;
@@ -52,7 +54,7 @@ class IdentityController extends AbstractController
         }
     }
 
-    /** Called by Mobil forwarded by ProxyApi
+    /** Called by Mobil forwarded by HUB
      * 
      * Second step in the device registration.
      * Retrive email and phone number and privacyPolicy and fcm_token from the request payload,

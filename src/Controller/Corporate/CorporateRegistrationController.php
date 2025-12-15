@@ -1,5 +1,7 @@
 <?php
 /**
+ * Domain registration on the HUB for QR and "OneTouch" services
+ * 
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
  * 
  */

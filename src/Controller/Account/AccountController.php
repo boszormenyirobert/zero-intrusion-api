@@ -1,5 +1,7 @@
 <?php
 /**
+ * Handling an registrated Corporate account
+ * 
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
  * 
  */

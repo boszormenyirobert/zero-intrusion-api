@@ -25,7 +25,7 @@ class ValidationHandler
         $userIntegritySecretObject = $this->identityRepository->findOneBy(['publicId' => $user['publicId']]);
         
         // This is the secret which is responsible to data-integrity and data-decryption
-        // The user-credential encrypted by the credential_secret, which is deleted from the database after NFC write
+        // The user-credential encrypted by the credential_secret, which is deleted from the database after NFC Card created
         
         $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($userIntegritySecretObject);
         $userIntegritySecret = $decrypted->getSecret();

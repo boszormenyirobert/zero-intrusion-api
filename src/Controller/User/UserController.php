@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * User registration/login on the HUB or on any registrated WEB site
+ * 
+ * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
+ */
+
 namespace App\Controller\User;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

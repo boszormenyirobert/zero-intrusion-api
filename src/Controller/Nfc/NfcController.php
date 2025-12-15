@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * NFC => Communication with the Desktop Applicaiton
+ * 
+ * All communication through the HUB
+ * 
+ * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
+ */
+
 namespace App\Controller\Nfc;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

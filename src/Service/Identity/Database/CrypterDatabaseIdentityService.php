@@ -31,7 +31,10 @@ final class CrypterDatabaseIdentityService
 
         foreach ($fields as $field => $setter) {
             if (isset($secretData[$field])) {
-                $encryptedSecret->$setter($this->encryptData($secretData[$field], $iv));
+                $encryptedSecret->$setter('');
+                if(!$secretData[$field]){
+                    $encryptedSecret->$setter($this->encryptData($secretData[$field], $iv));
+                }
             }
         }
 

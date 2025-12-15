@@ -97,8 +97,7 @@ class NfcController extends AbstractController
             }
 
 
-            $this->logger->critical('NFC USERS CALLED 2' . json_encode($payloadArray));
-            $this->logger->critical('NFC USERS CALLED 3');
+            $this->logger->critical('NFC USERS CALLED 2' . json_encode($users));
 
             $response = ['users' => $users];
 

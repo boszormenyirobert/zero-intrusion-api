@@ -155,9 +155,9 @@ class NfcController extends AbstractController
 
             // Compare payload corporatePublicId and the corporateAuthentication with the database records
             $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
-            $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray['nfcData']) );
+            $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray['NfcData']) );
 
-            $email = $payloadArray['nfcData']['Email'];
+            $email = $payloadArray['NfcData']['Email'];
 
             $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
             $this->logger->critical('NFC DECRYPT Email ' . $email );

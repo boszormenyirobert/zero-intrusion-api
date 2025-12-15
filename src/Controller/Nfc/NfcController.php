@@ -103,7 +103,8 @@ class NfcController extends AbstractController
                  **/
                 
                 $nfcEncryptionKey = $this->utilityHelper->generateKey('nfc'); // This key will be stored in the database for each user
-                
+                 $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
+
                 $rawUserData = [
                     'publicId' => $decryptedUser->getPublicId(),
                     'privateId' => $decryptedUser->getPrivateId(),

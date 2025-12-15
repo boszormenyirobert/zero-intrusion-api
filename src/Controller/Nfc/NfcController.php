@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use App\Attribute\RequireHmac;
 use App\Attribute\RequireJson;
 use App\Controller\CredentialHub\PayloadKeys;
+use App\Service\Shared\RequestService;
 
 
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,7 +29,8 @@ class NfcController extends AbstractController
     public function __construct(
         private LoggerInterface $logger,
         private UserService $userService,
-        private PayloadValidator $payloadValidator 
+        private PayloadValidator $payloadValidator ,
+        private RequestService $requestService
     ) {}
 
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]

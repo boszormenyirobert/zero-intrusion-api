@@ -17,6 +17,7 @@ use App\DTO\RegistrationProcessDTO;
 use Symfony\Component\HttpFoundation\Response;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 use App\Service\JWT\JwtService;
+use App\Controller\CredentialHub\PayloadKeys;
 
 class NfcController extends AbstractController
 {
@@ -36,7 +37,7 @@ class NfcController extends AbstractController
         JwtService $jwtService
         ) {
 
-            $payloadKey = PayloadKeys::API_NFE_USERS;
+            $payloadKey = PayloadKeys::API_NFC_USERS;
 
             $this->logger->critical('NFC USERS CALLED 1');
            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);

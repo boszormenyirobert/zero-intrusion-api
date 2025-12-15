@@ -15,7 +15,7 @@ use App\Service\Shared\RequestService;
 use App\Helper\ResponseHelper;
 use App\Repository\CorporateIdentityRepository;
 use App\Repository\IdentityRepository;
-use App\Service\Crypters\App\Service\Crypters\CrypterDatabaseLoginService;
+use App\Service\Crypters\CrypterDatabaseLoginService;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -77,6 +77,7 @@ class NfcController extends AbstractController
             $users = [];
             
             foreach ($usersEncrypted as $identity) {
+                $this->logger->critical('NFC identity' . json_encode($identity));
                 $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);
                 $users[] = [
                     'email' => $decryptedUser->getEmail(),                    

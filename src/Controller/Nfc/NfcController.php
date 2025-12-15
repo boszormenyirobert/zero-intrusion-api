@@ -143,7 +143,6 @@ class NfcController extends AbstractController
         public function NfcDecryptCardData(
         Request $request
         ) {
-            $this->logger->critical('NFC DECRYPT CALLED ' );
             $payloadKey = PayloadKeys::API_NFC_DECRYPT;
             // Controll the request coming from the HUB and validate HMAC ~ Data integrity (shared secret HUB - API)
             $payload = $this->requestService->requestControll($request);
@@ -152,13 +151,14 @@ class NfcController extends AbstractController
             // Access to the paylaoad by shared payloadKey
             $payloadArray = $validatedPayload[$payloadKey];
             
-            $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
             $nfcEncryptionKey = "MyTestEncryptionKey123";
 
             // Compare payload corporatePublicId and the corporateAuthentication with the database records
             $email = $payloadArray['Email'];
             $nfcData = $payloadArray['NfcData'];
             $header = $payloadArray['hmac'];
+            $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
+            $this->logger->critical('NFC DECRYPT Email ' . $email );
 
             $decryptedUserData = $this->sodiumService->sodiumDecrypt($nfcData, $nfcEncryptionKey);
 

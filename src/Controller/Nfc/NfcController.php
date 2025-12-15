@@ -6,18 +6,22 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Controller\User\UserService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Controller\PayloadValidator\PayloadValidator;
 use Symfony\Component\HttpFoundation\Request;
+use App\Attribute\RequireHmac;
+use App\Attribute\RequireJson;
+use App\Controller\CredentialHub\PayloadKeys;
+
+
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\HttpFoundation\Cookie;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use App\DTO\RegistrationProcessDTO;
 use Symfony\Component\HttpFoundation\Response;
-use App\Controller\CredentialHub\PayloadKeys;
-use App\Controller\PayloadValidator\PayloadValidator;
-use App\Attribute\RequireHmac;
-use App\Attribute\RequireJson;
+
+
 
 class NfcController extends AbstractController
 {
@@ -31,18 +35,19 @@ class NfcController extends AbstractController
     #[RequireHmac]
     #[RequireJson]
     public function getNfcUsers(
-        Request $request,
-        JwtService $jwtService
+        Request $request
         ) {
 
             $payloadKey = PayloadKeys::API_NFC_USERS;
 
             $this->logger->critical('NFC USERS CALLED 1');
-           $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
+            $validatedPayload = $this->requestService->validPayload($payload);
+            $payloadArray = $validatedPayload['get_registrated_business'];
 
-            $this->logger->critical('NFC USERS CALLED 2' . json_encode($validatedPayload));
+
+            $this->logger->critical('NFC USERS CALLED 2' . json_encode($payloadArray));
             $this->logger->critical('NFC USERS CALLED 3');
-return $this->json(['users' => ['3boszormenyirobert@yahoo.com','3vilagteteje@freemail.hu']]);
+
             $headers =  $request->headers->all();
 
             $corporateIentification = json_decode($request->getContent(), true);       

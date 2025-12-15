@@ -14,6 +14,8 @@ use App\Controller\CredentialHub\PayloadKeys;
 use App\Service\Shared\RequestService;
 use App\Helper\ResponseHelper;
 use App\Repository\CorporateIdentityRepository;
+use App\Repository\IdentityRepository;
+use App\Service\Crypters\App\Service\Crypters\CrypterDatabaseLoginService;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -33,7 +35,9 @@ class NfcController extends AbstractController
         private PayloadValidator $payloadValidator ,
         private RequestService $requestService,
         private ResponseHelper $responseHelper,
-        private CorporateIdentityRepository $corporateIdentityRepository
+        private CorporateIdentityRepository $corporateIdentityRepository,
+        private IdentityRepository $identityRepository,
+        private CrypterDatabaseLoginService $crypterDatabaseLoginService
     ) {}
 
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
@@ -68,10 +72,22 @@ class NfcController extends AbstractController
                 );
             }
             
+            // TODO : Fetch NFC users from database
+            $usersEncrypted = $this->identityRepository->findAll();
+            $users = [];
+            
+            foreach ($usersEncrypted as $identity) {
+                $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);
+                $users[] = [
+                    'email' => $decryptedUser->getEmail(),                    
+                ];
+            }
+
+
             $this->logger->critical('NFC USERS CALLED 2' . json_encode($payloadArray));
             $this->logger->critical('NFC USERS CALLED 3');
 
-            $response = ['users' => ['boszormenyirobert@yahoo.com']];
+            $response = ['users' => $users];
 
             return $this->json(
                  $response

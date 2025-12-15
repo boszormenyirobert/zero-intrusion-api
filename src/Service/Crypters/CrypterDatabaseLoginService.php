@@ -88,7 +88,7 @@ final class CrypterDatabaseLoginService
         return $decrypted;
     }
 
-
+    // Decrypt User Identity from database
     public function decryptFromDatabaseidentity(Identity $value): Identity
     {
         $this->key = $this->params->get('DATABASE_HASH_SECRET');
@@ -100,7 +100,7 @@ final class CrypterDatabaseLoginService
 
         $decrypted = new identity();
         $decrypted->setPrivateId($this->decryptData($value->getPrivateId(), $iv));
-        $decrypted->setSecret($this->decryptData($value->getSecret(), $iv)); // userIntegritySecret
+        $decrypted->setSecret($this->decryptData($value->getSecret(), $iv)); // userIntegritySecret => Secret will be deleted after NFC-card activation
         $decrypted->setPublicId($value->getPublicId());
         $decrypted->setIv($value->getIv());
 

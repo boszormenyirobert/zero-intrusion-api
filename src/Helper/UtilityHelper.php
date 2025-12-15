@@ -22,7 +22,7 @@ final class UtilityHelper
     /**
      * Generate a single hashed value with a prefix
      */
-    private static function generateKey(string $prefix): string
+    public static function generateKey(string $prefix): string
     {
         return substr($prefix . '_' . base64_encode(random_bytes(90)), 0, 64);
     }

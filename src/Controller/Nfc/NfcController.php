@@ -156,17 +156,24 @@ class NfcController extends AbstractController
             // Compare payload corporatePublicId and the corporateAuthentication with the database records
 
 
-            $nfcDataArray = $payloadArray['nfcData'];
 
-            // Decode the JSON string to an array
-            $decode = \json_decode($nfcDataArray, true);
+$nfcDataArray = $payloadArray['nfcData'];
 
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->logger->critical('NFC DECRYPT ERROR: Invalid JSON in nfcData: ' . $nfcDataArray);
-            } else {
-                $this->logger->critical('Email: ' . $decode['Email']);
-                $this->logger->critical('NfcData: ' . $decode['NfcData']);
-            }
+if (is_string($nfcDataArray)) {
+    $decode = json_decode($nfcDataArray, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $this->logger->critical('NFC DECRYPT ERROR: Invalid JSON in nfcData: ' . $nfcDataArray);
+        // handle error
+    } else {
+        $this->logger->critical('Email: ' . $decode['Email']);
+        $this->logger->critical('NfcData: ' . $decode['NfcData']);
+    }
+} elseif (is_array($nfcDataArray)) {
+    $this->logger->critical('Email: ' . $nfcDataArray['Email']);
+    $this->logger->critical('NfcData: ' . $nfcDataArray['NfcData']);
+} else {
+    $this->logger->critical('NFC DECRYPT ERROR: Unexpected nfcData type');
+}
 
             $decryptedUserData = $this->sodiumService
                 ->sodiumDecrypt($nfcDataArray['NfcData'], $nfcEncryptionKey);

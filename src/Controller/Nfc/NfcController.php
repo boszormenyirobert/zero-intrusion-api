@@ -154,8 +154,8 @@ class NfcController extends AbstractController
             $nfcEncryptionKey = "MyTestEncryptionKey123";
 
             // Compare payload corporatePublicId and the corporateAuthentication with the database records
-            $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
-            $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray['NfcData']) );
+            $this->logger->critical('NFC DECRYPT CALLED 1' . json_encode($payloadArray) );
+            $this->logger->critical('NFC DECRYPT CALLED 2' . json_encode($payloadArray['NfcData']) );
 
 
             $stringRawUserData = json_encode($payloadArray['NfcData'], JSON_THROW_ON_ERROR);

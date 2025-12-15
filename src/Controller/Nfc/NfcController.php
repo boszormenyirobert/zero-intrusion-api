@@ -157,12 +157,9 @@ class NfcController extends AbstractController
             $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
             $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray['NfcData']) );
 
-            $email = $payloadArray['NfcData']['Email'];
 
-            $this->logger->critical('NFC DECRYPT CALLED ' . json_encode($payloadArray) );
-            $this->logger->critical('NFC DECRYPT Email ' . $email );
-
-            $decryptedUserData = $this->sodiumService->sodiumDecrypt($nfcData, $nfcEncryptionKey);
+            $stringRawUserData = json_encode($payloadArray['NfcData'], JSON_THROW_ON_ERROR);
+            $decryptedUserData = $this->sodiumService->sodiumDecrypt($stringRawUserData, $nfcEncryptionKey);
 
             $this->logger->critical('Message ' . json_encode($decryptedUserData));
 

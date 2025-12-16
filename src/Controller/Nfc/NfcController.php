@@ -161,21 +161,14 @@ class NfcController extends AbstractController
             $this->logger->critical('NFC DECRYPT CALLED 3');
             $this->logger->critical('Email: ' . $payloadArray['Email']);
             $this->logger->critical('NfcData: ' . $payloadArray['NfcData']);
-            $this->logger->critical('Message ' . json_encode($decryptedUserData));
 
             // Only attempt decryption if we have the encrypted data
             $decryptedUserData = null;
             if ($nfcEncryptedData !== null) {
                 $decryptedUserData = $this->sodiumService->sodiumDecrypt($payloadArray['NfcData'], $nfcEncryptionKey);
             }
-
-            // Only attempt decryption if we have the encrypted data
-            $decryptedUserData = null;
-            if ($nfcEncryptedData !== null) {
-                $decryptedUserData = $this->sodiumService->sodiumDecrypt($nfcEncryptedData, $nfcEncryptionKey);
-            }
-
-$this->logger->critical('NFC DECRYPT CALLED 3');
+            
+            $this->logger->critical('NFC DECRYPT CALLED 3');
             $this->logger->critical('Message ' . json_encode($decryptedUserData));
 
             $corporateId = $this->corporateIdentityRepository->findOneBy([

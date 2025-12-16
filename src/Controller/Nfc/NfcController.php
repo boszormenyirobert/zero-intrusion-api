@@ -116,7 +116,7 @@ class NfcController extends AbstractController
                     'secret' => $decryptedUser->getSecret(),
                     'credentialSecret' => $decryptedUser->getCredentialSecret()
                 ];  
-                
+                $this->logger->critical('$rawUserData' . $rawUserData);
                 try{
                     $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
                     $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);

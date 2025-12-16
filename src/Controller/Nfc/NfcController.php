@@ -167,7 +167,10 @@ class NfcController extends AbstractController
             
             
             $this->logger->critical('NFC DECRYPT CALLED 3');
-            $this->logger->critical('Message ' . $decryptedUserDataJson);
+            $randomPin = rand(10000000, 99999999);
+            $this->logger->critical('PIN : ' . $randomPin);
+            // TODO => send in e-mail && || SMS to the user
+            $decryptedUserDataJson['pin'] = $randomPin;
 
             $userData = json_decode($decryptedUserDataJson, true);
 

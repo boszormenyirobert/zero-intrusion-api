@@ -155,38 +155,19 @@ class NfcController extends AbstractController
 
             // Compare payload corporatePublicId and the corporateAuthentication with the database records
 
-
-
-
-            $nfcDataArray = $payloadArray['nfcData'];
             $nfcEmail = null;
             $nfcEncryptedData = null;
 
-            if (is_string($nfcDataArray)) {
-                $decode = json_decode($nfcDataArray, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    $this->logger->critical('NFC DECRYPT ERROR: Invalid JSON in nfcData: ' . $nfcDataArray);
-                } else {
-                    $nfcEmail = $decode['Email'] ?? null;
-                    $nfcEncryptedData = $decode['NfcData'] ?? null;
-                }
-            } elseif (is_array($nfcDataArray)) {
-                $nfcEmail = $nfcDataArray['Email'] ?? null;
-                $nfcEncryptedData = $nfcDataArray['NfcData'] ?? null;
-            } else {
-                $this->logger->critical('NFC DECRYPT ERROR: Unexpected nfcData type');
-            }
+            $this->logger->critical('NFC DECRYPT CALLED 3');
+            $this->logger->critical('Email: ' . $payloadArray['email']);
+            $this->logger->critical('NfcData: ' . $payloadArray['nfcData']);
+            $this->logger->critical('Message ' . json_encode($decryptedUserData));
 
             // Only attempt decryption if we have the encrypted data
             $decryptedUserData = null;
             if ($nfcEncryptedData !== null) {
-                $decryptedUserData = $this->sodiumService->sodiumDecrypt($nfcEncryptedData, $nfcEncryptionKey);
+                $decryptedUserData = $this->sodiumService->sodiumDecrypt($payloadArray['nfcData'], $nfcEncryptionKey);
             }
-
-            $this->logger->critical('NFC DECRYPT CALLED 3');
-            $this->logger->critical('Email: ' . $nfcEmail);
-            $this->logger->critical('NfcData: ' . $nfcEncryptedData);
-            $this->logger->critical('Message ' . json_encode($decryptedUserData));
 
             // Only attempt decryption if we have the encrypted data
             $decryptedUserData = null;

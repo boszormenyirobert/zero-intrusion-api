@@ -171,21 +171,8 @@ class NfcController extends AbstractController
 
             $userData = json_decode($decryptedUserDataJson, true);
 
-            $corporateId = $this->corporateIdentityRepository->findOneBy([
-                'corporateId' =>  $userData['corporateId'],
-                'corporateIdKey' => $userData['corporateIdKey']
-            ]);
-
-            if (!$corporateId) {
-                $this->logger->critical('NFC USERS CALLED - CORPORATE ID NOT FOUND ' . json_encode($payloadArray));
-
-                return $this->json(
-                    $this->responseHelper->createErrorResponse('NFC Users 001: Corporate identity not found.', 404)
-                );
-            }
-            $response = ['decryptedData' => $decryptedUserData];
             return $this->json(
-                 $response
+                  $userData
             );
         }
 }

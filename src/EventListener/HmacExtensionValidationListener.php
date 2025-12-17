@@ -48,12 +48,20 @@ class HmacExtensionValidationListener
     }
         
         $this->logger->critical('Middle HmacExtensionValidationListener');
+        try{
+            $request = $event->getRequest();
+            $authHeader = $request->headers->get('X-Extension-Auth');
+            $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
 
-        $request = $event->getRequest();
-        $authHeader = $request->headers->get('X-Extension-Auth');
-        $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
-
-        $payload = json_decode($request->getContent(), true);
+            $payload = json_decode($request->getContent(), true);
+        } catch (\Exception $e) {
+            $this->logger->critical('Exception during request processing: ' . $e->getMessage());
+            $event->setController(fn() => new JsonResponse([
+                'success' => false,
+                'error' => 'Exception during request processing',
+            ], 400));
+            $event->stopPropagation();;return;
+        }
 
         if (!is_array($payload)) {
             $this->logger->critical('Invalid JSON body');

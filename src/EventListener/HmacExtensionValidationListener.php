@@ -33,6 +33,8 @@ class HmacExtensionValidationListener
         if (!$hasHmacCheck) {
             return;
         }
+        
+        $this->logger->critical('Middle HmacExtensionValidationListener');
 
         $request = $event->getRequest();
         $authHeader = $request->headers->get('X-Extension-Auth');

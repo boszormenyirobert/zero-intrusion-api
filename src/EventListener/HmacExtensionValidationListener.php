@@ -24,7 +24,6 @@ class HmacExtensionValidationListener
 
     public function onKernelController(ControllerEvent $event): void
     {
-    $this->logger->critical('Start HmacExtensionValidationListener');
 
     $request = $event->getRequest();
     $controllerString = $request->attributes->get('_controller');
@@ -46,7 +45,6 @@ class HmacExtensionValidationListener
         return;
     }
         
-        $this->logger->critical('Middle HmacExtensionValidationListener');
         try{
             $request = $event->getRequest();
             $authHeader = $request->headers->get('X-Extension-Auth');
@@ -63,7 +61,6 @@ class HmacExtensionValidationListener
             $event->stopPropagation();;
             return;
         }
-$this->logger->critical('HmacExtensionValidationListener :1');
 
         if (!is_array($payload)) {
             $this->logger->critical('Invalid JSON body');
@@ -73,7 +70,6 @@ $this->logger->critical('HmacExtensionValidationListener :1');
             ], 400));
             $event->stopPropagation();;return;
         }
-$this->logger->critical('HmacExtensionValidationListener :2');
 
         if (!isset($payload['iv'], $payload['zeroIntrusionProyApi'])) {
             $this->logger->critical('Missing required fields');
@@ -83,7 +79,6 @@ $this->logger->critical('HmacExtensionValidationListener :2');
             ], 400));
             $event->stopPropagation();;return;
         }
-$this->logger->critical('HmacExtensionValidationListener :3');
 
         $this->crypterService->setData($payload['zeroIntrusionProyApi']);
 
@@ -98,7 +93,6 @@ $this->logger->critical('HmacExtensionValidationListener :3');
             ], 400));
             $event->stopPropagation();;return;
         }
-$this->logger->critical('HmacExtensionValidationListener :4');
         $innerJson = $data[$payloadKey] ?? null;
 
         if ($innerJson) {
@@ -120,21 +114,16 @@ $this->logger->critical('HmacExtensionValidationListener :4');
             ], 400));
             $event->stopPropagation();;return;
         }
-$this->logger->critical('HmacExtensionValidationListener :5');
+
         if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {
             $this->logger->critical('Missing HMAC header or process ID.');
-            
-            $this->logger->critical('authHeader: ' . json_encode($authHeader));
-            $this->logger->critical('$processId: ' . json_encode($processId));
-            $this->logger->critical('$payloadKey: ' . json_encode($payloadKey));
-
             $event->setController(fn() => new JsonResponse([
                 'success' => false,
                 'error' => 'Missing HMAC header or process ID.',
             ], 403));
             $event->stopPropagation();;return;
         }
-$this->logger->critical('HmacExtensionValidationListener :6');
+
         $processKey =  $this->resolveProcessKey($payloadKey);
 
         if (!$processKey) {
@@ -145,20 +134,25 @@ $this->logger->critical('HmacExtensionValidationListener :6');
             ], 400));
             $event->stopPropagation();;return;
         }
-$this->logger->critical('HmacExtensionValidationListener :7');
-        $process = $this->authBridgeRepository->findOneBy([
-            $processKey => $processId
-        ]);
 
-        if (!$process || !$this->isHmacValid($authHeader, $process)) {
-            $this->logger->critical('Invalid HMAC Extension authentication.');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Invalid or expired HMAC from the extension',
-            ], 403));
-            $event->stopPropagation();
+        if($processKey !== 'api_nfc_users'){
+            $process = $this->authBridgeRepository->findOneBy([
+                $processKey => $processId
+            ]);
+            if (!$process || !$this->isHmacValid($authHeader, $process)) {
+                $this->logger->critical('Invalid HMAC Extension authentication.');
+                $event->setController(fn() => new JsonResponse([
+                    'success' => false,
+                    'error' => 'Invalid or expired HMAC from the extension',
+                ], 403));
+                $event->stopPropagation();
+            }
         }
-         $this->logger->critical('Stop HmacExtensionValidationListener');
+        
+        if($processKey !== 'api_nfc_users'){
+            $this->logger->critical('MISSING HMAC DESKTOP HMAC VALIDATION.');
+        }
+        $this->logger->critical('Stop HmacExtensionValidationListener');
     }
 
     private function isHmacValid(string $authHeader, $process): bool
@@ -217,6 +211,8 @@ $this->logger->critical('HmacExtensionValidationListener :7');
             'vault_edit_state' => 'registrationProcessId',
             'domain_read_credential_encrypted' => 'domainProcessId',
             'vault_read_credential_encrypted' => 'applicationProcessId',
+            'vault_read_credential_encrypted' => 'applicationProcessId',
+            'api_nfc_users' => 'api_nfc_users',
             default => null,
         };
     }

@@ -8,7 +8,7 @@
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
  */
 
-namespace App\Controller\Nfc;
+namespace App\Controller\DeviceManagement\Nfc;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
@@ -58,6 +58,7 @@ class NfcController extends AbstractController
      */
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
     #[RequireHmac]
+    #[ExtensionHmac]
     #[RequireJson]
     public function getNfcUsers(
         Request $request
@@ -139,6 +140,7 @@ class NfcController extends AbstractController
 
         #[Route('/api/nfc/decrypt', name: 'api_nfc_decrypt', methods: "POST")]
         #[RequireHmac]
+        #[ExtensionHmac]
         #[RequireJson]
         public function NfcDecryptCardData(
         Request $request

@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Restore => Device replacement and recovery process => The user have the device. E-mail or Phone-number changed
+ * Restore => Device replacement and recovery process => The user have the old device but wants to replace it with a new one
  * 
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
  */
 
-namespace App\Controller\Restore;
+namespace App\Controller\DeviceManagement\Restore;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;

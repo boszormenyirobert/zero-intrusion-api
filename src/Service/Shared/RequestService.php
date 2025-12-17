@@ -25,8 +25,6 @@ class RequestService
     {
         $payload = UtilityHelper::validateJsonFormat($request);
         if (array_key_exists('error', $payload)) {
-            $this->logger->critical('Identity Config 001: ' . json_encode($request));
-
             return $payload;
         }
 

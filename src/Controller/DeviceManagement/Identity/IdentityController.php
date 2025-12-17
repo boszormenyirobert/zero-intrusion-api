@@ -6,7 +6,7 @@
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
  */
 
-namespace App\Controller\Identity;
+namespace App\Controller\DeviceManagement\Identity;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;

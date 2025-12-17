@@ -29,7 +29,6 @@ class HmacExtensionValidationListener
     $request = $event->getRequest();
     $controllerString = $request->attributes->get('_controller');
 
-    // pl: App\Controller\ApiController::getNfcUsers
     if (!is_string($controllerString) || !str_contains($controllerString, '::')) {
         $this->logger->critical('Invalid _controller format');
         return;
@@ -54,13 +53,14 @@ class HmacExtensionValidationListener
             $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
 
             $payload = json_decode($request->getContent(), true);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->logger->critical('Exception during request processing: ' . $e->getMessage());
             $event->setController(fn() => new JsonResponse([
                 'success' => false,
                 'error' => 'Exception during request processing',
             ], 400));
-            $event->stopPropagation();;return;
+            $event->stopPropagation();;
+            return;
         }
 
         if (!is_array($payload)) {

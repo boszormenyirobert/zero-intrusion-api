@@ -18,6 +18,7 @@ use App\Controller\PayloadValidator\PayloadValidator;
 use Symfony\Component\HttpFoundation\Request;
 use App\Attribute\RequireHmac;
 use App\Attribute\RequireJson;
+use App\Attribute\ExtensionHmac;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Service\Shared\RequestService;
 use App\Helper\ResponseHelper;

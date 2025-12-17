@@ -24,21 +24,28 @@ class HmacExtensionValidationListener
 
     public function onKernelController(ControllerEvent $event): void
     {
-        $this->logger->critical('Start HmacExtensionValidationListener');
-        $controllerCallable = $event->getController();
-        if (!is_array($controllerCallable)) {
-            $this->logger->critical('Controller is not array, skip HMAC listener');
-            return;
-        }
+    $this->logger->critical('Start HmacExtensionValidationListener');
 
-        [$controller, $method] = $event->getController();
-        $reflection = new ReflectionMethod($controller, $method);
-        $hasHmacCheck = !empty($reflection->getAttributes(ExtensionHmac::class));
+    $request = $event->getRequest();
+    $controllerString = $request->attributes->get('_controller');
 
-        if (!$hasHmacCheck) {
-            $this->logger->critical('Return before use HmacExtensionValidationListener');
-            return;
-        }
+    // pl: App\Controller\ApiController::getNfcUsers
+    if (!is_string($controllerString) || !str_contains($controllerString, '::')) {
+        $this->logger->critical('Invalid _controller format');
+        return;
+    }
+
+    [$controllerClass, $method] = explode('::', $controllerString, 2);
+
+    $reflection = new \ReflectionMethod($controllerClass, $method);
+    $hasHmacCheck = !empty(
+        $reflection->getAttributes(\App\Attribute\ExtensionHmac::class)
+    );
+
+    if (!$hasHmacCheck) {
+        $this->logger->critical('Return before use HmacExtensionValidationListener');
+        return;
+    }
         
         $this->logger->critical('Middle HmacExtensionValidationListener');
 

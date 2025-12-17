@@ -53,6 +53,7 @@ class HmacExtensionValidationListener
             $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
 
             $payload = json_decode($request->getContent(), true);
+             $this->logger->critical('Try END HmacExtensionValidationListener');
         } catch (\Throwable $e) {
             $this->logger->critical('Exception during request processing: ' . $e->getMessage());
             $event->setController(fn() => new JsonResponse([
@@ -62,6 +63,7 @@ class HmacExtensionValidationListener
             $event->stopPropagation();;
             return;
         }
+$this->logger->critical('HmacExtensionValidationListener :1');
 
         if (!is_array($payload)) {
             $this->logger->critical('Invalid JSON body');
@@ -71,6 +73,7 @@ class HmacExtensionValidationListener
             ], 400));
             $event->stopPropagation();;return;
         }
+$this->logger->critical('HmacExtensionValidationListener :2');
 
         if (!isset($payload['iv'], $payload['zeroIntrusionProyApi'])) {
             $this->logger->critical('Missing required fields');
@@ -80,6 +83,7 @@ class HmacExtensionValidationListener
             ], 400));
             $event->stopPropagation();;return;
         }
+$this->logger->critical('HmacExtensionValidationListener :3');
 
         $this->crypterService->setData($payload['zeroIntrusionProyApi']);
 
@@ -94,7 +98,7 @@ class HmacExtensionValidationListener
             ], 400));
             $event->stopPropagation();;return;
         }
-
+$this->logger->critical('HmacExtensionValidationListener :4');
         $innerJson = $data[$payloadKey] ?? null;
 
         if ($innerJson) {
@@ -116,7 +120,7 @@ class HmacExtensionValidationListener
             ], 400));
             $event->stopPropagation();;return;
         }
-
+$this->logger->critical('HmacExtensionValidationListener :5');
         if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {
             $this->logger->critical('Missing HMAC header or process ID.');
             

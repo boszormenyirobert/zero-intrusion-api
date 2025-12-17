@@ -25,6 +25,11 @@ class HmacExtensionValidationListener
     public function onKernelController(ControllerEvent $event): void
     {
         $this->logger->critical('Start HmacExtensionValidationListener');
+        $controllerCallable = $event->getController();
+        if (!is_array($controllerCallable)) {
+            $this->logger->critical('Controller is not array, skip HMAC listener');
+            return;
+        }
 
         [$controller, $method] = $event->getController();
         $reflection = new ReflectionMethod($controller, $method);

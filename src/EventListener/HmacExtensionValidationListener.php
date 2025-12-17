@@ -181,8 +181,7 @@ class HmacExtensionValidationListener
             'vault_delete_state' => 'removeProcessId',
             'vault_edit_state' => 'registrationProcessId',
             'domain_read_credential_encrypted' => 'domainProcessId',
-            'vault_read_credential_encrypted' => 'applicationProcessId',            
-            default => null,
+            'vault_read_credential_encrypted' => 'applicationProcessId'
         };
     }
 }

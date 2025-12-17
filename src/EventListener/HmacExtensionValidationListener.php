@@ -25,13 +25,13 @@ class HmacExtensionValidationListener
     public function onKernelController(ControllerEvent $event): void
     {
         $this->logger->critical('Start HmacExtensionValidationListener');
-        
+
         [$controller, $method] = $event->getController();
         $reflection = new ReflectionMethod($controller, $method);
         $hasHmacCheck = !empty($reflection->getAttributes(ExtensionHmac::class));
 
         if (!$hasHmacCheck) {
-            return;
+           // return;
         }
 
         $request = $event->getRequest();

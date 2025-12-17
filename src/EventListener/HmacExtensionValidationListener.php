@@ -31,7 +31,7 @@ class HmacExtensionValidationListener
         $hasHmacCheck = !empty($reflection->getAttributes(ExtensionHmac::class));
 
         if (!$hasHmacCheck) {
-           // return;
+            return;
         }
 
         $request = $event->getRequest();

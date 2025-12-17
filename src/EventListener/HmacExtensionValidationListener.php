@@ -131,6 +131,7 @@ class HmacExtensionValidationListener
             ], 403));
             $event->stopPropagation();
         }
+         $this->logger->critical('Stop HmacExtensionValidationListener');
     }
 
     private function isHmacValid(string $authHeader, $process): bool

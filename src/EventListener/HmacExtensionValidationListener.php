@@ -61,7 +61,7 @@ class HmacExtensionValidationListener
                 'success' => false,
                 'error' => 'Invalid JSON body',
             ], 400));
-            $event->stopPropagation();;
+            $event->stopPropagation();;return;
         }
 
         if (!isset($payload['iv'], $payload['zeroIntrusionProyApi'])) {
@@ -70,7 +70,7 @@ class HmacExtensionValidationListener
                 'success' => false,
                 'error' => 'Missing required fields',
             ], 400));
-            $event->stopPropagation();;
+            $event->stopPropagation();;return;
         }
 
         $this->crypterService->setData($payload['zeroIntrusionProyApi']);
@@ -84,7 +84,7 @@ class HmacExtensionValidationListener
                 'success' => false,
                 'error' => 'Invalid decrypted payload',
             ], 400));
-            $event->stopPropagation();;
+            $event->stopPropagation();;return;
         }
 
         $innerJson = $data[$payloadKey] ?? null;
@@ -97,7 +97,7 @@ class HmacExtensionValidationListener
                         'success' => false,
                         'error' => 'Invalid inner payload',
                     ], 400));
-            $event->stopPropagation();;
+            $event->stopPropagation();;return;
                 }
             $processId = $decoded['processId'] ?? null;
         } else {
@@ -106,7 +106,7 @@ class HmacExtensionValidationListener
                 'success' => false,
                 'error' => 'payloadKey missing or null',
             ], 400));
-            $event->stopPropagation();;
+            $event->stopPropagation();;return;
         }
 
         if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {
@@ -120,7 +120,7 @@ class HmacExtensionValidationListener
                 'success' => false,
                 'error' => 'Missing HMAC header or process ID.',
             ], 403));
-            $event->stopPropagation();;
+            $event->stopPropagation();;return;
         }
 
         $processKey =  $this->resolveProcessKey($payloadKey);
@@ -131,7 +131,7 @@ class HmacExtensionValidationListener
                 'success' => false,
                 'error' => "Unknown payload type: $payloadKey",
             ], 400));
-            $event->stopPropagation();;
+            $event->stopPropagation();;return;
         }
 
         $process = $this->authBridgeRepository->findOneBy([

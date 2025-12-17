@@ -134,7 +134,7 @@ $this->logger->critical('HmacExtensionValidationListener :5');
             ], 403));
             $event->stopPropagation();;return;
         }
-
+$this->logger->critical('HmacExtensionValidationListener :6');
         $processKey =  $this->resolveProcessKey($payloadKey);
 
         if (!$processKey) {
@@ -145,7 +145,7 @@ $this->logger->critical('HmacExtensionValidationListener :5');
             ], 400));
             $event->stopPropagation();;return;
         }
-
+$this->logger->critical('HmacExtensionValidationListener :7');
         $process = $this->authBridgeRepository->findOneBy([
             $processKey => $processId
         ]);

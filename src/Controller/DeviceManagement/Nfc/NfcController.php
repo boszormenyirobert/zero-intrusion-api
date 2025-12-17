@@ -56,7 +56,7 @@ class NfcController extends AbstractController
      * Used by the Desktop Application to fetch all NFC users
      * On the Desktop Application the encrypted NFC data will be written on the NFC card by the selected user
      */
-    #[Route('/api/nfc/users', name: 'api_nfc_user', methods: "POST")]
+    #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
     #[RequireHmac]
     #[ExtensionHmac]
     #[RequireJson]

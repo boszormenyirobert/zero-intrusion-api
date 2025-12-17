@@ -93,7 +93,7 @@ class NfcController extends AbstractController
             $users = [];
             
             foreach ($usersEncrypted as $identity) {
-                $this->logger->critical('NFC identity' . json_encode($identity));
+            //    $this->logger->critical('NFC identity' . json_encode($identity));
                 $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);
 
                 /**
@@ -109,7 +109,7 @@ class NfcController extends AbstractController
                 // $nfcEncryptionKey = UtilityHelper::generateKey('nfc'); // This key will be stored in the database for each user
                 $nfcEncryptionKey = "MyTestEncryptionKey123"; // TODO remove test key
 
-                $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
+            //    $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
                 
                 $rawUserData = [
                     'publicId' => $decryptedUser->getPublicId(),
@@ -117,7 +117,7 @@ class NfcController extends AbstractController
                     'secret' => $decryptedUser->getSecret(),
                     'credentialSecret' => $decryptedUser->getCredentialSecret()
                 ];  
-                $this->logger->critical('$rawUserData' . json_encode($rawUserData));
+            //    $this->logger->critical('$rawUserData' . json_encode($rawUserData));
                 try{
                     $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
                     $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
@@ -160,9 +160,9 @@ class NfcController extends AbstractController
             $nfcEmail = null;
             $nfcEncryptedData = null;
 
-            $this->logger->critical('NFC DECRYPT CALLED 3');
-            $this->logger->critical('Email: ' . $payloadArray['Email']);
-            $this->logger->critical('NfcData: ' . $payloadArray['NfcData']);
+        //    $this->logger->critical('NFC DECRYPT CALLED 3');
+        //    $this->logger->critical('Email: ' . $payloadArray['Email']);
+        //    $this->logger->critical('NfcData: ' . $payloadArray['NfcData']);
 
             // Only attempt decryption if we have the encrypted data
             $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['NfcData'], $nfcEncryptionKey);

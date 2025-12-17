@@ -94,7 +94,7 @@ class HmacExtensionValidationListener
             $event->stopPropagation();;
         }
 
-        if (!$authHeader || !$processId) {
+        if (!$authHeader || (!$processId && $payload !== 'api_nfc_users') ) {
             $this->logger->critical('Missing HMAC header or process ID.');
             $event->setController(fn() => new JsonResponse([
                 'success' => false,

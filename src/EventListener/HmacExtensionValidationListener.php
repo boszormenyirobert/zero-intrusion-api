@@ -34,7 +34,7 @@ class HmacExtensionValidationListener
 
         $request = $event->getRequest();
         $authHeader = $request->headers->get('X-Extension-Auth');
-        $payloadKey = $request->attributes->get('_route');
+        $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
 
         $payload = json_decode($request->getContent(), true);
 

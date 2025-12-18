@@ -27,6 +27,7 @@ use App\Repository\IdentityRepository;
 use App\Service\Crypters\CrypterDatabaseLoginService;
 use App\Helper\UtilityHelper;
 use App\Service\Crypters\SodiumService;
+use App\Entity\CorprateIdentity;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
@@ -118,9 +119,27 @@ class NfcController extends AbstractController
 
             $this->logger->critical('NFC Encrypt Payload ' . json_encode($payloadArray));
 
-            $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['nfcData'], $nfcEncryptionKey);  
-            $this->logger->critical('NFC Decrypt Payload ' . json_encode($decryptedUserDataJson));          
-            $userData = json_decode($decryptedUserDataJson, true);
+            $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['nfcData'], $nfcEncryptionKey);
+
+            $dbEncrypedIdentity_publicId = $payloadArray['publicId'];
+            $dbEncrypedIdentity_privateId = $payloadArray['privateId'];
+            $dbEncrypedIdentity_secret = $payloadArray['secret'];
+            $dbEncrypedIdentity_credentialSecret = $payloadArray['credentialSecret'];
+
+            $identity = new CorporateIdentity();
+            $identity
+                ->setPublicId($dbEncrypedIdentity_publicId)
+                ->setPrivateId($dbEncrypedIdentity_privateId)
+                ->setSecret($dbEncrypedIdentity_secret)
+                ->setCredentialSecret($dbEncrypedIdentity_credentialSecret);
+
+
+            $this->logger->critical('NFC Decrypt Payload ' . json_encode($decryptedUserDataJson));       
+
+            $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabase($identity);
+            $this->logger->critical('NFC Decrypt Payload ' . json_encode($decryptedUser));       
+
+            $userData = json_decode($decryptedUser, true);
 
             return $this->json(
                   $userData

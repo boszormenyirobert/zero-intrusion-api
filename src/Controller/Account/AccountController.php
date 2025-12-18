@@ -19,6 +19,7 @@ use App\Attribute\RequireJson;
 use App\Repository\CorporateIdentityRepository;
 use App\Repository\UserRegistratedCorporateRepository;
 use App\Repository\IdentityRepository;
+use App\Service\Crypters\CrypterDatabaseService;
 
 
 #[Route('/api/account')]
@@ -27,7 +28,8 @@ class AccountController extends AbstractController
     public function __construct(
         private CorporateRegistrationService $corporateRegistrationService,
         private LoggerInterface $logger,
-        private RequestService $requestService
+        private RequestService $requestService,
+        private CrypterDatabaseService $crypterDatabaseService
     ) {    }
 
 
@@ -52,14 +54,20 @@ class AccountController extends AbstractController
 
 
         $businessId = $userBusinessData->getBusinessService();
+        // Database encrypted data
         $corporates = $corporateIdentityRepository->findBy([
             'businessServices' => $businessId
         ]);
 
+        // Decrypted data for response
+        $decryptedCorporates = [];
+        foreach ($corporates as $corporate) {
+            $decryptedCorporates[] = $this->crypterDatabaseService->decryptFromDatabase($corporate);
+        }
 
         return $this->json(
             [
-                'accounts' => $corporates,
+                'accounts' => $decryptedCorporates,
                 'businessSubscription' => $userBusinessData->getBusinessService()
             ]);
     }

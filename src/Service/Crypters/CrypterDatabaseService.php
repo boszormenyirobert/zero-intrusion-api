@@ -63,7 +63,8 @@ final class CrypterDatabaseService
         $decrypted->setCorporateIdSecret($this->decryptData($value->getCorporateIdSecret(), $iv));
         $decrypted->setSslPrivateKey($this->decryptData($value->getSslPrivateKey(), $iv));
         $decrypted->setSslPublicKey($value->getSslPublicKey());
-        $decrypted->setCallbackUserLogin($value->getCallbackUserLogin(), $iv);        
+        $decrypted->setCallbackUserLogin($value->getCallbackUserLogin(), $iv);     
+        $decrypted->setIv($value->getIv());   
 
         return $decrypted;
     }

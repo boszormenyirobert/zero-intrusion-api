@@ -130,19 +130,10 @@ class NfcController extends AbstractController
             $payloadArray = $validatedPayload[$payloadKey];
             
             $nfcEncryptionKey = "MyTestEncryptionKey123";
-
-            // Compare payload corporatePublicId and the corporateAuthentication with the database records
-
             $nfcEmail = null;
             $nfcEncryptedData = null;
 
-        //    $this->logger->critical('NFC DECRYPT CALLED 3');
-        //    $this->logger->critical('Email: ' . $payloadArray['Email']);
-        //    $this->logger->critical('NfcData: ' . $payloadArray['NfcData']);
-
-            // Only attempt decryption if we have the encrypted data
-            $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['NfcData'], $nfcEncryptionKey);
-            
+            $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['NfcData'], $nfcEncryptionKey);            
             $userData = json_decode($decryptedUserDataJson, true);
 
             return $this->json(

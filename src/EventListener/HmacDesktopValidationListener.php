@@ -119,8 +119,15 @@ class HmacDesktopValidationListener
             return;
         }
 
-        $this->logger->critical('NFC HMAC VALIDATION: Missing HMAC header or process ID.');
-        $this->logger->critical('Payload Key: ' . json_encode($payloadDecoded));
+        $publicId = $payloadDecoded['CorporatePublicId'] ?? null;
+        $message = $payloadDecoded['message'] ?? null;
+        $domain = $payloadDecoded['domain'] ?? null;
+        $hmac = $payloadDecoded['hmac'] ?? null;
+
+        $this->logger->critical('publicId: ' . $publicId);
+        $this->logger->critical('message: ' . $message);
+        $this->logger->critical('domain: ' . $domain);      
+        $this->logger->critical('hmac: ' . $hmac);
 
 
         if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {

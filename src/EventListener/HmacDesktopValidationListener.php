@@ -105,7 +105,7 @@ class HmacDesktopValidationListener
                     ], 400));
             $event->stopPropagation();;return;
                 }
-            $payloadDecoded = $decoded ?? [];
+            $payloadDecoded = $payload ?? [];
         } else {
             $this->logger->critical('payloadKey missing or null');
             $event->setController(fn() => new JsonResponse([

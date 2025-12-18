@@ -112,6 +112,9 @@ services:
         - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }
     App\EventListener\HmacMobileValidationListener:
         tags:
-        - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }        
+        - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }    
+    App\EventListener\HmacDesktopValidationListener:
+        tags:
+        - { name: kernel.event_listener, event: kernel.controller, method: onKernelController }             
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -44,7 +44,7 @@ class HmacDesktopValidationListener
         $this->logger->critical('Return before use HmacDesktopValidationListener');
         return;
     }
-        
+        $this->logger->critical('Useage of HmacDesktopValidationListener');
         try{
             $request = $event->getRequest();
             $authHeader = $request->headers->get('X-Extension-Auth');

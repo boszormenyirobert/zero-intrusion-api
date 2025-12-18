@@ -11,6 +11,8 @@ use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use App\Service\Crypters\CrypterService;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Repository\CorporateIdentityRepository;
+use App\Service\Crypters\CrypterDatabaseService;
 
 class HmacDesktopValidationListener
 {
@@ -19,7 +21,9 @@ class HmacDesktopValidationListener
         private LoggerInterface $logger,
         private AuthBridgeRepository $authBridgeRepository,
         private EntityManagerInterface $entityManager,
-        private ParameterBagInterface $params
+        private ParameterBagInterface $params,
+        private CorporateIdentityRepository $corporateIdentityRepository,
+        private CrypterDatabaseService $crypterDatabaseService
     ) {}
 
     public function onKernelController(ControllerEvent $event): void
@@ -44,14 +48,12 @@ class HmacDesktopValidationListener
         $this->logger->critical('Return before use HmacDesktopValidationListener');
         return;
     }
-        $this->logger->critical('Useage of HmacDesktopValidationListener');
         try{
             $request = $event->getRequest();
             $authHeader = $request->headers->get('X-Extension-Auth');
             $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
 
             $payload = json_decode($request->getContent(), true);
-             $this->logger->critical('Try END HmacDesktopValidationListener');
         } catch (\Throwable $e) {
             $this->logger->critical('Exception during request processing: ' . $e->getMessage());
             $event->setController(fn() => new JsonResponse([
@@ -119,7 +121,7 @@ class HmacDesktopValidationListener
             return;
         }
 
-        $publicId = $payloadDecoded['publicId'] ?? null;
+        $corporateId = $payloadDecoded['publicId'] ?? null;
         $message = $payloadDecoded['message'] ?? null;
         $domain = $payloadDecoded['domain'] ?? null;
         $hmac = \json_encode($payloadDecoded['hmac']) ?? null;
@@ -128,6 +130,20 @@ class HmacDesktopValidationListener
         $this->logger->critical('message: ' . $message);
         $this->logger->critical('domain: ' . $domain);      
         $this->logger->critical('hmac: ' . $hmac);
+
+        
+        // $expectedSecret => CorporateIdSecret from DB
+        $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateId' => $corporateId]);
+        $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
+
+        $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());
+        $expectedSecret = $corporate->getCorporateIdSecret();
+        
+        $expectedSignature = hash_hmac('sha256', $message, $expectedSecret);
+        if (!hash_equals($expectedSignature, $recvSignature)) {
+            $this->logger->critical('Invalid HMAC signature');
+            throw new InvalidHmacException('Invalid HMAC signature');
+        }
 
         // CorporateIdSecret used for HMAC validation
 

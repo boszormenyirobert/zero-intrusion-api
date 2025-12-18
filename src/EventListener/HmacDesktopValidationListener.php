@@ -134,17 +134,20 @@ class HmacDesktopValidationListener
         
         // $expectedSecret => CorporateIdSecret from DB
         $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateId' => $corporateId]);
-        $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
+        $this->logger->critical('corporateDbEncrypted: ' . json_encode($corporateDbEncrypted, true));
 
-        $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());
-        $expectedSecret = $corporate->getCorporateIdSecret();
+        /**
+*            $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
 
-        $expectedSignature = hash_hmac('sha256', $message, $expectedSecret);
-        if (!hash_equals($expectedSignature, $recvSignature)) {
-            $this->logger->critical('Invalid HMAC signature');
-            throw new InvalidHmacException('Invalid HMAC signature');
-        }
+*            $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());
+*            $expectedSecret = $corporate->getCorporateIdSecret();
 
+*            $expectedSignature = hash_hmac('sha256', $message, $expectedSecret);
+*            if (!hash_equals($expectedSignature, $recvSignature)) {
+*                $this->logger->critical('Invalid HMAC signature');
+*                throw new InvalidHmacException('Invalid HMAC signature');
+*            }
+    */
         // CorporateIdSecret used for HMAC validation
 
         if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {

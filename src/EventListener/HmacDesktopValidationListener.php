@@ -120,6 +120,17 @@ class HmacDesktopValidationListener
             $event->stopPropagation();
             return;
         }
+// Get all headers
+$allHeaders = $request->headers->all();
+
+// Convert to string for logging
+$headerLog = '';
+foreach ($allHeaders as $name => $values) {
+    $headerLog .= $name . ': ' . implode(', ', $values) . "\n";
+}
+
+$this->logger->critical("Incoming request headers:\n" . $headerLog);
+
 
         $recvSignature = strtolower($request->headers->get('X-Client-Auth'));
                 $this->logger->critical('recvSignature: ' . $recvSignature);

@@ -81,6 +81,7 @@ class NfcController extends AbstractController
                 ];  
                 try{
                     $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
+                    $this->logger->critical('NFC USERS RAW DATA ' . $stringRawUserData);
                     $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
                     
                     $users[] = [

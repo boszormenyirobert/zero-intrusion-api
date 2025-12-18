@@ -170,45 +170,6 @@ $this->logger->critical("Incoming request headers:\n" . $headerLog);
                 throw new InvalidHmacException('Invalid HMAC signature');
             }
     
-        // CorporateIdSecret used for HMAC validation
-
-        if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {
-            $this->logger->critical('Missing HMAC header or process ID.');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Missing HMAC header or process ID.',
-            ], 403));
-            $event->stopPropagation();;return;
-        }
-
-        $processKey =  $this->resolveProcessKey($payloadKey);
-
-        if (!$processKey) {
-            $this->logger->critical("Unknown payload type: $payloadKey");
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => "Unknown payload type: $payloadKey",
-            ], 400));
-            $event->stopPropagation();;return;
-        }
-
-        if($processKey !== 'api_nfc_users'){
-            $process = $this->authBridgeRepository->findOneBy([
-                $processKey => $processId
-            ]);
-            if (!$process || !$this->isHmacValid($authHeader, $process)) {
-                $this->logger->critical('Invalid HMAC Extension authentication.');
-                $event->setController(fn() => new JsonResponse([
-                    'success' => false,
-                    'error' => 'Invalid or expired HMAC from the extension',
-                ], 403));
-                $event->stopPropagation();
-            }
-        }
-        
-        if($processKey !== 'api_nfc_users'){
-            $this->logger->critical('MISSING HMAC DESKTOP HMAC VALIDATION.');
-        }
         $this->logger->critical('Stop HmacExtensionValidationListener');
     }
 

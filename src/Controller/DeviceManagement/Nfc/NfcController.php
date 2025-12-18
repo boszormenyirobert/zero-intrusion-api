@@ -73,43 +73,20 @@ class NfcController extends AbstractController
             // Access to the paylaoad by shared payloadKey
             $payloadArray = $validatedPayload[$payloadKey];
 
-            // Compare payload corporatePublicId and the corporateAuthentication with the database records
             $corporateId = $payloadArray['publicId'];
             $corporateIdKey = $payloadArray['message'];
 
             $corporateId = $this->corporateIdentityRepository->findOneBy([
                 'corporateIdKey' =>  $corporateId
             ]);
-
-            if (!$corporateId) {
-                $this->logger->critical('NFC USERS CALLED - CORPORATE ID NOT FOUND ' . json_encode($payloadArray));
-
-                return $this->json(
-                    $this->responseHelper->createErrorResponse('NFC Users 001: Corporate identity not found.', 404)
-                );
-            }
             
             $usersEncrypted = $this->identityRepository->findAll();
             $users = [];
             
             foreach ($usersEncrypted as $identity) {
-            //    $this->logger->critical('NFC identity' . json_encode($identity));
                 $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);
 
-                /**
-                 * TODO
-                 * 
-                 * Create from the [publicId, privateId, secret, credentialSecret] key => value an encrypted string 
-                 * save the encryption key in the database, and send only the encrypted string to the Desktop Application
-                 * Encrypted string will be written on the NFC-card
-                 * Delete the credentialSecret from the database after NFC-card activation
-                 * Secret has to be stored in the database, because it is for the secure communication between Handy Device and API
-                 **/
-                
-                // $nfcEncryptionKey = UtilityHelper::generateKey('nfc'); // This key will be stored in the database for each user
                 $nfcEncryptionKey = "MyTestEncryptionKey123"; // TODO remove test key
-
-            //    $this->logger->critical('nfcEncryptionKey' . $nfcEncryptionKey);
                 
                 $rawUserData = [
                     'publicId' => $decryptedUser->getPublicId(),
@@ -117,7 +94,6 @@ class NfcController extends AbstractController
                     'secret' => $decryptedUser->getSecret(),
                     'credentialSecret' => $decryptedUser->getCredentialSecret()
                 ];  
-            //    $this->logger->critical('$rawUserData' . json_encode($rawUserData));
                 try{
                     $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
                     $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);

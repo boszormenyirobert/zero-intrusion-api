@@ -28,26 +28,28 @@ class HmacDesktopValidationListener
 
     public function onKernelController(ControllerEvent $event): void
     {
+        // Controll validator use of the Listener
+        $request = $event->getRequest();
+        $controllerString = $request->attributes->get('_controller');
 
-    $request = $event->getRequest();
-    $controllerString = $request->attributes->get('_controller');
+        if (!is_string($controllerString) || !str_contains($controllerString, '::')) {
+            $this->logger->critical('Invalid _controller format');
+            return;
+        }
 
-    if (!is_string($controllerString) || !str_contains($controllerString, '::')) {
-        $this->logger->critical('Invalid _controller format');
-        return;
-    }
+        [$controllerClass, $method] = explode('::', $controllerString, 2);
 
-    [$controllerClass, $method] = explode('::', $controllerString, 2);
+        $reflection = new \ReflectionMethod($controllerClass, $method);
+        $hasHmacCheck = !empty(
+            $reflection->getAttributes(\App\Attribute\DesktopHmac::class)
+        );
 
-    $reflection = new \ReflectionMethod($controllerClass, $method);
-    $hasHmacCheck = !empty(
-        $reflection->getAttributes(\App\Attribute\DesktopHmac::class)
-    );
+        if (!$hasHmacCheck) {
+            $this->logger->critical('Return before use HmacDesktopValidationListener');
+            return;
+        }
 
-    if (!$hasHmacCheck) {
-        $this->logger->critical('Return before use HmacDesktopValidationListener');
-        return;
-    }
+        // Controll route name to use as payload key
         try{
             $request = $event->getRequest();
             $authHeader = $request->headers->get('X-Extension-Auth');
@@ -64,6 +66,7 @@ class HmacDesktopValidationListener
             return;
         }
 
+        // Controll payload structure
         if (!is_array($payload)) {
             $this->logger->critical('Invalid JSON body');
             $event->setController(fn() => new JsonResponse([
@@ -73,6 +76,7 @@ class HmacDesktopValidationListener
             $event->stopPropagation();;return;
         }
 
+        // Controll required fields as the request sent by the HUB
         if (!isset($payload['iv'], $payload['zeroIntrusionProyApi'])) {
             $this->logger->critical('Missing required fields');
             $event->setController(fn() => new JsonResponse([
@@ -82,6 +86,7 @@ class HmacDesktopValidationListener
             $event->stopPropagation();;return;
         }
 
+        // Decrypt the payload data: basic level decryption between HUB - API
         $this->crypterService->setData($payload['zeroIntrusionProyApi']);
 
         $decrypted = $this->crypterService->decryptData();
@@ -95,12 +100,13 @@ class HmacDesktopValidationListener
             ], 400));
             $event->stopPropagation();;return;
         }
+        // Access to the inner payload by shared payloadKey, which is the route name
         $innerJson = $data[$payloadKey] ?? null;
 
         if ($innerJson) {
-            $payload = is_string($innerJson) ? json_decode($innerJson, true) : $innerJson;
+            $payloadDecoded = is_string($innerJson) ? json_decode($innerJson, true) : $innerJson;
 
-            if (!is_array($payload)) {
+            if (!is_array($payloadDecoded)) {
                 $this->logger->critical('Decoded innerJson is not array.');
                 $event->setController(fn() => new JsonResponse([
                     'success' => false,
@@ -109,8 +115,6 @@ class HmacDesktopValidationListener
                 $event->stopPropagation();
                 return;
             }
-
-            $payloadDecoded = $payload;
         } else {
             $this->logger->critical('payloadKey missing or null');
             $event->setController(fn() => new JsonResponse([
@@ -120,109 +124,48 @@ class HmacDesktopValidationListener
             $event->stopPropagation();
             return;
         }
-// Get all headers
-$allHeaders = $request->headers->all();
 
-// Convert to string for logging
-$headerLog = '';
-foreach ($allHeaders as $name => $values) {
-    $headerLog .= $name . ': ' . implode(', ', $values) . "\n";
-}
-
-$this->logger->critical("Incoming request headers:\n" . $headerLog);
-
-
+        // Get the HMAC signature from headers created by the Desktop Application
         $recvSignature = strtolower($request->headers->get('x-extension-auth'));
-                $this->logger->critical('recvSignature: ' . $recvSignature);
 
+        // Extract fields from the payload
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $message = $payloadDecoded['message'] ?? null;
-        $domain = $payloadDecoded['domain'] ?? null;        
+        $domain = $payloadDecoded['domain'] ?? null;  // Not used currently. Can be used for future enhancements.
         $timestamp = $payloadDecoded['timestamp'] ?? null;
 
-        $this->logger->critical('corporateId: ' . $corporateId);
-        $this->logger->critical('message: ' . $message);
-        $this->logger->critical('domain: ' . $domain);      
-        $this->logger->critical('hmac: ' . $recvSignature);
-        $this->logger->critical('timestamp: ' . $timestamp);
-
-        
-        // $expectedSecret => CorporateIdSecret from DB
+        // Get corporate data from database to controll HMAC signature
         $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateIdKey' => $corporateId]);
-        $this->logger->critical('Decrypted corporateDbEncrypted: ' . ($corporateDbEncrypted ? 'Found' : 'Not Found'));
         $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
-
-        $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());
 
         $expectedSecret = $corporate->getCorporateIdSecret();
         $expectedCorporateIdKey = $corporate->getCorporateIdKey();
-        
-        $this->logger->critical('Decrypted expectedCorporateIdKey: ' . $corporate->getCorporateIdKey());
-                $this->logger->critical('Decrypted expectedSecret: ' . $corporate->getCorporateIdSecret());
 
-
+        // Recreate HMAC signature
         $controllMessage = $expectedCorporateIdKey . '|' . $timestamp;
 
-            $expectedSignature = hash_hmac('sha256', $controllMessage, $expectedSecret);
+        $expectedSignature = hash_hmac('sha256', $controllMessage, $expectedSecret);
 
-            if (!hash_equals($expectedSignature, $recvSignature)) {
-                $this->logger->critical('Invalid HMAC signature');
-                throw new InvalidHmacException('Invalid HMAC signature');
-            }
+        // Controll HMAC signature
+        if (!hash_equals($expectedSignature, $recvSignature)) {
+            $this->logger->critical('Invalid HMAC signature');
+            $event->setController(fn() => new JsonResponse([
+                'success' => false,
+                'error' => 'Invalid HMAC signature',
+            ], 400));
+            $event->stopPropagation();;return;
+        }
+        // Timestamp controll to avoid replay attacks (5 minutes window)
+        $currentTime = time();
+        if (abs($currentTime - $timestamp) > 300) {
+            $this->logger->critical('Timestamp is outside the allowed window');
+            $event->setController(fn() => new JsonResponse([
+                'success' => false,
+                'error' => 'Timestamp is outside the allowed window',
+            ], 400));
+            $event->stopPropagation();;return;
+        }
     
         $this->logger->critical('Stop HmacExtensionValidationListener');
-    }
-
-    private function isHmacValid(string $authHeader, $process): bool
-    {
-        $secret = $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
-        $message = $this->params->get('EXTENSION_REGISTRATION_POOL_MESSAGE');
-        $hmacValue = $this->getHmacValue($authHeader);
-
-            if (!is_string($hmacValue)) {
-                $this->logger->error('Invalid HMAC header format.');
-                return false;
-            }
-
-        $createdAt = $process->getCreatedAt()->getTimestamp();
-        $now = time();
-        $diff = abs($createdAt - $now);
-
-            if ($diff > 12) {
-                $this->logger->error('Time difference too large.');
-                return false;
-            }
-
-        $expected = hash_hmac('sha1', $message . '|' . $createdAt, $secret);
-
-        $isMatch = hash_equals($expected, $hmacValue);
-
-            if (!$isMatch) {
-                $this->logger->error('HMAC mismatch.');
-            }
-
-        return $isMatch;
-    }
-
-    private function getHmacValue($extensionAuthHeader): string|false
-    {
-        if (!$extensionAuthHeader) {
-            return false;
-        }
-
-        if (str_starts_with($extensionAuthHeader, 'HMAC ')) {
-            $hmac = explode(' ', $extensionAuthHeader, 2);
-            return trim($hmac[1] ?? '');
-        }
-
-        return false;
-    }
-
-    private function resolveProcessKey(string $payloadKey): ?string
-    {
-        return match ($payloadKey) {
-            'api_nfc_users' => 'api_nfc_users',
-            default => null,
-        };
     }
 }

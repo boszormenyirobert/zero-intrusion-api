@@ -121,6 +121,9 @@ class HmacDesktopValidationListener
             return;
         }
 
+        $recvSignature = strtolower($request->headers->get('X-Client-Auth'));
+                $this->logger->critical('recvSignature: ' . $recvSignature);
+
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $message = $payloadDecoded['message'] ?? null;
         $domain = $payloadDecoded['domain'] ?? null;

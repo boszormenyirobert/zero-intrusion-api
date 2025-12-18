@@ -96,7 +96,7 @@ class HmacDesktopValidationListener
         $innerJson = $data[$payloadKey] ?? null;
 
         if ($innerJson) {
-            $decoded = is_string($innerJson) ? json_decode($innerJson, true) : $innerJson;
+            $payload = is_string($innerJson) ? json_decode($innerJson, true) : $innerJson;
                 if (!is_array($decoded)) {
                     $this->logger->critical('Decoded innerJson is not array.');
                     $event->setController(fn() => new JsonResponse([
@@ -105,7 +105,7 @@ class HmacDesktopValidationListener
                     ], 400));
             $event->stopPropagation();;return;
                 }
-            $processId = $decoded['processId'] ?? null;
+            $payloadDecoded = $decoded ?? [];
         } else {
             $this->logger->critical('payloadKey missing or null');
             $event->setController(fn() => new JsonResponse([
@@ -115,6 +115,8 @@ class HmacDesktopValidationListener
             $event->stopPropagation();;return;
         }
 $this->logger->critical('NFC HMAC VALIDATION:Missing HMAC header or process ID.');
+$this->logger->critical('Payload Key: ' . json_encode($payloadDecoded));
+
         if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {
             $this->logger->critical('Missing HMAC header or process ID.');
             $event->setController(fn() => new JsonResponse([

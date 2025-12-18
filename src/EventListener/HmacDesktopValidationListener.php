@@ -2,7 +2,7 @@
 
 namespace App\EventListener;
 
-use App\Attribute\ExtensionHmac;
+use App\Attribute\DesktopHmac;
 use App\Repository\AuthBridgeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -12,7 +12,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use App\Service\Crypters\CrypterService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class HmacExtensionValidationListener
+class HmacDesktopValidationListener
 {
     public function __construct(
         private readonly CrypterService $crypterService,
@@ -37,11 +37,11 @@ class HmacExtensionValidationListener
 
     $reflection = new \ReflectionMethod($controllerClass, $method);
     $hasHmacCheck = !empty(
-        $reflection->getAttributes(\App\Attribute\ExtensionHmac::class)
+        $reflection->getAttributes(\App\Attribute\DesktopHmac::class)
     );
 
     if (!$hasHmacCheck) {
-        $this->logger->critical('Return before use HmacExtensionValidationListener');
+        $this->logger->critical('Return before use HmacDesktopValidationListener');
         return;
     }
         
@@ -51,7 +51,7 @@ class HmacExtensionValidationListener
             $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
 
             $payload = json_decode($request->getContent(), true);
-             $this->logger->critical('Try END HmacExtensionValidationListener');
+             $this->logger->critical('Try END HmacDesktopValidationListener');
         } catch (\Throwable $e) {
             $this->logger->critical('Exception during request processing: ' . $e->getMessage());
             $event->setController(fn() => new JsonResponse([
@@ -114,8 +114,8 @@ class HmacExtensionValidationListener
             ], 400));
             $event->stopPropagation();;return;
         }
-
-        if (!$authHeader || !$processId ) {
+$this->logger->critical('NFC HMAC VALIDATION:Missing HMAC header or process ID.');
+        if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {
             $this->logger->critical('Missing HMAC header or process ID.');
             $event->setController(fn() => new JsonResponse([
                 'success' => false,
@@ -135,18 +135,23 @@ class HmacExtensionValidationListener
             $event->stopPropagation();;return;
         }
 
-        $process = $this->authBridgeRepository->findOneBy([
-            $processKey => $processId
-        ]);
-        if (!$process || !$this->isHmacValid($authHeader, $process)) {
-            $this->logger->critical('Invalid HMAC Extension authentication.');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Invalid or expired HMAC from the extension',
-            ], 403));
-            $event->stopPropagation();
-        }        
+        if($processKey !== 'api_nfc_users'){
+            $process = $this->authBridgeRepository->findOneBy([
+                $processKey => $processId
+            ]);
+            if (!$process || !$this->isHmacValid($authHeader, $process)) {
+                $this->logger->critical('Invalid HMAC Extension authentication.');
+                $event->setController(fn() => new JsonResponse([
+                    'success' => false,
+                    'error' => 'Invalid or expired HMAC from the extension',
+                ], 403));
+                $event->stopPropagation();
+            }
+        }
         
+        if($processKey !== 'api_nfc_users'){
+            $this->logger->critical('MISSING HMAC DESKTOP HMAC VALIDATION.');
+        }
         $this->logger->critical('Stop HmacExtensionValidationListener');
     }
 
@@ -198,15 +203,7 @@ class HmacExtensionValidationListener
     private function resolveProcessKey(string $payloadKey): ?string
     {
         return match ($payloadKey) {
-            'shared_registration_state' => 'registrationProcessId',
-            'domain_read_state' => 'domainProcessId',
-            'vault_read_state' => 'applicationProcessId',
-            'domain_delete_state' => 'removeProcessId',
-            'vault_delete_state' => 'removeProcessId',
-            'vault_edit_state' => 'registrationProcessId',
-            'domain_read_credential_encrypted' => 'domainProcessId',
-            'vault_read_credential_encrypted' => 'applicationProcessId',
-            'vault_read_credential_encrypted' => 'applicationProcessId',
+            'api_nfc_users' => 'api_nfc_users',
             default => null,
         };
     }

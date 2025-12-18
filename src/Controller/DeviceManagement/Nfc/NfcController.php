@@ -18,7 +18,7 @@ use App\Controller\PayloadValidator\PayloadValidator;
 use Symfony\Component\HttpFoundation\Request;
 use App\Attribute\RequireHmac;
 use App\Attribute\RequireJson;
-use App\Attribute\ExtensionHmac;
+use App\Attribute\DesktopHmac;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Service\Shared\RequestService;
 use App\Helper\ResponseHelper;
@@ -59,7 +59,7 @@ class NfcController extends AbstractController
      */
     #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
     #[RequireHmac]
-    #[ExtensionHmac]
+    #[DesktopHmac]
     #[RequireJson]
     public function getNfcUsers(
         Request $request
@@ -141,7 +141,7 @@ class NfcController extends AbstractController
 
         #[Route('/api/nfc/decrypt', name: 'api_nfc_decrypt', methods: "POST")]
         #[RequireHmac]
-        #[ExtensionHmac]
+        #[DesktopHmac]
         #[RequireJson]
         public function NfcDecryptCardData(
         Request $request

@@ -58,7 +58,7 @@ final class CrypterDatabaseService
         }
 
         $decrypted = new CorporateIdentity();
-        $decrypted->setCorporateId($value->getCorporateIdKey());
+        $decrypted->setCorporateId($value->getCorporateId());
         $decrypted->setCorporateIdKey($this->decryptData($value->getCorporateIdKey(), $iv));
         $decrypted->setCorporateIdSecret($this->decryptData($value->getCorporateIdSecret(), $iv));
         $decrypted->setSslPrivateKey($this->decryptData($value->getSslPrivateKey(), $iv));

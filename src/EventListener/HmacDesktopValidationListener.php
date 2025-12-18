@@ -149,6 +149,7 @@ $this->logger->critical("Incoming request headers:\n" . $headerLog);
         
         // $expectedSecret => CorporateIdSecret from DB
         $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateId' => $corporateId]);
+        $this->logger->critical('Decrypted corporateDbEncrypted: ' . ($corporateDbEncrypted ? 'Found' : 'Not Found'));
         $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
 
         $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());

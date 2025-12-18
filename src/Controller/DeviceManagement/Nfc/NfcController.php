@@ -64,22 +64,7 @@ class NfcController extends AbstractController
     public function getNfcUsers(
         Request $request
         ) {
-
-            $payloadKey = PayloadKeys::API_NFC_USERS;
-            // Controll the request coming from the HUB and validate HMAC ~ Data integrity (shared secret HUB - API)
-            $payload = $this->requestService->requestControll($request);
-            // Get decrypted payload
-            $validatedPayload = $this->requestService->validPayload($payload);
-            // Access to the paylaoad by shared payloadKey
-            $payloadArray = $validatedPayload[$payloadKey];
-
-            $corporateId = $payloadArray['publicId'];
-            $corporateIdKey = $payloadArray['message'];
-
-            $corporateId = $this->corporateIdentityRepository->findOneBy([
-                'corporateId' =>  $corporateId
-            ]);
-            
+           
             $usersEncrypted = $this->identityRepository->findAll();
             $users = [];
             

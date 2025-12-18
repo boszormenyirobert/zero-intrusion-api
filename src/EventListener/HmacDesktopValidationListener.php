@@ -131,7 +131,7 @@ class HmacDesktopValidationListener
         // Extract fields from the payload
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $timestamp = $payloadDecoded['timestamp'] ?? null;
-$this->logger->critical('HMAC DESKTOP VALIDATION LISTENER CALLED for corporateId: ' . $corporateId);
+
         if (!$corporateId || !$timestamp || !$recvSignature) {
             $this->logger->critical('Missing required HMAC fields');
             $event->setController(fn() => new JsonResponse([

@@ -64,7 +64,7 @@ class NfcController extends AbstractController
     public function getNfcUsers(
         Request $request
         ) {
-           
+            // Request controlled by HMAC => Desktop HMAC and JSON Attribute
             $usersEncrypted = $this->identityRepository->findAll();
             $users = [];
             

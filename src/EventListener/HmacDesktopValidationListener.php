@@ -132,13 +132,12 @@ foreach ($allHeaders as $name => $values) {
 $this->logger->critical("Incoming request headers:\n" . $headerLog);
 
 
-        $recvSignature = strtolower($request->headers->get('X-Client-Auth'));
+        $recvSignature = strtolower($request->headers->get('x-extension-auth'));
                 $this->logger->critical('recvSignature: ' . $recvSignature);
 
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $message = $payloadDecoded['message'] ?? null;
-        $domain = $payloadDecoded['domain'] ?? null;
-        $recvSignature = $payloadDecoded['hmac'][0] ?? null;
+        $domain = $payloadDecoded['domain'] ?? null;        
         $timestamp = $payloadDecoded['timestamp'] ?? null;
 
         $this->logger->critical('corporateId: ' . $corporateId);

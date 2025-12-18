@@ -53,17 +53,16 @@ class NfcController extends AbstractController
         private SodiumService $sodiumService
     ) {}
 
-    /**
-     * Used by the Desktop Application to fetch all NFC users
-     * On the Desktop Application the encrypted NFC data will be written on the NFC card by the selected user
-     */
-    #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
-    #[RequireHmac]
-    #[DesktopHmac]
-    #[RequireJson]
-    public function getNfcUsers(
-        Request $request
-        ) {
+        /**
+         * Used by the Desktop Application to fetch all NFC users
+         * On the Desktop Application the encrypted NFC data will be written on the NFC card by the selected user
+         */
+        #[Route('/api/nfc/users', name: 'api_nfc_users', methods: "POST")]
+        #[RequireHmac]
+        #[DesktopHmac]
+        #[RequireJson]
+        public function getNfcUsers(Request $request) 
+        {
             // Request controlled by HMAC => Desktop HMAC and JSON Attribute
             $usersEncrypted = $this->identityRepository->findAll();
             $users = [];
@@ -103,9 +102,8 @@ class NfcController extends AbstractController
         #[RequireHmac]
         #[DesktopHmac]
         #[RequireJson]
-        public function NfcDecryptCardData(
-        Request $request
-        ) {
+        public function NfcDecryptCardData(Request $request) 
+        {
             $payloadKey = PayloadKeys::API_NFC_DECRYPT;
             // Controll the request coming from the HUB and validate HMAC ~ Data integrity (shared secret HUB - API)
             $payload = $this->requestService->requestControll($request);
@@ -117,6 +115,8 @@ class NfcController extends AbstractController
             $nfcEncryptionKey = "MyTestEncryptionKey123";
             $nfcEmail = null;
             $nfcEncryptedData = null;
+
+            $this->logger->info('NFC Decrypt Payload ' . json_encode($payloadArray));
 
             $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['NfcData'], $nfcEncryptionKey);            
             $userData = json_decode($decryptedUserDataJson, true);

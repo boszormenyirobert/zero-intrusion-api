@@ -131,7 +131,7 @@ class HmacDesktopValidationListener
         // Extract fields from the payload
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $timestamp = $payloadDecoded['timestamp'] ?? null;
-return;
+
         // Get corporate data from database to controll HMAC signature
         $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateId' => $corporateId]);
         $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);

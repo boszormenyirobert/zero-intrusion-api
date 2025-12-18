@@ -124,12 +124,12 @@ class HmacDesktopValidationListener
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $message = $payloadDecoded['message'] ?? null;
         $domain = $payloadDecoded['domain'] ?? null;
-        $hmac = \json_encode($payloadDecoded['hmac']) ?? null;
+        $recvSignature = \json_encode($payloadDecoded['hmac']) ?? null;
 
         $this->logger->critical('publicId: ' . $publicId);
         $this->logger->critical('message: ' . $message);
         $this->logger->critical('domain: ' . $domain);      
-        $this->logger->critical('hmac: ' . $hmac);
+        $this->logger->critical('hmac: ' . $recvSignature);
 
         
         // $expectedSecret => CorporateIdSecret from DB
@@ -138,7 +138,7 @@ class HmacDesktopValidationListener
 
         $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());
         $expectedSecret = $corporate->getCorporateIdSecret();
-        
+
         $expectedSignature = hash_hmac('sha256', $message, $expectedSecret);
         if (!hash_equals($expectedSignature, $recvSignature)) {
             $this->logger->critical('Invalid HMAC signature');

@@ -128,22 +128,12 @@ class NfcController extends AbstractController
             $dbEncrypedIdentity_secret = $payload['secret'];
             $dbEncrypedIdentity_credentialSecret = $payload['credentialSecret'];
 
-            $this->logger->critical('dbEncrypedIdentity_publicId ' . $dbEncrypedIdentity_publicId);
-            $this->logger->critical('dbEncrypedIdentity_privateId ' . $dbEncrypedIdentity_privateId);
-            $this->logger->critical('dbEncrypedIdentity_secret ' . $dbEncrypedIdentity_secret);
-            $this->logger->critical('dbEncrypedIdentity_credentialSecret ' . $dbEncrypedIdentity_credentialSecret);
 
-            $identity = new CorporateIdentity();
-            $identity
-                ->setPublicId($dbEncrypedIdentity_publicId)
-                ->setPrivateId($dbEncrypedIdentity_privateId)
-                ->setSecret($dbEncrypedIdentity_secret)
-                ->setCredentialSecret($dbEncrypedIdentity_credentialSecret);
+                $identity = $this->identityRepository->findOneBy([
+                    'publicId' => $dbEncrypedIdentity_publicId
+                ]);
 
-
-            $this->logger->critical('NFC Decrypt Payload ' . json_encode($decryptedUserDataJson));       
-
-            $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabase($identity);
+                $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabase($identity);
             $this->logger->critical('NFC Decrypt Payload ' . json_encode($decryptedUser));       
 
             $userData = json_decode($decryptedUser, true);

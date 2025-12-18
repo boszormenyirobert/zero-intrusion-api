@@ -131,7 +131,15 @@ class HmacDesktopValidationListener
         // Extract fields from the payload
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $timestamp = $payloadDecoded['timestamp'] ?? null;
-
+$this->logger->critical('HMAC DESKTOP VALIDATION LISTENER CALLED for corporateId: ' . $corporateId);
+        if (!$corporateId || !$timestamp || !$recvSignature) {
+            $this->logger->critical('Missing required HMAC fields');
+            $event->setController(fn() => new JsonResponse([
+                'success' => false,
+                'error' => 'Missing required HMAC fields',
+            ], 400));
+            $event->stopPropagation();;return;
+        }
         // Get corporate data from database to controll HMAC signature
         $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateId' => $corporateId]);
         $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);

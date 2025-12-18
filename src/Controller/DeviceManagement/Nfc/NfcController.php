@@ -78,8 +78,7 @@ class NfcController extends AbstractController
             $corporateIdKey = $payloadArray['message'];
 
             $corporateId = $this->corporateIdentityRepository->findOneBy([
-                'corporateId' =>  $corporateId,
-                'corporateIdKey' =>  $corporateIdKey
+                'corporateId' =>  $corporateId
             ]);
 
             if (!$corporateId) {

@@ -125,23 +125,28 @@ class HmacDesktopValidationListener
         $message = $payloadDecoded['message'] ?? null;
         $domain = $payloadDecoded['domain'] ?? null;
         $recvSignature = $payloadDecoded['hmac'][0] ?? null;
+        $timestamp = $payloadDecoded['timestamp'] ?? null;
 
         $this->logger->critical('corporateId: ' . $corporateId);
         $this->logger->critical('message: ' . $message);
         $this->logger->critical('domain: ' . $domain);      
         $this->logger->critical('hmac: ' . $recvSignature);
+        $this->logger->critical('timestamp: ' . $timestamp);
 
         
         // $expectedSecret => CorporateIdSecret from DB
         $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateId' => $corporateId]);
+        $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
 
-        
-            $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
+        $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());
 
-            $this->logger->critical('Decrypted CorporateIdSecret: ' . $corporate->getCorporateIdSecret());
-            $expectedSecret = $corporate->getCorporateIdSecret();
+        $expectedSecret = $corporate->getCorporateIdSecret();
+        $expectedCorporateIdKey = $corporate->getCorporateIdKey();
 
-            $expectedSignature = hash_hmac('sha256', $message, $expectedSecret);
+        $controllMessage = $expectedCorporateIdKey . '|' . $timestamp;
+
+            $expectedSignature = hash_hmac('sha256', $controllMessage, $expectedSecret);
+
             if (!hash_equals($expectedSignature, $recvSignature)) {
                 $this->logger->critical('Invalid HMAC signature');
                 throw new InvalidHmacException('Invalid HMAC signature');

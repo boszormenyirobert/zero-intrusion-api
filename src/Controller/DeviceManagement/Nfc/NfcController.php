@@ -120,6 +120,8 @@ class NfcController extends AbstractController
             $this->logger->critical('NFC Encrypt Payload ' . json_encode($payloadArray['nfcData']));
 
             $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['nfcData'], $nfcEncryptionKey);
+ 
+            $this->logger->critical('NFC Encrypt Payload ' . json_encode($decryptedUserDataJson));
 
             $dbEncrypedIdentity_publicId = $payloadArray['publicId'];
             $dbEncrypedIdentity_privateId = $payloadArray['privateId'];

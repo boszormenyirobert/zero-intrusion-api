@@ -124,7 +124,7 @@ class HmacDesktopValidationListener
         $corporateId = $payloadDecoded['publicId'] ?? null;
         $message = $payloadDecoded['message'] ?? null;
         $domain = $payloadDecoded['domain'] ?? null;
-        $recvSignature = \json_encode($payloadDecoded['hmac']) ?? null;
+        $recvSignature = $payloadDecoded['hmac'][0] ?? null;
 
         $this->logger->critical('corporateId: ' . $corporateId);
         $this->logger->critical('message: ' . $message);

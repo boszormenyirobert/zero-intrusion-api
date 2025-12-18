@@ -119,16 +119,17 @@ class HmacDesktopValidationListener
             return;
         }
 
-        $publicId = $payloadDecoded['CorporatePublicId'] ?? null;
+        $publicId = $payloadDecoded['publicId'] ?? null;
         $message = $payloadDecoded['message'] ?? null;
         $domain = $payloadDecoded['domain'] ?? null;
-        $hmac = $payloadDecoded['hmac'] ?? null;
+        $hmac = \json_encode($payloadDecoded['hmac']) ?? null;
 
         $this->logger->critical('publicId: ' . $publicId);
         $this->logger->critical('message: ' . $message);
         $this->logger->critical('domain: ' . $domain);      
         $this->logger->critical('hmac: ' . $hmac);
 
+        // CorporateIdSecret used for HMAC validation
 
         if (!$authHeader || (!$processId && $payloadKey !== 'api_nfc_users') ) {
             $this->logger->critical('Missing HMAC header or process ID.');

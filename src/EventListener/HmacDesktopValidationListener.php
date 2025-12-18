@@ -155,6 +155,10 @@ $this->logger->critical("Incoming request headers:\n" . $headerLog);
 
         $expectedSecret = $corporate->getCorporateIdSecret();
         $expectedCorporateIdKey = $corporate->getCorporateIdKey();
+        
+        $this->logger->critical('Decrypted expectedCorporateIdKey: ' . $corporate->getCorporateIdKey());
+                $this->logger->critical('Decrypted expectedSecret: ' . $corporate->getCorporateIdSecret());
+
 
         $controllMessage = $expectedCorporateIdKey . '|' . $timestamp;
 

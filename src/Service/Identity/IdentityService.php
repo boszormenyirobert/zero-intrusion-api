@@ -40,7 +40,7 @@ final class IdentityService
             $setOfIds['shared_publicId'],
             $this->sodiumService->sodiumEncrypt($setOfIds['shared_privateId'], $setOfIds['shared_secret']),
             $setOfIds['shared_secret'],
-            $setOfIds['credentialSecret']
+            $setOfIds['credential_secret']
         );
 
         // Encrypt the IdentityKeyDTO object with the global database encryption
@@ -65,7 +65,7 @@ final class IdentityService
             'shared_publicId' => base64_encode(random_bytes(35)),
             'shared_privateId' => base64_encode(random_bytes(35)),
             'shared_secret' => base64_encode(random_bytes(35)),
-            'credentialSecret' => base64_encode(random_bytes(35))
+            'credential_secret' => base64_encode(random_bytes(35))
         ];
     }
 

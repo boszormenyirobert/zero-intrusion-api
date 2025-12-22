@@ -22,16 +22,6 @@ class Identity
     #[ORM\Column(type: 'datetime')]
     private $createdAt;
 
-    public function __construct()
-    {
-        $this->createdAt = new \DateTimeImmutable();
-    }
-
-    public function getCreateAt(): ?\DateTimeInterface
-    {
-        return $this->createdAt;
-    }
-
     #[ORM\Column(length: 800)]
     private ?string $secret = null;
 
@@ -55,6 +45,16 @@ class Identity
 
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $fcmToken = null;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
+
+    public function getCreateAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
 
     public function getId(): ?int
     {

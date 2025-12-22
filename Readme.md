@@ -34,7 +34,9 @@
     php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate
 
 ### Android
-    Open project in android studio, or if it is already deployed register.
+    Open project in android studio
+    .env settings
+    deploy on handy => Do NOT start the application !
 
 ### HUB
     // db connection in .env
@@ -49,8 +51,8 @@
     php bin/console doctrine:migrations:migrate
     
 ## After installation first Step:
-    0. Open the api log file
-    1. Android Handy registration
+    0. Open the API log file
+    1. Android Handy registration => Fill out email and phone
     2. Set in the HUB 
        .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=1
     3. !!! Take from the log the public id and copy his publicId, replace on frontend HUB .env  by INSTALLATION_PUBLIC_ID=   

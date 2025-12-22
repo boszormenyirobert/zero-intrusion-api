@@ -28,13 +28,19 @@ final class CrypterDatabaseIdentityService
             'phone'   => 'setPhone',
             'credentialSecret' => 'setCredentialSecret'
         ];
-
+/**
+*        foreach ($fields as $field => $setter) {
+*            if (isset($secretData[$field])) {
+*                $encryptedSecret->$setter('');
+*                if(!$secretData[$field]){
+*                    $encryptedSecret->$setter($this->encryptData($secretData[$field], $iv));
+*                }
+*            }
+*        }
+*/
         foreach ($fields as $field => $setter) {
-            if (isset($secretData[$field])) {
-                $encryptedSecret->$setter('');
-                if(!$secretData[$field]){
-                    $encryptedSecret->$setter($this->encryptData($secretData[$field], $iv));
-                }
+            if (!empty($secretData[$field])) { 
+                $encryptedSecret->$setter($this->encryptData($secretData[$field], $iv));
             }
         }
 

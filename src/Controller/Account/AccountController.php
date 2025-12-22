@@ -47,11 +47,9 @@ class AccountController extends AbstractController
         $userPublicId = $payloadArray['publicId'];
         $email = $payloadArray['email'];
 
-
         $userBusinessData = $identityRepository->findOneBy([
             'publicId' =>  $userPublicId
         ]);
-
 
         $businessId = $userBusinessData->getBusinessService();
         // Database encrypted data

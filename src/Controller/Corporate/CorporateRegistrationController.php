@@ -38,7 +38,6 @@ class CorporateRegistrationController extends AbstractController
             $this->logger->critical('service_registration_corporate_data: ' . json_encode($payload));
             return $this->json($payload);
         }
-        $this->logger->critical('service_registration_corporate_data: ' . json_encode($data));
         $identityConfig = $this->corporateRegistrationService->getBusinessRegistration($data);
         
         return new Response($identityConfig['body'], 200, $identityConfig['headers']);

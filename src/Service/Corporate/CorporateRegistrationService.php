@@ -30,6 +30,7 @@ class CorporateRegistrationService
     public function getBusinessRegistration($data){
         $businessModel = $data['businessModel'];        
         $publicId = $data['publicId'];
+        // Scope is under refactoring
         $scope = $data['scope'];
 
 

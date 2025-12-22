@@ -35,7 +35,7 @@ class SecureDeviceController extends AbstractController
     }
 
      /** 
-     * Generate QR for "One Touch Activation" link, 
+     * Generate QR for "One Touch Activation" link
      */
     #[Route('/secure-device/qr-identity', name: 'secure_device_qr_identity', methods: "POST")]
     #[RequireHmac]

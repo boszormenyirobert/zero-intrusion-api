@@ -79,12 +79,14 @@ class UserService
         $corporatePublicId = $payload['corporatePublicId'] ?? null;
         $corporateAuthentication = $payload['corporateAuthentication'] ?? null;
 
-        // Authentication ellenörzese meg hianyzik
+        // Authentication controll missing
+
+        $this->logger->critical('ERROR ', 'TODO: only first element of corporateAuthentication used');
 
         $xExtensionAuthOne = $identity->getXExtensionAuthOne();
         $newCorporateRegistration = new CorporateRegistrationDTO();
         $newCorporateRegistration->setCorporateId($corporatePublicId);//incoming
-        $newCorporateRegistration->setCorporateAuthentication($corporateAuthentication[0]); //incoming  => HIBA
+        $newCorporateRegistration->setCorporateAuthentication($corporateAuthentication[0]); //incoming  => ERROR only first element
         $newCorporateRegistration->setDomain($payload['domain']); //incoming
         $newCorporateRegistration->setXExtensionAuthOne($xExtensionAuthOne); //additionalByApi used by MobileApp
         $newCorporateRegistration->setRegistrationProcessId($identity->getRegistrationProcessId());//additionalByApi
@@ -99,7 +101,7 @@ class UserService
         $corporateAuthentication = $payload['corporateAuthentication'] ?? null;
         $domain = $payload['domain'] ?? null;
 
-        // Authentication ellenörzese meg hianyzik
+        // Authentication controll missing
 
         $xExtensionAuthOne = $identity->getXExtensionAuthOne();
         $userLogin = new UserLoginDTO(

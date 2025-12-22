@@ -1,9 +1,7 @@
 <?php
 /**
- * Domain registration on the HUB for QR and "OneTouch" services
- * 
- * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
- * 
+ * To register a new Corporate account, the user must create a Business service as prerequisite
+ * After that, he can create multiple Corporate identities under that Business service in the Account section
  */
 namespace App\Controller\Corporate;
 
@@ -27,6 +25,9 @@ class CorporateRegistrationController extends AbstractController
         private RequestService $requestService
     ) {    }
 
+    /**
+     * Create a new Business service as a prerequisite for Corporate identities
+     */
     #[Route('/business/create', name: 'service_registration_business_Create', methods: ['POST'])]
     #[RequireHmac]
     #[RequireJson]
@@ -43,6 +44,10 @@ class CorporateRegistrationController extends AbstractController
         return new Response($identityConfig['body'], 200, $identityConfig['headers']);
     }
 
+    /**
+     * Initialize Corporate identity creation under an existing Business service
+     * First step of the Corporate registration process creating the corporate identity
+     */
     #[Route('/identity/create/initialize', name: 'service_registration_corporate_data', methods: ['POST'])]
     #[RequireHmac]
     #[RequireJson]
@@ -68,6 +73,10 @@ class CorporateRegistrationController extends AbstractController
         return new Response($identityConfig['body'], 200, $identityConfig['headers']);
     }
 
+    /**
+     * Finalize Corporate identity creation under an existing Business service
+     * Second step of the Corporate registration process updating the corporate identity with the call-back data and extend data-set
+     */
     #[Route('/identity/create/follow-up', name: 'service_registration_corporate_data_extend', methods: ['POST'])]
     #[RequireHmac]
     #[RequireJson]

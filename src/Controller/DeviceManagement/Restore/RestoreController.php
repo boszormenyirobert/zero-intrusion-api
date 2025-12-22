@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Restore => Device replacement and recovery process => The user have the old device but wants to replace it with a new one
+ * Restore => Device replacement and recovery process => The user have the device. E-mail or Phone-number changed
  * 
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
  */

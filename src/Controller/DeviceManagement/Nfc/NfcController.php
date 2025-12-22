@@ -100,6 +100,10 @@ class NfcController extends AbstractController
             );
         }
 
+        /**
+         * Used by the Desktop Application to decrypt the NFC card data read from the NFC card
+         * On the Desktop Application the encrypted NFC data will be generated as a QR code
+         */
         #[Route('/api/nfc/decrypt', name: 'api_nfc_decrypt', methods: "POST")]
         #[RequireHmac]
         #[DesktopHmac]

@@ -41,7 +41,6 @@ class HmacExtensionValidationListener
     );
 
     if (!$hasHmacCheck) {
-        $this->logger->critical('Return before use HmacExtensionValidationListener');
         return;
     }
         

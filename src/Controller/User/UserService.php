@@ -45,8 +45,6 @@ class UserService
             default : $qrCodeContent = [];
         }
 
-        $this->logger->critical('identity ', ['identity' => $identity]);   
-
         $qrCode = $this->qrService->getQrCode($qrCodeContent);
         
         $extended = (array)$identity;

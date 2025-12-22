@@ -2,7 +2,7 @@
 
 /**
  * Identity => Describe an USER, USER DEVICE
- * 
+ * Device Registration Process => Start with the Mobile-Application installation finish with user-email and phone-number
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
  */
 

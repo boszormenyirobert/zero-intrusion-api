@@ -45,7 +45,6 @@ class HmacDesktopValidationListener
         );
 
         if (!$hasHmacCheck) {
-            $this->logger->critical('Return before use HmacDesktopValidationListener');
             return;
         }
 

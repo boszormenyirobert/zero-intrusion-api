@@ -79,7 +79,7 @@ class UserController extends AbstractController
 
             $qrData = $this->userService->getQrData($payload, $processKey);
             $userPublicId = $payload['userPublicId'];
-            $this->logger->critical('userPublicId ', ['userPublicId' => $userPublicId]);
+
             if($userPublicId)
             {                
                 $firebaseService->manageFcm(  

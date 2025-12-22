@@ -26,25 +26,6 @@ class CorporateRegistrationController extends AbstractController
     ) {    }
 
     /**
-     * Create a new Business service as a prerequisite for Corporate identities
-     */
-    #[Route('/business/create', name: 'service_registration_business_Create', methods: ['POST'])]
-    #[RequireHmac]
-    #[RequireJson]
-    public function businessCreate(Request $request): Response    {
-        $payload = $this->requestService->requestControll($request);
-        $data = $this->corporateRegistrationService->accessDataByKey($payload, 'business_create');
-
-        if (array_key_exists('error', $payload)) {
-            $this->logger->critical('service_registration_corporate_data: ' . json_encode($payload));
-            return $this->json($payload);
-        }
-        $identityConfig = $this->corporateRegistrationService->getBusinessRegistration($data);
-        
-        return new Response($identityConfig['body'], 200, $identityConfig['headers']);
-    }
-
-    /**
      * Initialize Corporate identity creation under an existing Business service
      * First step of the Corporate registration process creating the corporate identity
      */

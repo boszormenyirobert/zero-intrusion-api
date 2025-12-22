@@ -51,8 +51,6 @@ class CorporateRegistrationController extends AbstractController
         IdentityRepository $identityRepository
         ): Response    
     {
-         $this->logger->critical('service_registration_corporate_data: ');
-
         $payload = $this->requestService->requestControll($request);
         $data = $this->corporateRegistrationService->accessDataByKey($payload, 'getIdentity');        
 

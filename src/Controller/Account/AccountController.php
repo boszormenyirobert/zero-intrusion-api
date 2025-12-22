@@ -33,6 +33,9 @@ class AccountController extends AbstractController
     ) {    }
 
 
+    /*
+    * Get all registrated Corporate accounts for user
+    */
     #[Route('/all', name: 'account', methods: ['POST'])]
     public function account(
         Request $request,

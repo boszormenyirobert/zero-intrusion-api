@@ -1,7 +1,7 @@
 <?php
 
 /**
- * User registration/login on the HUB or on any registrated WEB site
+ * User login on the HUB or on any registrated WEB site
  * 
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
  */
@@ -23,7 +23,7 @@ use App\Attribute\RequireJson;
 use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/user')]
-class UserController extends AbstractController
+class LoginController extends AbstractController
 {
 
     public function __construct(
@@ -34,30 +34,13 @@ class UserController extends AbstractController
     ) {
     }
 
-    #[Route('/registration/qr-identity', name: 'user_registration_qr_identity', methods: "POST")]
-    #[RequireHmac]
-    #[RequireJson]
-    public function registrationQrIdentity(
-        Request $request,
-        ResponseHelper $responseHelper
-    ) {
-            $processKey = 'registrationProcessId';
-            $payloadKey = 'user_registration';
-
-            $data = $this->requestService->validPayload(json_decode($request->getContent(),true));
-
-            try{
-                $payload = $data[$payloadKey];
-            }catch(Exception $e){
-                return $responseHelper->handleException($e);
-            }
-
-            $qrData = $this->userService->getQrData($payload, $processKey);     
-
-        $defaultResponse = $qrData['defaultResponse'];            
-        return new Response($defaultResponse['body'], 200, $defaultResponse['headers']);
-    }
-
+    /**
+     * Called during the user login process to get the QR data
+     * On the HUB the QR code will be generated with the received data
+     * If the userPublicId is present in the payload, an FCM notification will be sent to the user device
+     * 
+     * The next steps—mobile call and extension/web polling—happen in the CredentialHub.
+     */
     #[Route('/login/qr-identity', name: 'user_login_qr_identity', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
@@ -93,31 +76,5 @@ class UserController extends AbstractController
             $defaultResponse = $qrData['defaultResponse'];     
 
         return new Response($defaultResponse['body'], 200, $defaultResponse['headers']);
-    }    
-
-    #[Route('/secure-device/qr-identity', name: 'secure_device_qr_identity', methods: "POST")]
-    #[RequireHmac]
-    #[RequireJson]
-    public function secureDeviceQrIdentity(
-        Request $request,
-        ResponseHelper $responseHelper
-    ) {
-            $processKey = 'domainProcessId';
-            $payloadKey = 'secure_device_registration';
-
-            $data = $this->requestService->validPayload(json_decode($request->getContent(),true));
-           
-            try{
-                $payload = $data[$payloadKey];
-            }catch(Exception $e){
-                return $responseHelper->handleException($e);
-            }
-
-            $qrData = $this->userService->getQrData($payload, $processKey);
-            
-            $defaultResponse = $qrData['defaultResponse'];     
-            $this->logger->critical('body', $defaultResponse);
-
-        return new Response($defaultResponse['body'], 200, $defaultResponse['headers']);
-    }        
+    }         
 }

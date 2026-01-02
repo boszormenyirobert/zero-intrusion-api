@@ -85,7 +85,8 @@ class NfcController extends AbstractController
                     $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
                     $users[] = [
                         'email' => $decryptedUser->getEmail(),
-                        'nfcData' => $encryptedUserData            
+                        'nfcData' => $encryptedUserData,
+                        'puID' => $decryptedUser->getPublicId()          
                     ];
                 }catch(\Exception $e){
                     $this->logger->critical('NFC USERS ENCRYPTION ERROR ' . $e->getMessage());  
@@ -116,11 +117,18 @@ class NfcController extends AbstractController
             $validatedPayload = $this->requestService->validPayload($payload);
             // Access to the paylaoad by shared payloadKey
             $payloadArray = $validatedPayload[$payloadKey];
-            
-            $nfcEncryptionKey = "";
-        //    $nfcEncryptionKey = $identity->getNfcEncryptionKey();
-            $nfcEmail = null;
-            $nfcEncryptedData = null;
+
+            $userPublicId = $payloadArray['userPublicId'];
+            $corporatePublicId = $payloadArray['publicId'];
+
+            $identity = $this->identityRepository->findOneBy(['publicId' => $userPublicId]);
+
+            if(!$identity){
+                 $nfcEncryptionKey = "";
+            } else {
+                $nfcEncryptionKey = $identity->getNfcEncryptionKey();
+            }
+
             $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['nfcData'], $nfcEncryptionKey);            
             $payload = json_decode($decryptedUserDataJson, true);
 

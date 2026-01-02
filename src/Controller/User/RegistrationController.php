@@ -56,6 +56,7 @@ class RegistrationController extends AbstractController
             try{
                 $payload = $data[$payloadKey];
             }catch(Exception $e){
+                $this->logger->critical('Invalid payload structure: ' . $e->getMessage());
                 return $responseHelper->handleException($e);
             }
 

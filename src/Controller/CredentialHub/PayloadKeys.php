@@ -33,4 +33,8 @@ final class PayloadKeys
 
     public const API_NFC_USERS = 'api_nfc_users';
     public const API_NFC_DECRYPT = 'api_nfc_decrypt';
+
+    public const ONE_TOUCH_QR_IDENTITY = 'one_touch_qr_identity';
+    public const ONE_TOUCH_IDENTIFIER = 'one_touch_identifier';
+    public const ONE_TOUCH_STATE = 'one_touch_state';
 }

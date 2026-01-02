@@ -165,6 +165,7 @@ class HmacMobileValidationListener
             'user_registration' => 'registrationProcessId',
             'domain_read_credential_encrypted' => 'domainProcessId',
             'vault_read_credential_encrypted' => 'applicationProcessId',
+            'one_touch_identifier' => 'oneTouchProcessId',  
             default => null,
         };
     }

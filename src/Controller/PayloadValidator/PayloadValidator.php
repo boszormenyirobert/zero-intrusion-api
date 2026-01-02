@@ -10,6 +10,9 @@ use App\Exception\MissingKeyException;
 class PayloadValidator
 {
     const ALLOWED_INTEGRITY_KEYS = [
+        'one_touch_qr_identity' => 'one_touch_qr_identity',
+        'one_touch_identifier' => 'one_touch_identifier',
+        'one_touch_state' => 'one_touch_state',
         'domain_read_qr_identity' =>'domain_read_qr_identity',
         'domain_read_credential' => 'domain_read_credential',       
         'domain_read_credential_encrypted' => 'domain_read_credential_encrypted',   

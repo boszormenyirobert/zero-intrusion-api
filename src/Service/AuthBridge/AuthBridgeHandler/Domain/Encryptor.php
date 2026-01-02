@@ -39,6 +39,26 @@ class Encryptor
         return $this->updateLoginEntry($user, $credentialsCollection);
     }
 
+    public function setDecryptedUserIdentity(array $user): bool
+    {
+        $authBridge = $this->authBridgeRepository->findOneBy(['oneTouchProcessId' => $user['oneTouchProcessId']]);
+        if (!$authBridge) {
+            $this->logger->critical("No user login found for oneTouchProcessId: " . $user['oneTouchProcessId']);
+            return false;
+        }
+
+        $identity = [
+            'publicId' => $user['publicId'],
+            'email' => $user['email'],
+        ];
+
+        $authBridge->setUserIdentity(json_encode($identity));
+        $this->loginDatabaseService->addUserLogin($authBridge);
+
+        return true;
+    }       
+
+
     // Extract the credentials, description and targetId from the database by publicId and domain
     // Decrypt by database key    
     public function getDecryptedCredentials(array $user): ?array

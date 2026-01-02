@@ -2,8 +2,9 @@
 namespace App\DTO\QR;
 
 use Symfony\Component\Validator\Constraints as Assert;
+use App\DTO\QR\QrInterface;
 
-class CredentialHubIdentityDTO
+class OneTouchDTO  implements QrInterface
 {
     #[Assert\NotBlank]
     public array $validCommunication = [];
@@ -15,14 +16,25 @@ class CredentialHubIdentityDTO
     public ?string $secret;
     public ?string $iv;
 
-    public ?string $registrationProcessId;
-    public ?string $removeProcessId;
-    public ?string $domainProcessId;
-    public ?string $applicationProcessId;
     public ?string $oneTouchProcessId;
     public ?string $qrCode;
 
-    
+    public function __construct(
+    string $oneTouchProcessId,
+    string $xExtensionAuthOne,
+    string $type,
+    ?string $source,
+    ?string $userPublicId,
+    ?string $targetId
+) {
+    $this->oneTouchProcessId = $oneTouchProcessId;
+    $this->xExtensionAuthOne = $xExtensionAuthOne;
+    $this->type = $type;
+    $this->source = $source;
+    $this->userPublicId = $userPublicId;
+    $this->targetId = $targetId;
+}
+
     public function getValidCommunication(): array
     {
         return $this->validCommunication;
@@ -215,21 +227,7 @@ class CredentialHubIdentityDTO
             'applicationProcessId' => $this->applicationProcessId,
             'qrCode' => $this->qrCode
         ];
-    } 
-    
-    public function toOneTouchProcessArray(): array
-    {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'oneTouchProcessId' => $this->oneTouchProcessId,
-            'qrCode' => $this->qrCode
-        ];
-    }      
+    }     
 
     /**
      * Get the value of qrCode

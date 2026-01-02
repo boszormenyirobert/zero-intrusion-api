@@ -46,6 +46,9 @@ class Identity
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $fcmToken = null;
 
+    #[ORM\Column(length: 30)]
+    private ?string $nfcEncryptionKey = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -176,6 +179,17 @@ class Identity
     public function setFcmToken(?array $fcmToken): static
     {
         $this->fcmToken = $fcmToken;
+        return $this;
+    }
+
+    public function getNfcEncryptionKey(): ?string
+    {
+        return $this->nfcEncryptionKey;
+    }   
+    public function setNfcEncryptionKey(string $nfcEncryptionKey): static
+    {
+        $this->nfcEncryptionKey = $nfcEncryptionKey;
+
         return $this;
     }
 }

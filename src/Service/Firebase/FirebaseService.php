@@ -168,6 +168,7 @@ class FirebaseService
             ]);
 
             $body = $responseFcm->getBody()->getContents();
+            $this->logger->critical('FCM Success Status: ' . $body);
             return $body;
 
         } catch (\GuzzleHttp\Exception\RequestException $e) {

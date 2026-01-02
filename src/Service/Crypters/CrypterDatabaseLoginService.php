@@ -98,6 +98,7 @@ final class CrypterDatabaseLoginService
             throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
         }
 
+        try{
         $decrypted = new identity();
         $decrypted->setPrivateId($this->decryptData($value->getPrivateId(), $iv));
         $decrypted->setSecret($this->decryptData($value->getSecret(), $iv)); // userIntegritySecret => Secret will be deleted after NFC-card activation
@@ -107,6 +108,10 @@ final class CrypterDatabaseLoginService
         $decrypted->setCredentialSecret($this->decryptData($value->getCredentialSecret(), $iv));
 
         return $decrypted;
+        }catch(\Exception $e){
+            $this->logger->critical('Decryption error in CrypterDatabaseLoginService: ' . $e->getMessage());
+            throw new \RuntimeException('Decryption error in CrypterDatabaseLoginService: ' . $e->getMessage());
+        }
     }
 
     private function decryptData(string $value, string $iv): string

@@ -27,6 +27,24 @@ class AuthBridgeHandler
     {
         // Validate the extension request by user privateId.
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
+        if ($validation->getValid()) {
+            if($user['type'] === 'domain-login'){
+                $this->encryptor->setDecryptedValuesForDomain($user);
+            } else if($user['type'] === 'secure'){
+                $this->encryptor->setDecryptedUserIdentity($user);
+            }            
+            else {
+                $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
+            }
+        }
+
+        return $validation->getValid();
+    }
+
+    public function persistOneTouchUserData(array $user): bool
+    {
+        // Validate the extension request by user privateId.
+        $validation = $this->validationHandler->checkExtensionRequestValidation($user);
 
         if ($validation->getValid()) {
             return $user['type'] === 'domain-login'
@@ -35,7 +53,8 @@ class AuthBridgeHandler
         }
 
         return $validation->getValid();
-    }
+    }    
+    
 
     // Deprecated fs, use getDecryptedUserDataToMobileRequest instead
     public function getDecryptedUserData(array $user): bool

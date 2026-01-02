@@ -8,6 +8,7 @@ use App\Service\AuthBridge\AuthBridgeHandler\Domain\Credential;
 use App\Service\AuthBridge\AuthBridgeHandler\Application\Fetch;
 use App\DTO\CredentialHub\ResponseDTO;
 use App\DTO\QR\CredentialHubIdentityDTO;
+use App\Entity\AuthBridge;
 
 class AuthBridgeService
 {
@@ -40,7 +41,12 @@ class AuthBridgeService
     public function persistDecryptedUserDataForWeb(array $user): array
     {
         return $this->authBridgeHandler->persistDecryptedUserDataForWeb($user);
-    }    
+    }
+
+    public function persistOneTouchUserData(array $user): bool
+    {
+        return $this->authBridgeHandler->persistOneTouchUserData($user);
+    }
 
     // deprecated
     public function getUserCredentialsByDomainProcessId($domainProcessId): array
@@ -56,6 +62,11 @@ class AuthBridgeService
     public function fetchFromAccessTable($applicationProcessId, $processType): array
     {
         return $this->fetch->fetchFromAccessTable($applicationProcessId, $processType);
+    }
+
+    public function fetchForOneTouch($oneTouchProcessId, $processType): AuthBridge|false
+    {
+        return $this->fetch->fetchForOneTouch($oneTouchProcessId, $processType);
     }
 
     public function updateProcessState(string $processKey, string $processId): void

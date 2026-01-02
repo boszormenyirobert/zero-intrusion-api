@@ -69,21 +69,20 @@ class NfcController extends AbstractController
             $users = [];
             
             foreach ($usersEncrypted as $identity) {
-                $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);
+                $decryptedUser = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($identity);                
 
-                $nfcEncryptionKey = "MyTestEncryptionKey123"; // TODO remove test key
+                // Created during the registration process - identity creation
+                $nfcEncryptionKey = $identity->getNfcEncryptionKey();
                 
                 $rawUserData = [
-                    'publicId' => $decryptedUser->getPublicId(),
-                    'privateId' => $decryptedUser->getPrivateId(),
+                    'puID' => $decryptedUser->getPublicId(),
+                    'prID' => $this->sodiumService->sodiumDecrypt($decryptedUser->getPrivateId(), $decryptedUser->getSecret()),
                     'secret' => $decryptedUser->getSecret(),
-                    'credentialSecret' => $decryptedUser->getCredentialSecret()
+                    'credSecret' => $decryptedUser->getCredentialSecret()                    
                 ];  
                 try{
-                    $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);
-                    $this->logger->critical('NFC USERS RAW DATA ' . $stringRawUserData);
+                    $stringRawUserData = json_encode($rawUserData, JSON_THROW_ON_ERROR);                  
                     $encryptedUserData = $this->sodiumService->sodiumEncrypt($stringRawUserData, $nfcEncryptionKey);
-                    
                     $users[] = [
                         'email' => $decryptedUser->getEmail(),
                         'nfcData' => $encryptedUserData            
@@ -118,13 +117,11 @@ class NfcController extends AbstractController
             // Access to the paylaoad by shared payloadKey
             $payloadArray = $validatedPayload[$payloadKey];
             
-            $nfcEncryptionKey = "MyTestEncryptionKey123";
+            $nfcEncryptionKey = "";
+        //    $nfcEncryptionKey = $identity->getNfcEncryptionKey();
             $nfcEmail = null;
             $nfcEncryptedData = null;
-
-            $this->logger->critical('NFC Encrypt Payload ' . json_encode($payloadArray['nfcData']));
-
-            $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['nfcData'], $nfcEncryptionKey);
+            $decryptedUserDataJson = $this->sodiumService->sodiumDecrypt($payloadArray['nfcData'], $nfcEncryptionKey);            
             $payload = json_decode($decryptedUserDataJson, true);
 
             return $this->json(

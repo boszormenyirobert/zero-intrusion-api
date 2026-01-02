@@ -85,7 +85,12 @@ class SharedService
 
     public function getProcessId($request, $payloadKey, $fullPayload = false){
         $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
-        $payload = json_decode($validatedPayload[$payloadKey] ?? '', true);
+
+        if (is_array($validatedPayload[$payloadKey])) {
+            $payload = $validatedPayload[$payloadKey];
+        } else {
+            $payload = json_decode($validatedPayload[$payloadKey], true);
+        }
 
         if($fullPayload){
             return $payload;
@@ -94,7 +99,6 @@ class SharedService
         if (!is_array($payload) || empty($payload['processId'])) {
             return false;
         }
-
         return $payload['processId'];
     }
     

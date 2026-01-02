@@ -27,8 +27,14 @@ class AuthBridge
     private ?string $registrationProcessId = null;    
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $removeProcessId = null;           
+    private ?string $removeProcessId = null;         
     
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $oneTouchProcessId = null;  
+    
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $userIdentity = null; 
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $iv = null;
 
@@ -211,4 +217,39 @@ class AuthBridge
 
         return $this;
     } 
+
+    public function getOneTouchProcessId(): ?string
+    {
+        return $this->oneTouchProcessId;
+    }
+    
+    public function setOneTouchProcessId(string $oneTouchProcessId): static
+    {
+        $this->oneTouchProcessId = $oneTouchProcessId;
+
+        return $this;
+    }
+
+    public function getUserIdentity(): ?string
+    {
+        return $this->userIdentity;
+    }
+    
+    // Only publicId and e-mail should be stored here. No sensitive data.
+    public function setUserIdentity(?string $userIdentity): static
+    {
+        $this->userIdentity = $userIdentity;
+
+        return $this;
+    }
+
+    public function toOneTouchProcessArray(): array
+    {
+        $identity = $this->getUserIdentity() ? json_decode($this->getUserIdentity(), true) : null;
+
+        return [
+            'email' => $identity && isset($identity['email']) ? $identity['email'] : null,
+            'publicId' => $identity && isset($identity['publicId']) ? $identity['publicId'] : null
+        ];
+    }
 }

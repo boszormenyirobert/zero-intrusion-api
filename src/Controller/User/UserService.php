@@ -81,7 +81,7 @@ class UserService
 
         // Authentication controll missing
 
-        $this->logger->critical('ERROR ', 'TODO: only first element of corporateAuthentication used');
+        $this->logger->critical('ERROR '. 'TODO: only first element of corporateAuthentication used');
 
         $xExtensionAuthOne = $identity->getXExtensionAuthOne();
         $newCorporateRegistration = new CorporateRegistrationDTO();

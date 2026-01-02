@@ -8,6 +8,7 @@ use App\Service\Crypters\CrypterDatabaseLoginService;
 use Exception;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Service\AccessRegistry\CredentialHubHandler\RegistryState;
+use App\Entity\AuthBridge;
 
 class Fetch
 {
@@ -18,6 +19,16 @@ class Fetch
         private SerializerInterface $serializerInterface,
         private RegistryState $registryState
     ) {}
+
+    public function fetchForOneTouch($oneTouchProcessId, $processType): AuthBridge|false
+    {        
+        $this->logger->critical('Fetch for One Touch processId: ' . $oneTouchProcessId);
+        $this->logger->critical('Fetch for One Touch processType: ' . $processType);
+
+        $user = $this->authBridgeRepository->findOneBy([$processType => $oneTouchProcessId]);
+
+        return $user ? $user : false;
+    }   
 
     public function fetchFromAccessTable($applicationProcessId, $processType): array
     {

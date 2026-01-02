@@ -15,7 +15,7 @@ class ValidationDTO
         $this->valid = $valid;
         $this->userSecret = $userSecret;
         if(!$valid){
-            $this->error = 'Unvalid PrivateId';
+            $this->error = 'Unvalid PrivateId : Validation failed.';
         }
     }
 

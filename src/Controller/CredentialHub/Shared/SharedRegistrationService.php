@@ -3,6 +3,7 @@
 namespace App\Controller\CredentialHub\Shared;
 
 use App\DTO\QR\SharedRegistrationQrDTO;
+use App\DTO\QR\OneTouchDTO;
 use Psr\Log\LoggerInterface;
 
 class SharedRegistrationService
@@ -36,5 +37,17 @@ class SharedRegistrationService
             $qrContent->setApplication($application);
         }
         return $qrContent;
-    }  
+    }
+
+    public function getOneTouchQrContent($validatedPayload, $mobilXExtensionAuth, $processId): OneTouchDTO
+    {
+        return new OneTouchDTO(
+            $processId,
+            $mobilXExtensionAuth,
+            $validatedPayload->type,
+            $validatedPayload->source,
+            null,
+            null
+        );
+    }    
 }

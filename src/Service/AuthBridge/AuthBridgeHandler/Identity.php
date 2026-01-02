@@ -6,6 +6,7 @@ use App\Service\Crypters\CrypterDatabaseLoginService;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use App\DTO\QR\CredentialHubIdentityDTO;
+use App\DTO\QR\OneTouchDTO;
 use Psr\Log\LoggerInterface;
 
 class Identity
@@ -61,7 +62,7 @@ class Identity
      */    
     public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
     {
-        /* $processType : registrationProcessId || removeProcessId || domainProcessId */
+        /* $processType : registrationProcessId || removeProcessId || domainProcessId || oneTouchProcessId*/
         $processId = $this->getGeneratedId();
         $targetId = $this->getGeneratedId();
 
@@ -102,6 +103,8 @@ class Identity
             $authBridge->setRemoveProcessId($processId);
         } else if($processType === 'registrationProcessId'){
             $authBridge->setRegistrationProcessId($processId);
+        } else if($processType === 'oneTouchProcessId'){
+            $authBridge->setOneTouchProcessId($processId);
         }
 
         return $authBridge;

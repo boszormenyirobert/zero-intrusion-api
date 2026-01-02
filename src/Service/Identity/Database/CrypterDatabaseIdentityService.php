@@ -26,7 +26,8 @@ final class CrypterDatabaseIdentityService
             'privateId' => 'setPrivateId',
             'email'   => 'setEmail',
             'phone'   => 'setPhone',
-            'credentialSecret' => 'setCredentialSecret'
+            'credentialSecret' => 'setCredentialSecret',
+            'nfcEncryptionKey' => 'setNfcEncryptionKey'
         ];
 /**
 *        foreach ($fields as $field => $setter) {

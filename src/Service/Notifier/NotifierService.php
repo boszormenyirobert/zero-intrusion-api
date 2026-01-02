@@ -47,20 +47,32 @@ final class NotifierService
           //  'userAuth' => $user['userAuth']
         ]);
 
-        $userIdentity = [
+        $userIdentity = json_encode([
             'signature' => $this->signMessageWithPrivateKey($userIdentity, $corporateIdentity),            
             'publicId' => $user['publicId'],
             'email' => $user['email'],
             'registrationProcessId' => $user['registrationProcessId'],
          //   'userAuth' => $user['userAuth']
-        ];
+        ]);
 
         $callbackPath = $encryptedCorporate->getCallbackUserRegistration();
-        $this->httpClient->request(
+        $this->logger->critical(' Callback Path: ' . $callbackPath);    
+        $this->logger->critical(' userIdentity : ' . $userIdentity);    
+
+        try {
+            $userIdentity = ['json' => json_decode($userIdentity, true)];
+        } catch (\Exception $e) {
+            $this->logger->critical(' JSON Decode Error: ' . $e->getMessage());    
+            return;
+        }   
+
+        $response =  $this->httpClient->request(
             'POST', 
             $callbackPath, 
-            ['json' => $userIdentity]
+            $userIdentity
         );
+
+        $this->logger->critical(' Callback Path: ' . $response->getStatusCode());    
     }
 
     public function callBackUserLogin($decryptedResponse, $user)
@@ -91,19 +103,17 @@ final class NotifierService
         );
     }
 
-    private function signMessageWithPrivateKey($userIdentity, $corporate){
-            $corporatePrivateKey = $corporate->getSslPrivateKey();
-            $this->logger->critical(' Private Key: ' . $corporatePrivateKey);
-            $this->logger->critical(' Public Key: ' . $corporate->getSslPublicKey());
-            $this->logger->critical(' Corporate Id: ' . $corporate->getCorporateId());
+    private function signMessageWithPrivateKey($userIdentity, $corporate)
+    {
+        $corporatePrivateKey = $corporate->getSslPrivateKey();
+        $result = openssl_sign($userIdentity, $signature, $corporatePrivateKey, OPENSSL_ALGO_SHA256);
 
-            $result = openssl_sign($userIdentity, $signature, $corporatePrivateKey, OPENSSL_ALGO_SHA256);
-
-            if (!$result) {
-                $error = openssl_error_string();
-                $this->logger->critical('openssl_sign failed: ' . $error);               
-            } 
+        if (!$result) {
+            $error = openssl_error_string();
+            $this->logger->critical('openssl_sign failed: ' . $error);
+            return null; 
+        }
 
         return base64_encode($signature);
-    }    
+    }
 }

@@ -42,6 +42,7 @@ class CorporateRegistrationController extends AbstractController
 
         if($data['scope'] == 'external'){
             $identity = $identityRepository->findOneBy(['publicId' => $data['publicId']]);
+            // Bug in the logic. The logged-in user is not forced to be the owner of any Business service
             $data['businessModel'] = $this->corporateRegistrationService->getSelectedSubscription($identity->getBusinessService());            
         } 
 

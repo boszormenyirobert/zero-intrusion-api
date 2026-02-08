@@ -67,7 +67,7 @@ final class IdentityService
             'shared_privateId' => base64_encode(random_bytes(35)),
             'shared_secret' => base64_encode(random_bytes(35)),
             'credential_secret' => base64_encode(random_bytes(35)),
-            'nfcEncryptionKey' => base64_encode(random_bytes(16))
+            'nfcEncryptionKey' => base64_encode(random_bytes(8))
         ];
     }
 

@@ -64,7 +64,7 @@
     3. !!! Take from the log the public id and copy his publicId, replace on frontend HUB .env  by INSTALLATION_PUBLIC_ID=   
 
 
-    3. Create public and private key in the 
+    3. HUB code: Create public and private key in the 
         /config/jwt
         
         openssl genpkey -algorithm RSA -out config/jwt/private.pem -aes256 -pass pass:ZeroIntrusionLockAndLayeredEncryption -pkeyopt rsa_keygen_bits:4096
@@ -73,9 +73,14 @@
             chmod 644 config/jwt/public.pem      chown www-data:www-data
             chmod 600 config/jwt/private.pem     chown www-data:www-data
     4. Open HUB instance registration
-    2. Set in the HUB 
+    5. Copy corporate_id => registration confirmation
+    6. Fill out:
+       1. Domain: http://82.165.219.9:8082
+       2. Callback user login: /api/user-login/callback
+       3. Callback user registration: /api/registration/callback
+    7. Set in the HUB 
        .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=0
-    5. Stop mobil application and restart it   
+    8. Stop mobil application and restart it   
 
 
 ## Sanitize Database : Job call automatically stored DB procedure

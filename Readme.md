@@ -35,7 +35,13 @@
 
 ### Android
     Open project in android studio
-    .env settings
+    .env and enviroments.ts settings
+    Terminal : adb kill-server && adb start-server
+    Connect: to the device by QR-code (Android Studio right side device manager) or USB-cabel
+    cd android
+        ./gradlew clean
+        ./gradlew assembleRelease
+        cd .. && adb install android/app/build/outputs/apk/release/app-release.apk
     deploy on handy => Do NOT start the application !
 
 ### HUB
@@ -43,12 +49,12 @@
     composer install
     npm install
     npm run build
-    php bin/console doctrine:migrations:migrate
+    php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate
 
 ### DEMO
     // db connection in .env
     composer install
-    php bin/console doctrine:migrations:migrate
+    php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate
     
 ## After installation first Step:
     0. Open the API log file

@@ -57,8 +57,9 @@
     php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate
     
 ## After installation first Step:
-    0. Open the API log file
-    1. Android Handy registration => Fill out email and phone
+    --RESET DATABASE IF IT IS NOT EMPTY--
+    0. Open the SERVER API log file
+    1. Android Handy registration => Fill out email and phone 
     2. Set in the HUB 
        .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=1
     3. !!! Take from the log the public id and copy his publicId, replace on frontend HUB .env  by INSTALLATION_PUBLIC_ID=   
@@ -75,7 +76,7 @@
     4. Open HUB instance registration
     5. Copy corporate_id => registration confirmation
     6. Fill out:
-       1. Domain: http://82.165.219.9:8082
+       1. Domain: https://hub.zero-intrusion.com
        2. Callback user login: /api/user-login/callback
        3. Callback user registration: /api/registration/callback
     7. Set in the HUB 

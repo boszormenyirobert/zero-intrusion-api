@@ -145,6 +145,7 @@ class FirebaseService
         $message = [
             "message" => [
                 "token" => $deviceToken,
+                "priority" => "high",
                 "notification" => [
                     "title" => $title,
                     "body" => $body

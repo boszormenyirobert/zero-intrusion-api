@@ -3,9 +3,3 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
-
-_not_found:
-    path: /{_path}
-    controller: App\Controller\ErrorController::show
-    requirements:
-        _path: .*

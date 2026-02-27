@@ -114,8 +114,23 @@ class Identity
      * Generates a random alphanumeric string of fixed length (12 characters).
      * Used as unique identifiers for process IDs or target IDs.
      */    
-    private function getGeneratedId(){
+    private function getGeneratedId_Original(){
         $length = 12;
         return substr(str_shuffle(str_repeat('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $length)), 0, $length);
+    }
+
+    /**
+    * random_bytes(16) → 128-bit cryptographically secure random data
+    * base64_encode → ~6 bits of entropy per character → produces a shorter, readable string
+    * strtr('+/', 'AB') → replaces non-alphanumeric characters, keeping only alphanumeric characters
+    * substr(..., 0, 12) → takes 12 characters → ~72 bits of entropy → practically collision-free even with millions of generations
+    */    
+    private function getGeneratedId(int $length = 12): string {
+        // 128 bit random, base64-re kódoljuk
+        $bytes = random_bytes(16); // 16 bájt = 128 bit
+        $base64 = rtrim(strtr(base64_encode($bytes), '+/', 'AB'), '=');
+
+        // reduce to desired length (12 characters)
+        return substr($base64, 0, $length);
     }
 }

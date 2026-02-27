@@ -120,17 +120,21 @@ class Identity
     }
 
     /**
-    * random_bytes(16) → 128-bit cryptographically secure random data
-    * base64_encode → ~6 bits of entropy per character → produces a shorter, readable string
-    * strtr('+/', 'AB') → replaces non-alphanumeric characters, keeping only alphanumeric characters
-    * substr(..., 0, 12) → takes 12 characters → ~72 bits of entropy → practically collision-free even with millions of generations
-    */    
-    private function getGeneratedId(int $length = 24): string {
-        // 128 bit random, base64-re kódoljuk
-        $bytes = random_bytes(16); // 16 bájt = 128 bit
+     * Generate a cryptographically secure unique key with 128-bit entropy.
+     * Uses 16 random bytes (128 bits), encodes to base64, converts to alphanumeric,
+     * and truncates to the desired length. For full 128-bit entropy, use length = 22.
+     *
+     * @param int $length Desired length of the generated key (default 22 for 128-bit entropy)
+     * @return string Alphanumeric key
+     */
+    private function getGeneratedId(int $length = 22): string {
+        // 16 bytes = 128 bits of cryptographically secure random data
+        $bytes = random_bytes(16);
+
+        // Base64 encode and make URL-safe + alphanumeric
         $base64 = rtrim(strtr(base64_encode($bytes), '+/', 'AB'), '=');
 
-        // reduce to desired length (12 characters)
+        // Truncate to the desired length
         return substr($base64, 0, $length);
     }
 }

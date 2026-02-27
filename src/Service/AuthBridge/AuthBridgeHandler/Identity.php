@@ -125,7 +125,7 @@ class Identity
     * strtr('+/', 'AB') → replaces non-alphanumeric characters, keeping only alphanumeric characters
     * substr(..., 0, 12) → takes 12 characters → ~72 bits of entropy → practically collision-free even with millions of generations
     */    
-    private function getGeneratedId(int $length = 12): string {
+    private function getGeneratedId(int $length = 24): string {
         // 128 bit random, base64-re kódoljuk
         $bytes = random_bytes(16); // 16 bájt = 128 bit
         $base64 = rtrim(strtr(base64_encode($bytes), '+/', 'AB'), '=');

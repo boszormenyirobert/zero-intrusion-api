@@ -145,11 +145,23 @@ class FirebaseService
         $message = [
             "message" => [
                 "token" => $deviceToken,
-                "notification" => [
-                    "title" => $title,
-                    "body" => $body
-                ],                
+                "android" => [
+                    "priority" => "HIGH",
+                    "ttl" => "7s"
+                ],     
+                "apns" => [
+                    "headers" => [
+                        "apns-priority" => "10"
+                    ],
+                    "payload" => [
+                        "aps" => [
+                            "content-available" => 1
+                        ]
+                    ]
+                ],
                 "data"=> [
+                    "title" => $title,
+                    "body" => $body,
                     "action" => "show_allow_close",
                     "message"=> "Allow or Decline login to the requested domain: ",
                     "qrData" => json_encode($qrData)

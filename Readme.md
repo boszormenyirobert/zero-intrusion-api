@@ -81,6 +81,8 @@
        3. Callback user registration: /api/registration/callback
     7. Set in the HUB 
        .env ZERO_INTRUSION_FRONTEND_ALLOW_INSTANCE_REGISTRATION=0
+            ==> THE corporateIdKey, corporateIdSecret, corporateId, sslPublicKey automatically written in the HUB - DB,
+            do not put in the .env
     8. Stop mobil application and restart it   
 
 

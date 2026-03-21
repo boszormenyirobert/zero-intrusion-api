@@ -14,9 +14,6 @@ class VaultEditService
             $validatedPayload->type,
             $mobilXExtensionAuth,
             $processId,
-            $validatedPayload->userName,
-            $validatedPayload->userPassword,
-            $validatedPayload->description,
             $validatedPayload->application
         );
     }    

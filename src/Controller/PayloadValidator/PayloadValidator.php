@@ -23,6 +23,7 @@ class PayloadValidator
         'domain_delete_state' => 'domain_delete_state',
 
         'shared_registration_qr_identity' => 'shared_registration_qr_identity',
+        'shared_registration_new_to_encrypt' => 'shared_registration_new_to_encrypt',
         'shared_registration_new' => 'shared_registration_new',
         'shared_registration_state' => 'shared_registration_state',
 
@@ -84,7 +85,7 @@ class PayloadValidator
      * and optionally checks for a required key. 
      * Steps:
      * 1. Fetch the 'json_payload' injected into request attributes.
-     * 2. Validate the payload structure using requestService->validPayload().
+     * 2. Validate the payload structure using requestService->validPayload(). // Request must come from the HUB application with the key: zeroIntrusionProyApi
      * 3. If a specific key is required and missing, log the issue and throw MissingKeyException.
      * 4. On any validation error, log the failure details and rethrow the exception.
      */    

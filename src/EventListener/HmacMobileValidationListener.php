@@ -73,7 +73,6 @@ class HmacMobileValidationListener
                 if (is_string($innerJson)) {
                     $innerJson = json_decode($innerJson, true);
                 }
-
             $processId = $innerJson[$processKey] ?? null;
         } else {
             $this->logger->critical('payloadKey missing or null');
@@ -89,9 +88,6 @@ class HmacMobileValidationListener
         ]);
 
         if (!$process) {
-            $this->logger->critical('Invalid processId. Incoming from Mobile HMAC validation. : ' . $processId);
-            $this->logger->critical('Processkey from Mobile HMAC validation. : ' . $processKey);
-            $this->logger->critical('Invalid processId. The process id missing from the auth bridge table');
             $event->setController(fn() => new JsonResponse([
                 'success' => false,
                 'error' => 'Invalid or expired HMAC from the extension',
@@ -158,6 +154,7 @@ class HmacMobileValidationListener
         return match ($payloadKey) {
             'domain_read_credential' => 'domainProcessId',
             'vault_read_credential' => 'applicationProcessId',
+            'shared_registration_new_to_encrypt' => 'registrationProcessId',
             'shared_registration_new' => 'registrationProcessId',
             'domain_delete_credential' => 'removeProcessId',         
             'vault_delete_credential' => 'removeProcessId',       

@@ -40,7 +40,7 @@ final class IdentityService
             $setOfIds['shared_publicId'],
             $this->sodiumService->sodiumEncrypt($setOfIds['shared_privateId'], $setOfIds['shared_secret']),
             $setOfIds['shared_secret'],
-            $setOfIds['credential_secret'],
+            $setOfIds['credential_secret'], // TODO: This secret should generated on the Handy and sent encrypted to the API, not generated in the API
             $setOfIds['nfcEncryptionKey']
         );
 
@@ -63,7 +63,7 @@ final class IdentityService
 
     private function generateSetOfIds(){
         return [
-            'shared_publicId' => base64_encode(random_bytes(35)),
+            'shared_publicId' => base64_encode(random_bytes(35)), // 280 bits of entropy, encoded in base64 for storage and transmission
             'shared_privateId' => base64_encode(random_bytes(35)),
             'shared_secret' => base64_encode(random_bytes(35)),
             'credential_secret' => base64_encode(random_bytes(35)),

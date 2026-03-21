@@ -21,6 +21,19 @@ use App\Controller\CredentialHub\Shared\SharedRegistrationService;
 use App\Controller\CredentialHub\SharedService;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Flow: 
+ * 1. Extension push user-credentials
+ * 2. /qr-identity 
+ *  - Generate processId and authToken, save the user-credential in the database with the processId
+ * 3. /new/to-encrypt
+ *  - Mobile application pull the "unencrypted" user-credential with the processId, encrypt with the mobile app and return to the mobile application
+ * 4. /new
+ * - Mobile application push the "encrypted" user-credential with the processId, save the "encrypted" user-credential in the database with the processId
+ * 5. /state
+ * - Extension pull the registration state with the processId, return the registration state to the extension
+ */
+
 #[Route('/api/credential-hub/shared/registration')]
 class SharedRegistrationController extends AbstractController
 {
@@ -71,6 +84,9 @@ class SharedRegistrationController extends AbstractController
             $authToken = $identity->getXExtensionAuthOne();
             $processId = $identity->getRegistrationProcessId();;
 
+            // Save the user credential in the database with the processId and             
+            $this->sharedRegistrationService->saveUserCredentialInAuthBridge($validatedPayload, $identity->getRegistrationProcessId());
+            // return the qr content with the processId and authToken to the extension and mobile app
             $qrContent = $this->sharedRegistrationService->getQrContent($validatedPayload, $authToken, $processId);
             $errors = $validator->validate($qrContent);
 
@@ -95,6 +111,38 @@ class SharedRegistrationController extends AbstractController
 
             return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());
         } catch (\Throwable $e) {
+            return $this->responseHelper->handleException($e);
+        }
+    }
+
+    /* Called by Mobile App
+     *
+     * Mobile Identity and HMAC Registration Hash retrived from the request (first HMAC-hash)
+     * Retrive domain or application-registration data from the AuthBridge Database to encrypt with the mobile app
+     * 
+     * @param Request $request
+     * @return JsonResponse
+     */
+    #[Route('/new/to-encrypt', name: 'shared_registration_new_to_encrypt', methods: "POST")]
+    #[RequireHmac]
+    #[MobileHmac]    
+    #[RequireJson]
+    public function sharedRegistrationNewToEncrypt(
+        Request $request,
+        AccessRegistryRegistrationService $accessService
+    ): Response {
+        try {           
+            $validatedPayload = $this->payloadValidator->validatePayload($request, 'shared_registration_new_to_encrypt');
+            $user = json_decode($validatedPayload['shared_registration_new_to_encrypt'], true);
+            $type = $user['type']; // registration-domain, application-registration, system_hub_registration
+            $key = in_array($type, ['registration-domain', 'system_hub_registration']) ? 'domain' : 'application';
+            $userCredential = $this->sharedRegistrationService->getUserCredentialFromAuthBridge($user['registrationProcessId']);            
+
+            return $this->json([
+                'registration_process_init' => $userCredential,
+                'error' => ''
+            ]);
+        } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }

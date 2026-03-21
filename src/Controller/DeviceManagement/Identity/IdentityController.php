@@ -48,6 +48,7 @@ class IdentityController extends AbstractController
         try {            
             $this->payloadValidator->validatePayload($request, 'firstSecret');
             $keys = $this->identityService->getKey();
+            $this->logger->critical("To the HUB Registration the registrator Public ID: " . json_encode($keys->toIdentityArray()));
             return $this->json($keys->toIdentityArray());
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

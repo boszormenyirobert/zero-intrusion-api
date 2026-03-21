@@ -82,4 +82,37 @@ final class CrypterDatabaseService
 
         return $decrypted;
     }
+
+    public function enrcyptUserCredential(array $userCredential, string $iv)
+    {
+       $ivDecoded = base64_decode($iv);
+        $this->key = hash('sha256', $this->params->get('DATABASE_HASH_SECRET'), true);
+
+        $jsonCredential = json_encode($userCredential);
+        if ($jsonCredential === false) {
+            throw new \RuntimeException('JSON encoding failed');
+        }
+        
+        return ['encryptedCredential' =>$this->encryptData($jsonCredential, $ivDecoded)];
+    }
+    
+    // The credential is by the default DB encrypted
+    public function decryptUserCredential(string $encryptedCredential, string $iv)
+    {        
+        $this->key = hash('sha256', $this->params->get('DATABASE_HASH_SECRET'), true);
+        $ivDecoded = base64_decode($iv);
+
+        if (strlen($ivDecoded) !== 16) {
+            throw new \RuntimeException('Invalid IV length');
+        }
+
+            $decryptedJson = $this->decryptData($encryptedCredential, $ivDecoded);
+            $decoded = json_decode($decryptedJson, true);
+
+            if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+                throw new \RuntimeException('JSON decoding failed: ' . json_last_error_msg());
+            }
+
+        return $decryptedJson;
+    }
 }

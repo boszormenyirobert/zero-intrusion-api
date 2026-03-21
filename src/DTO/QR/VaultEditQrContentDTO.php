@@ -22,14 +22,6 @@ class VaultEditQrContentDTO implements QrInterface
     public ?string $registrationProcessId;
 
     #[Assert\NotBlank]
-    public ?string $userName;
-
-    #[Assert\NotBlank]
-    public ?string $userPassword;
-
-    public ?string $description;
-
-    #[Assert\NotBlank]
     public ?string $application;
 
     public function __construct(
@@ -38,9 +30,6 @@ class VaultEditQrContentDTO implements QrInterface
         ?string $type,
         ?string $xExtensionAuthOne,
         ?string $registrationProcessId,
-        ?string $userName,
-        ?string $userPassword,
-        ?string $description,
         ?string $application
     ) {
         $this->source = $source;
@@ -48,9 +37,6 @@ class VaultEditQrContentDTO implements QrInterface
         $this->type = $type;
         $this->xExtensionAuthOne = $xExtensionAuthOne;
         $this->registrationProcessId = $registrationProcessId;
-        $this->userName = $userName;
-        $this->userPassword = $userPassword;
-        $this->description = $description;
         $this->application = $application;
     }
 }

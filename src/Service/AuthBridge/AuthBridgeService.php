@@ -6,7 +6,6 @@ use App\Service\AuthBridge\AuthBridgeHandler\AuthBridgeHandler;
 use App\Service\AuthBridge\AuthBridgeHandler\Identity;
 use App\Service\AuthBridge\AuthBridgeHandler\Domain\Credential;
 use App\Service\AuthBridge\AuthBridgeHandler\Application\Fetch;
-use App\DTO\CredentialHub\ResponseDTO;
 use App\DTO\QR\CredentialHubIdentityDTO;
 use App\Entity\AuthBridge;
 
@@ -72,5 +71,13 @@ class AuthBridgeService
     public function updateProcessState(string $processKey, string $processId): void
     {
         $this->authBridgeHandler->updateProcessState($processKey, $processId);
+    }
+
+    public function saveUserCredentialInAuthBridge($userCredential, $registrationProcessId){
+        return $this->authBridgeHandler->saveUserCredentialInAuthBridge($userCredential, $registrationProcessId);
+    }
+
+    public function getUserCredentialFromAuthBridge($processId){
+        return $this->authBridgeHandler->getUserCredentialFromAuthBridge($processId);       
     }
 }

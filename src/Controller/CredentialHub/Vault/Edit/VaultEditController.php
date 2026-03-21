@@ -20,7 +20,20 @@ use App\Service\QrService\QrService;
 use App\Controller\CredentialHub\Vault\Edit\VaultEditService;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Controller\CredentialHub\SharedService;
+use App\Controller\CredentialHub\Shared\SharedRegistrationService;
 
+/**
+ * Flow: 
+ * 1. Extension push user-credentials
+ * 2. /qr-identity 
+ *  - Generate processId and authToken, save the user-credential in the database with the processId and targetId (applicationId or domainId)
+ * 3. /new/to-encrypt => Shared endpoint => SharedRegistrationController::sharedRegistrationNewToEncrypt
+ *  - Mobile application pull the "unencrypted" user-credential with the processId, encrypt with the mobile app and return to the mobile application
+ * 4. /new
+ * - Mobile application push the "encrypted" user-credential with the processId, save the "encrypted" user-credential in the database with the processId
+ * 5. /state
+ * - Extension pull the registration state with the processId, return the registration state to the extension
+ */
 #[Route('/api/credential-hub/vault/edit')]
 class VaultEditController extends AbstractController
 {
@@ -30,6 +43,7 @@ class VaultEditController extends AbstractController
         private ResponseHelper $responseHelper,
         private AccessRegistryRegistrationService $accessRegistryRegistrationService,
         private SharedService $sharedService,
+        private SharedRegistrationService $sharedRegistrationService
     ) {}
 
     /*
@@ -55,6 +69,8 @@ class VaultEditController extends AbstractController
             $validatedPayload = json_decode($validatedPayloadJson[$payloadKey]);
             /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
             $identity = $authBridgeService->generateRequestIdentity($processKey);
+            // Save the user credential in the database with the targetId and             
+            $this->sharedRegistrationService->saveUserCredentialInAuthBridge($validatedPayload, $identity->getRegistrationProcessId());
 
             $qrContent = $vaultEditService->getQrContent($validatedPayload, $identity->getXExtensionAuthOne(), $identity->getRegistrationProcessId());
             

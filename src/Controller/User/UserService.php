@@ -64,6 +64,7 @@ class UserService
 
         $header = $authHelperInit->getAuthHeader($encryptedData);
         $iv64 = $authHelperInit->getIvBase64();
+            $this->logger->info('iv64: ' . $iv64);
 
         return  [
         "defaultResponse" => $authHelperInit->buildResponse(

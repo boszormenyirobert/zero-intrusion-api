@@ -64,16 +64,19 @@ class VaultReadController extends AbstractController
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $source = $validatedPayload[$payloadKey]['source'];
             $type = $validatedPayload[$payloadKey]['type'];
-
+            $identity = null;
+            
             if ($source === 'extension' && $type === 'applications') {
                 /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */                
                 $identity = $this->authBridgeService->generateRequestIdentity($processKey);
             }
-
+            if (!$identity) {
+                throw new \RuntimeException('Identity generation failed');
+            }
             $qrContent = $vaultReadService->getQrContent($type, $source, $identity->getXExtensionAuthOne(), $identity);
             $qrCode = $qrService->getQrCode($qrContent);
             $identity->setQrCode($qrCode);
-            $this->logger->critical('Vault Read QR Content: ', (array)$validatedPayload[$payloadKey]);
+
             if(isset($validatedPayload[$payloadKey]['userPublicId']) && $validatedPayload[$payloadKey]['userPublicId'])
             {                 
                 $this->sharedService->sendFcmNotification(

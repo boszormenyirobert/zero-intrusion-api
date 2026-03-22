@@ -84,7 +84,7 @@ class SharedRegistrationController extends AbstractController
             $authToken = $identity->getXExtensionAuthOne();
             $processId = $identity->getRegistrationProcessId();;
 
-            // Save the user credential in the database with the processId and             
+            // Save the user credential in the database with the processId             
             $this->sharedRegistrationService->saveUserCredentialInAuthBridge($validatedPayload, $identity->getRegistrationProcessId());
             // return the qr content with the processId and authToken to the extension and mobile app
             $qrContent = $this->sharedRegistrationService->getQrContent($validatedPayload, $authToken, $processId);

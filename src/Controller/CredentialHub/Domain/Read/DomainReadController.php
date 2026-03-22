@@ -163,7 +163,7 @@ class DomainReadController extends AbstractController
 
             // Process the credential read request
             $response = $domainReadService->processCredentialRead($user);
-
+            $this->logger->info('domainReadCredential response: ' . json_encode($response, JSON_PRETTY_PRINT));
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

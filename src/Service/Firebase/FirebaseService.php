@@ -26,9 +26,21 @@ class FirebaseService
         $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $publicId]);
         if($identityEncrypted){
             $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
-            foreach ($fcmTokens as $token) {
+            $this->logger->info('Preparing FCM delivery.', [
+                'publicId' => $publicId,
+                'tokenCount' => count($fcmTokens),
+                'title' => $title,
+            ]);
+
+            foreach ($fcmTokens as $index => $token) {
                 $fcmToken = $this->crypterDatabaseIdentityService->decryptData($token, base64_decode($identityEncrypted->getIv()));
-                $this->logger->critical("Sending FCM to token: " . $title . ' : ' . $fcmToken);
+                $this->logger->info('Sending FCM to device token.', [
+                    'publicId' => $publicId,
+                    'title' => $title,
+                    'tokenIndex' => $index + 1,
+                    'tokenCount' => count($fcmTokens),
+                    'maskedToken' => $this->maskToken($fcmToken),
+                ]);
                 $this->sendFcmMessage($fcmToken, $title, $body, $qrData);
             }
         }
@@ -43,7 +55,23 @@ class FirebaseService
      */
     public function sendFcmMessage($deviceToken, $title, $body, $qrData) {        
         $jwt = $this->getJwt();
+        if (!$jwt) {
+            $this->logger->critical('FCM send aborted because JWT generation failed.', [
+                'maskedToken' => $this->maskToken($deviceToken),
+                'title' => $title,
+            ]);
+            return;
+        }
+
         $accessToken = $this->getAccessToken($jwt);
+        if (!$accessToken) {
+            $this->logger->critical('FCM send aborted because access token retrieval failed.', [
+                'maskedToken' => $this->maskToken($deviceToken),
+                'title' => $title,
+            ]);
+            return;
+        }
+
         $this->sendFCM($deviceToken, $title, $body, $accessToken, $qrData);
     }
 
@@ -98,7 +126,13 @@ class FirebaseService
      * 5. Returns the access token for authenticated FCM requests.
      */    
     private function getAccessToken($jwt) {
+        if (!$jwt) {
+            return null;
+        }
+
         $client = new Client();
+        $data = [];
+
         try {
             $response = $client->post($this->params->get('FIREBASE_TOKEN_URI'), [
                 'form_params' => [
@@ -117,15 +151,25 @@ class FirebaseService
             if (!empty($data['access_token'])) {
                 $this->logger->info('Firebase access token successfully received.');
             } else {
-                $this->logger->error('Firebase response did not contain an access_token.');
+                $this->logger->error('Firebase response did not contain an access_token.', [
+                    'responseBody' => $body,
+                ]);
             }
 
         } catch (\GuzzleHttp\Exception\RequestException $e) {
-             $this->logger->critical('error: '.$e->getMessage());
-            echo "Error: " . $e->getMessage();
+            $context = [
+                'message' => $e->getMessage(),
+            ];
+
+            if ($e->hasResponse()) {
+                $context['statusCode'] = $e->getResponse()->getStatusCode();
+                $context['responseBody'] = $e->getResponse()->getBody()->getContents();
+            }
+
+            $this->logger->critical('Firebase access token request failed.', $context);
         }
 
-        return $data["access_token"];       
+        return $data['access_token'] ?? null;
     }
 
     /**
@@ -137,7 +181,7 @@ class FirebaseService
      * 4. Returns the response body on success.
      */    
     private function sendFCM($deviceToken, $title, $body, $accessToken, $qrData) {
-        $project_id = "zerointrusionlock";
+        $project_id = $this->params->get('FIREBASE_PROJECT_ID');
 
         $client = new Client();
         $url = "https://fcm.googleapis.com/v1/projects/$project_id/messages:send";
@@ -180,17 +224,50 @@ class FirebaseService
             ]);
 
             $body = $responseFcm->getBody()->getContents();
-            $this->logger->critical('FCM Success Status: ' . $body);
+            $this->logger->info('FCM request succeeded.', [
+                'projectId' => $project_id,
+                'maskedToken' => $this->maskToken($deviceToken),
+                'responseBody' => $body,
+            ]);
             return $body;
 
         } catch (\GuzzleHttp\Exception\RequestException $e) {
-            $this->logger->critical('FCM Error: ' . $e->getMessage());
+            $context = [
+                'message' => $e->getMessage(),
+                'projectId' => $project_id,
+                'maskedToken' => $this->maskToken($deviceToken),
+                'title' => $title,
+                'requestUrl' => $url,
+            ];
 
             if ($e->hasResponse()) {
                 $resp = $e->getResponse();
-                $this->logger->critical('FCM Error Status: ' . $resp->getStatusCode());
-                $this->logger->critical('FCM Error Body: ' . $resp->getBody()->getContents());
+                $responseBody = $resp->getBody()->getContents();
+                $decodedBody = json_decode($responseBody, true);
+
+                $context['statusCode'] = $resp->getStatusCode();
+                $context['responseBody'] = $responseBody;
+                $context['firebaseStatus'] = $decodedBody['error']['status'] ?? null;
+                $context['firebaseMessage'] = $decodedBody['error']['message'] ?? null;
+                $context['firebaseCode'] = $decodedBody['error']['code'] ?? null;
+                $context['firebaseErrorCode'] = $decodedBody['error']['details'][0]['errorCode'] ?? null;
             }
+
+            $this->logger->critical('FCM request failed.', $context);
         }
+    }
+
+    private function maskToken(?string $token): string
+    {
+        if (!$token) {
+            return 'empty-token';
+        }
+
+        $length = strlen($token);
+        if ($length <= 10) {
+            return str_repeat('*', $length);
+        }
+
+        return substr($token, 0, 6) . '...' . substr($token, -4);
     }
 }

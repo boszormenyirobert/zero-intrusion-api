@@ -15,7 +15,12 @@ class ResponseHelper
     public function createSuccessResponse(array $data): JsonResponse
     {        
         $logData = [];
-        $responseData = [];
+        $responseData = [
+            'process' => false,
+            'validation' => false,
+            'process_check' => false,
+            'success' => false,
+        ];
         
         foreach ($data as $key => $value) {
             if (is_object($value) && method_exists($value, 'toDomainStateArray')) {
@@ -33,7 +38,7 @@ class ResponseHelper
             }
         }
         
-        return new JsonResponse(array_merge($responseData, ['success' => true]));
+        return new JsonResponse(array_merge($responseData));
     }
 
     public function createErrorResponse(string $errorMessage, int $statusCode = Response::HTTP_BAD_REQUEST): JsonResponse

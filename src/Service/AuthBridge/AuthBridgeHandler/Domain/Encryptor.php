@@ -12,6 +12,8 @@ use Psr\Log\LoggerInterface;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use App\Service\AuthBridge\AuthBridgeHandler\Application\Encryptor as ApplicationEncryptor;
 use App\Service\Firebase\FirebaseService;
+use App\Entity\AuthBridge;
+use App\Service\Cache\ProcessStateCacheService;
 
 class Encryptor
 {
@@ -24,7 +26,8 @@ class Encryptor
         private LoginDatabaseService $loginDatabaseService,
         private LoggerInterface $logger,
         private ApplicationEncryptor $applicationEncryptor,
-        private FirebaseService $firebaseService
+        private FirebaseService $firebaseService,
+        private ProcessStateCacheService $processStateCacheService
     ) {}
 
     // Set decrypted values for domain login
@@ -53,10 +56,19 @@ class Encryptor
         ];
 
         $authBridge->setUserIdentity(json_encode($identity));
-        $this->loginDatabaseService->addUserLogin($authBridge);
+        // $this->loginDatabaseService->addUserLogin($authBridge);
+        $this->writeLoginEntryInRedis($user['oneTouchProcessId'], $authBridge);
 
         return true;
-    }       
+    }
+    
+    private function writeLoginEntryInRedis(string $processId, AuthBridge $authBridge) {       
+        $this->processStateCacheService->set(
+            $processId,
+            json_encode($authBridge->toCacheArray(), JSON_UNESCAPED_UNICODE),
+            300
+        );
+    }  
 
 
     // Extract the credentials, description and targetId from the database by publicId and domain
@@ -104,9 +116,9 @@ class Encryptor
         return ['decrypted' => $decrypted];
     }    
 
-    // Update the login entry with decrypted credentials
-    // Write back the encrypted credentials to the database
-    // To the encryption use the iv saved in the AuthBridge entry and the general database key
+    // Update the login entry with the by user secret decrypted credentials
+    // Write the encrypted credentials in Redis cache => key is the processId. 
+    // To the encryption use the iv saved in the AuthBridge entry and the general database secret
     private function updateLoginEntry(array $user, array $credentialsCollection): bool
     {
         $authBridge = $this->authBridgeRepository->findOneBy(['domainProcessId' => $user['domainProcessId']]);
@@ -131,7 +143,8 @@ class Encryptor
         $authBridge->setProcessState(true);
         $authBridge->setApplications($databaseEncryptedCredentialsList);
 
-        $this->loginDatabaseService->addUserLogin($authBridge); 
+        //$this->loginDatabaseService->addUserLogin($authBridge); 
+        $this->writeLoginEntryInRedis($user['domainProcessId'], $authBridge);
 
         return true;
     }

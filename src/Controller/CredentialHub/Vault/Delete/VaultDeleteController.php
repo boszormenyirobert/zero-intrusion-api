@@ -117,9 +117,11 @@ class VaultDeleteController extends AbstractController
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
 
-            $response = $accessRegistryRegistrationService->getState($processId, $processKey);
+            //$response = $accessRegistryRegistrationService->getState($processId, $processKey);
+            //$response = $this->sharedService->getChacheByProcessId($processId);
+            $response = $this->sharedService->pollTheRedisDefault($processId);
 
-            return $this->responseHelper->createSuccessResponse($response->toStateArray());
+            return $this->responseHelper->createSuccessResponse($response ?? []);
 
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

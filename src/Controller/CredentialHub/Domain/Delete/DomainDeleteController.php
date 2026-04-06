@@ -21,6 +21,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\DTO\QR\DomainDeleteQrContentDTO;
 use App\Service\AccessRegistry\AccessRegistryRegistrationService;
 use App\Controller\CredentialHub\SharedService;
+use App\Service\Cache\ProcessStateCacheService;
 
 #[Route('/api/credential-hub/domain/delete')]
 class DomainDeleteController extends AbstractController
@@ -30,7 +31,8 @@ class DomainDeleteController extends AbstractController
         private PayloadValidator $payloadValidator,
         private ResponseHelper $responseHelper,
         private ValidatorInterface $validator,
-        private SharedService $sharedService
+        private SharedService $sharedService,
+        private ProcessStateCacheService $processStateCacheService
     ) {}
 
     /**
@@ -130,6 +132,7 @@ class DomainDeleteController extends AbstractController
     public function domainDeleteState(
         Request $request,
         AccessRegistryRegistrationService $stateService,
+        AuthBridgeService $authBridgeService
     ): JsonResponse {
         $payloadKey = PayloadKeys::DOMAIN_DELETE_STATE;
         $processKey = PayloadKeys::REMOVE_PROCESS_ID;
@@ -141,9 +144,10 @@ class DomainDeleteController extends AbstractController
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
 
-            $response = $stateService->getState($processId, $processKey);
+            //$response = $stateService->getState($processId, $processKey);
+            $response = $this->sharedService->pollTheRedisDefault($processId);            
 
-            return $this->responseHelper->createSuccessResponse($response->toStateArray());
+            return $this->responseHelper->createSuccessResponse($response ?? []);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }

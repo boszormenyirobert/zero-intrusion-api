@@ -23,6 +23,11 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Entity\AuthBridge;
 
+/**
+ * Class responsibility: mark the user the Desktop as "secure" machine for "oneTouchLogin"
+ * used from browser extension
+ */
+
 #[Route('/api/credential-hub/one-touch')]
 class OneTouchController extends AbstractController
 {
@@ -139,18 +144,10 @@ class OneTouchController extends AbstractController
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
 
-            $this->logger->info('One Touch State processId 000: ' . $processId);
-            $user = $authBridgeService->fetchForOneTouch($processId, 'oneTouchProcessId');    
-           
-            if($user){
-                $response = $user->toOneTouchProcessArray();
-                return $this->responseHelper->createSuccessResponse(
-                    $response
-                );
+            $payload = $sharedService->pollTheRedisOneTouch($processId, 'oneTouchProcessId');
 
-            }
             return $this->responseHelper->createSuccessResponse(
-                ['response' => 'no_user_found']
+                $payload
             );
 
         } catch (\Exception $e) {

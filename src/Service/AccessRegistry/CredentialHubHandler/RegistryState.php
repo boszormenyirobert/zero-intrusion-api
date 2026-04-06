@@ -36,7 +36,8 @@ final class RegistryState
 
         return new ResponseDTO(
             $process === null ? false : true,
-            ($process && !$process->isProcessState()) ? 'Missing handy validation' : true,
+           // ($process && !$process->isProcessState()) ? 'Missing handy validation' : true,
+           true,
             $state
         );
     }

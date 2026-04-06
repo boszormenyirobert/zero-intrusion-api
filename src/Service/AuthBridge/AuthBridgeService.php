@@ -16,7 +16,7 @@ class AuthBridgeService
         private Credential $credential,
         private AuthBridgeHandler $authBridgeHandler,
         private Fetch $fetch
-    ) {}
+        ) {}
 
 
     // Copy user from AccessRegistry into AuthBridge table

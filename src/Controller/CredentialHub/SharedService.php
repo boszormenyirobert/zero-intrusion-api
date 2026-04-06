@@ -12,6 +12,7 @@ use App\Service\Firebase\FirebaseService;
 use App\Repository\IdentityRepository;
 use App\Repository\AccessRegistryRepository;
 use App\Service\Identity\Database\CrypterDatabaseIdentityService;
+use App\Service\Cache\ProcessStateCacheService;
 
 class SharedService
 {
@@ -22,7 +23,8 @@ class SharedService
             private FirebaseService $firebaseService,
             private IdentityRepository $identityRepository,
             private AccessRegistryRepository $accessRegistryRepository,
-            private CrypterDatabaseIdentityService $crypterDatabaseIdentityService,
+            private CrypterDatabaseIdentityService $crypterDatabaseIdentityService,      
+            private ProcessStateCacheService $processStateCacheService,      
             private LoggerInterface $logger
     ) {}
 
@@ -175,5 +177,99 @@ class SharedService
         }
 
         return ['email' => null, 'publicId' => null];
-    }   
+    }
+
+    public function getChacheByProcessId(string $processId){
+        $cachedValue = $this->processStateCacheService->get($processId);
+        return json_decode($cachedValue, true);
+    }
+
+    public function pollTheRedis($processId, $authBridgeService, $type): array{
+        $startTime = time();
+        $maxWait = 8; // seconds
+        $response = null;
+        $toAutoNotification = [];
+        $list = $type === 'domain' ? 'domainList' : 'applicationList';
+        do {
+            $response = $authBridgeService->fetchFromAccessTable($processId, $type);
+            /** @var array{email: ?string, publicId: ?string} $toAutoNotification */
+            $toAutoNotification = $this->getUserEmailByTargetId($response);
+
+            // Ha megtalálta a rekordot (process_check true), lépjünk tovább
+            if (isset($response['process']['process_check']) && $response['process']['process_check'] === true) {
+                break;
+            }
+
+            // Ha letelt a 10 másodperc, lépjünk ki
+            if ((time() - $startTime) >= $maxWait) {
+                break;
+            }
+
+            // Várjunk 0.5 másodpercet a következő próbáig
+            usleep(500000);
+        } while (true);
+
+        return array_merge(
+            [$list => $response['response'] ?? []],
+            $response['process'] ?? [],
+            $toAutoNotification ?? []
+        );
+    }
+    
+    
+    public function pollTheRedisDefault($processId): array{
+            $startTime = time();
+            $maxWait = 8; // seconds
+            $response = null;
+            $toAutoNotification = [];
+
+            do {
+                $response = $this->getChacheByProcessId($processId);
+
+                // Ha megtalálta a rekordot (process_check true), lépjünk tovább
+                if (isset($response['process']['process_check']) && $response['process']['process_check'] === true) {
+                    break;
+                }
+
+                // Ha letelt a 10 másodperc, lépjünk ki
+                if ((time() - $startTime) >= $maxWait) {
+                    break;
+                }
+
+                // Várjunk 0.5 másodpercet a következő próbáig
+                usleep(500000);
+            } while (true);
+
+            return $response ?? [];
+    }
+
+    public function pollTheRedisOneTouch($processId, $authBridgeService): array{
+            $startTime = time();
+            $maxWait = 8; // seconds
+            $response = null;
+            $toAutoNotification = [];
+
+            do {
+                $user = $authBridgeService->fetchForOneTouch($processId, 'oneTouchProcessId');
+                           
+                if($user){
+                    $userData = $user->toOneTouchProcessArray();
+                    $response = $this->responseHelper->createSuccessResponse(
+                        $userData
+                    );
+                    break;
+                }
+
+
+                // Ha letelt a 10 másodperc, lépjünk ki
+                if ((time() - $startTime) >= $maxWait) {
+                    break;
+                }
+
+                // Várjunk 0.5 másodpercet a következő próbáig
+                usleep(500000);
+            } while (true);
+
+            return $response ?? [];
+    }
 }

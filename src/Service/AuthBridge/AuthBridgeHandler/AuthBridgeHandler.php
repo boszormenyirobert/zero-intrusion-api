@@ -28,20 +28,25 @@ class AuthBridgeHandler
 
     public function persistDecryptedUserData(array $user): bool
     {
+        $success = false;
         // Validate the extension request by user privateId.
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
+        if($validation->getValid() === false){
+            return false;
+        }
+
         if ($validation->getValid()) {
             if($user['type'] === 'domain-login'){
-                $this->encryptor->setDecryptedValuesForDomain($user);
+                $success = $this->encryptor->setDecryptedValuesForDomain($user);
             } else if($user['type'] === 'secure'){
-                $this->encryptor->setDecryptedUserIdentity($user);
+                $success = $this->encryptor->setDecryptedUserIdentity($user);
             }            
             else {
-                $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
+                $success = $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
             }
         }
 
-        return $validation->getValid();
+        return $success;
     }
 
     public function persistOneTouchUserData(array $user): bool

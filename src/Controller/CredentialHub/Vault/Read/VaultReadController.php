@@ -187,16 +187,13 @@ class VaultReadController extends AbstractController
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
 
-            $response = $this->authBridgeService->fetchFromAccessTable($processId, 'application');
-            /** @var array{email: ?string, publicId: ?string} $toAutoNotification */
-            $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response);
+           // $payload = $this->pollTheRedis($processId);
+            $payload = $this->sharedService->pollTheRedis($processId, $this->authBridgeService, 'application');
+
             return $this->responseHelper->createSuccessResponse(
-                array_merge(
-                    ['applicationList' => $response['response']],
-                    $response['process'],
-                    $toAutoNotification
-                )
+                $payload
             );
+
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }

@@ -5,6 +5,7 @@ namespace App\Service\AccessRegistry;
 use Psr\Log\LoggerInterface;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\AccessRegistry\CredentialHubResolver\ResolverService;
+use App\Service\Cache\ProcessStateCacheService;
 
 final class AccessRegistryDomainService
 {
@@ -12,7 +13,8 @@ final class AccessRegistryDomainService
     public function __construct(
         private LoggerInterface $logger,
         private AuthBridgeService $authBridgeService,
-        private ResolverService $resolverService     
+        private ResolverService $resolverService,
+        private ProcessStateCacheService $processStateCacheService
     ) {}
 
     public function isAllowedUserDomainApplicationCombination($user, $type): array
@@ -40,10 +42,17 @@ final class AccessRegistryDomainService
         $processKey = 'registrationProcessId';
         $processId = $userData['registrationProcessId'];
         
-        $this->authBridgeService->updateProcessState($processKey, $processId);
+        //$this->authBridgeService->updateProcessState($processKey, $processId);
         $encryptedUserData = $this->resolverService->getWrite()->createAccessRegistryDomain($userData, $type);
 
         $userData['encryptedAuthId'] = $encryptedUserData->getUserCredential();
+
+        $this->writeLoginEntryInRedis($processId, [
+            'process' => true,
+            'validation' => true,
+            'process_check' => true,
+            'success' => true,
+        ]);
         
         return $userData;
     }    
@@ -80,4 +89,12 @@ final class AccessRegistryDomainService
 
         return $decryptedPage;
     }
+
+    private function writeLoginEntryInRedis(string $processId, array $status) {       
+        $this->processStateCacheService->set(
+            $processId,
+            json_encode($status, JSON_UNESCAPED_UNICODE),
+            300
+        );
+    }    
 }

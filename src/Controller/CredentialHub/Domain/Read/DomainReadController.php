@@ -141,8 +141,9 @@ class DomainReadController extends AbstractController
      * Called by Mobile App
      * 
      * Find and decrypt to the domains related credentials in the AccessRegistry by PublicId
-     * Encrypt and move into the AuthBridge table the related record by domainProcessId
-     * Decrypt and Update the Record with the credentials
+     * Encrypt and move into the Redis cache the related record by domainProcessId => key is the domainProcessId
+     * The record decrypted with the default DB secret in the Redis
+     * Delete the record from the AuthBridge => automatically deleted by Database job (15second)
      *
      * @param Request $request
      * @return JsonResponse
@@ -163,7 +164,6 @@ class DomainReadController extends AbstractController
 
             // Process the credential read request
             $response = $domainReadService->processCredentialRead($user);
-            $this->logger->info('domainReadCredential response: ' . json_encode($response, JSON_PRETTY_PRINT));
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
@@ -172,8 +172,7 @@ class DomainReadController extends AbstractController
 
     /**
      * Called by Browser-Extension
-     * Get User Credentials By domainProcessId from the AuthBridge
-     * Delete the record from the AuthBridge
+     * Get User Credentials By domainProcessId from the Redis cache.     
      * Get User Email and publicId by targetId for auto-notification
      * 
      * @param Request $request
@@ -196,16 +195,12 @@ class DomainReadController extends AbstractController
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
 
-            $response = $authBridgeService->fetchFromAccessTable($processId, 'domain');
-            
-            /** @var array{email: ?string, publicId: ?string} $toAutoNotification */
-            $toAutoNotification = $this->sharedService->getUserEmailByTargetId($response);
+            $payload = $this->sharedService->pollTheRedis($processId, $authBridgeService, 'domain');
+
             return $this->responseHelper->createSuccessResponse(
-                array_merge(
-                    ['domainList' => $response['response']],
-                    $response['process'],
-                    $toAutoNotification
-                ));
+                $payload
+            );
+
         } catch (\Exception $e) {
             $this->logger->critical('Error: ' . $e->getMessage());
             return $this->responseHelper->handleException($e, ['login_process_check' => false]);            

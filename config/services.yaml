@@ -94,6 +94,10 @@ services:
             FIREBASE_CACERT_PATH: '%FIREBASE_CACERT_PATH%' 
             OPENSSL_CNF: '%OPENSSL_CNF%'  
 
+    App\Service\Cache\ProcessStateCacheService:
+        arguments:
+            $cachePool: '@cache.app'
+
     App\:
         resource: '../src/'
         exclude:

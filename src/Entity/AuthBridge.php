@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\AuthBridgeRepository;
-use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuthBridgeRepository::class)]
@@ -67,6 +66,13 @@ class AuthBridge
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
     }
 
     public function getId(): ?int
@@ -251,5 +257,84 @@ class AuthBridge
             'email' => $identity && isset($identity['email']) ? $identity['email'] : null,
             'publicId' => $identity && isset($identity['publicId']) ? $identity['publicId'] : null
         ];
+    }
+
+    public function toCacheArray(): array
+    {
+        return [
+            'id' => $this->getId(),
+            'domainProcessId' => $this->getDomainProcessId(),
+            'applicationProcessId' => $this->getApplicationProcessId(),
+            'registrationProcessId' => $this->getRegistrationProcessId(),
+            'removeProcessId' => $this->getRemoveProcessId(),
+            'oneTouchProcessId' => $this->getOneTouchProcessId(),
+            'iv' => $this->getIv(),
+            'userIdentity' => $this->getUserIdentity() ? json_decode($this->getUserIdentity(), true) : null,
+            'applications' => $this->getApplications(),
+            'description' => $this->getDescription(),
+            'targetId' => $this->getTargetId(),
+            'processState' => $this->isProcessState(),
+            'publicId' => $this->getPublicId(),
+            'createdAt' => $this->getCreatedAt()?->format(DATE_ATOM),
+        ];
+    }
+
+    public static function fromCacheArray(array $data): self
+    {
+        $authBridge = new self();
+
+        if (!empty($data['domainProcessId'])) {
+            $authBridge->setDomainProcessId($data['domainProcessId']);
+        }
+
+        if (!empty($data['applicationProcessId'])) {
+            $authBridge->setApplicationProcessId($data['applicationProcessId']);
+        }
+
+        if (!empty($data['registrationProcessId'])) {
+            $authBridge->setRegistrationProcessId($data['registrationProcessId']);
+        }
+
+        if (!empty($data['removeProcessId'])) {
+            $authBridge->setRemoveProcessId($data['removeProcessId']);
+        }
+
+        if (!empty($data['oneTouchProcessId'])) {
+            $authBridge->setOneTouchProcessId($data['oneTouchProcessId']);
+        }
+
+        if (!empty($data['iv'])) {
+            $authBridge->setIv($data['iv']);
+        }
+
+        if (array_key_exists('applications', $data)) {
+            $authBridge->setApplications($data['applications']);
+        }
+
+        if (array_key_exists('description', $data)) {
+            $authBridge->setDescription($data['description']);
+        }
+
+        if (!empty($data['targetId'])) {
+            $authBridge->setTargetId($data['targetId']);
+        }
+
+        if (array_key_exists('processState', $data) && $data['processState'] !== null) {
+            $authBridge->setProcessState((bool) $data['processState']);
+        }
+
+        if (array_key_exists('publicId', $data)) {
+            $authBridge->setPublicId($data['publicId']);
+        }
+
+        if (array_key_exists('userIdentity', $data) && $data['userIdentity'] !== null) {
+            $authBridge->setUserIdentity(json_encode($data['userIdentity'], JSON_UNESCAPED_UNICODE));
+        }
+
+        if (!empty($data['createdAt'])) {
+            $authBridge->setCreatedAt(new \DateTimeImmutable($data['createdAt']));
+        }
+
+        return $authBridge;
     }
 }

@@ -1,53 +1,48 @@
 monolog:
-    channels: ['mailer']
-    handlers:
-        mailer:
-            type: stream
-            path: '%kernel.logs_dir%/mailer.log'
-            level: debug
-            channels: ['mailer']
+    channels:
+        - deprecation
+        - request
+        - business
+        - security
+
 when@dev:
     monolog:
+
         handlers:
+
             main:
                 type: stream
-                path: "%kernel.logs_dir%/critical.log"
-                level: error
-                max_level: critical
-                bubble: false
-                # channels sort eltávolítva, csak szint alapján szűr
-            info:
+                path: "%kernel.logs_dir%/dev.log"
+                level: debug
+                channels:
+                    - "!event"
+                    - "!doctrine"
+                    - "!security"
+                    - "!request"
+                    - "!http_client"
+                    - "!deprecation"
+
+            doctrine:
                 type: stream
-                path: "%kernel.logs_dir%/info.log"
+                path: "%kernel.logs_dir%/doctrine.log"
+                level: debug
+                channels: [doctrine]
+
+            http:
+                type: stream
+                path: "%kernel.logs_dir%/http.log"
                 level: info
-                max_level: info
-                bubble: false
-                # channels sort eltávolítva, csak szint alapján szűr
-            # uncomment to get logging in your browser
-            # you may have to allow bigger header sizes in your Web server configuration
-            #firephp:
-            #    type: firephp
-            #    level: info
-            #chromephp:
-            #    type: chromephp
-            #    level: info
+                channels: [http_client]
+
+            deprecation:
+                type: stream
+                path: "%kernel.logs_dir%/deprecation.log"
+                channels: [deprecation]
+                
             console:
                 type: console
-                formatter: monolog.formatter.line
-                bubble: false
-                verbosity_levels:
-                    VERBOSITY_NORMAL: WARNING
-                    VERBOSITY_VERBOSE: NOTICE
-                    VERBOSITY_VERY_VERBOSE: INFO
-                    VERBOSITY_DEBUG: DEBUG                
                 process_psr_3_messages: false
-                channels: ["!event", "!doctrine", "!console"]
-                
-            mailer:
-                type: stream
-                path: '%kernel.logs_dir%/mailer.log'
-                level: debug
-                channels: ['mailer']                
+                channels: ["!event", "!doctrine", "!console"]                
 
 when@test:
     monolog:
@@ -65,29 +60,34 @@ when@test:
 
 when@prod:
     monolog:
+
         handlers:
+
             main:
                 type: fingers_crossed
                 action_level: error
-                handler: nested
-                excluded_http_codes: [404, 405]
-                buffer_size: 50 # How many messages should be saved? Prevent memory leaks
-            nested:
+                handler: buffered
+                excluded_http_codes: [400, 401, 403, 404]
+
+            buffered:
+                type: buffer
+                handler: file_log
+                buffer_size: 50
+                flush_on_overflow: true
+
+            file_log:
                 type: stream
-                path: php://stderr
+                path: "%kernel.logs_dir%/prod.log"
                 level: debug
                 formatter: monolog.formatter.json
-            console:
-                type: console
-                process_psr_3_messages: false
-                channels: ["!event", "!doctrine"]
+
             deprecation:
                 type: stream
+                path: "%kernel.logs_dir%/deprecations.log"
                 channels: [deprecation]
-                path: php://stderr
-                formatter: monolog.formatter.json
-            mailer:
+
+            security:
                 type: stream
-                path: '%kernel.logs_dir%/mailer.log'
-                level: debug
-                channels: ['mailer']
+                path: "%kernel.logs_dir%/security.log"
+                level: warning
+                channels: [security]

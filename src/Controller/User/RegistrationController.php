@@ -20,7 +20,6 @@ use App\Helper\ResponseHelper;
 use Exception;
 use App\Attribute\RequireHmac;
 use App\Attribute\RequireJson;
-use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/user')]
 class RegistrationController extends AbstractController

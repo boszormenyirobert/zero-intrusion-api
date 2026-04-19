@@ -6,7 +6,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Service\AccessRegistry\AccessRegistryRegistrationService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Psr\Log\LoggerInterface;
 use App\Controller\PayloadValidator\PayloadValidator;
@@ -21,13 +20,11 @@ use App\Controller\CredentialHub\Shared\SharedRegistrationService;
 use App\Controller\CredentialHub\SharedService;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Controller\CredentialHub\PayloadKeys;
-use App\Entity\AuthBridge;
 
 /**
  * Class responsibility: mark the user the Desktop as "secure" machine for "oneTouchLogin"
  * used from browser extension
  */
-
 #[Route('/api/credential-hub/one-touch')]
 class OneTouchController extends AbstractController
 {
@@ -132,7 +129,6 @@ class OneTouchController extends AbstractController
     #[ExtensionHmac]
     public function oneTouchState(
         Request $request,
-        AuthBridgeService $authBridgeService,
         SharedService $sharedService
     ): JsonResponse {
         $payloadKey = PayloadKeys::ONE_TOUCH_STATE;

@@ -128,9 +128,14 @@ class DomainReadController extends AbstractController
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $user = $validatedPayload[$payloadKey];
+            $processId = $user['domainProcessId'] ?? 'missing';
+
+            $this->logger->info(sprintf('domainReadCredentialDecrypted started for processId: %s', $processId));
             
             // User credentials by domain, decrypted by Database but still encrypted by the userSecret
             $response = $domainReadService->getDecryptedCredentials($user);
+            $this->logger->info(sprintf('domainReadCredentialDecrypted finished for processId: %s', $processId));
+
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
@@ -161,9 +166,14 @@ class DomainReadController extends AbstractController
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
             $user = $validatedPayload[$payloadKey];
+            $processId = $user['domainProcessId'] ?? 'missing';
+
+            $this->logger->info(sprintf('domainReadCredential started for processId: %s', $processId));
 
             // Process the credential read request
             $response = $domainReadService->processCredentialRead($user);
+            $this->logger->info(sprintf('domainReadCredential finished for processId: %s', $processId));
+
             return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

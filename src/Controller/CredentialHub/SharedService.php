@@ -24,7 +24,7 @@ class SharedService
             private IdentityRepository $identityRepository,
             private AccessRegistryRepository $accessRegistryRepository,
             private CrypterDatabaseIdentityService $crypterDatabaseIdentityService,      
-            private ProcessStateCacheService $processStateCacheService,      
+            private ProcessStateCacheService $processStateCacheService,     
             private LoggerInterface $logger
     ) {}
 
@@ -181,12 +181,13 @@ class SharedService
 
     public function getChacheByProcessId(string $processId){
         $cachedValue = $this->processStateCacheService->get($processId);
+
         return json_decode($cachedValue, true);
     }
 
     public function pollTheRedis($processId, $authBridgeService, $type): array{
-        $startTime = time();
-        $maxWait = 8; // seconds
+        $startTime = microtime(true);
+        $maxWait = 15; // seconds
         $response = null;
         $toAutoNotification = [];
         $list = $type === 'domain' ? 'domainList' : 'applicationList';
@@ -201,12 +202,12 @@ class SharedService
             }
 
             // Ha letelt a 10 másodperc, lépjünk ki
-            if ((time() - $startTime) >= $maxWait) {
+            if ((microtime(true) - $startTime) >= $maxWait) {
                 break;
             }
 
-            // Várjunk 0.5 másodpercet a következő próbáig
-            usleep(500000);
+            // Várjunk 0.25 másodpercet a következő próbáig
+            usleep(250000);
         } while (true);
 
         return array_merge(
@@ -218,7 +219,7 @@ class SharedService
     
     
     public function pollTheRedisDefault($processId): array{
-            $startTime = time();
+            $startTime = microtime(true);
             $maxWait = 8; // seconds
             $response = null;
             $toAutoNotification = [];
@@ -227,36 +228,35 @@ class SharedService
                 $response = $this->getChacheByProcessId($processId);
 
                 // Ha megtalálta a rekordot (process_check true), lépjünk tovább
-                if (isset($response['process']['process_check']) && $response['process']['process_check'] === true) {
+                if (isset($response['process_check']) && $response['process_check'] === true) {
                     break;
                 }
 
                 // Ha letelt a 10 másodperc, lépjünk ki
-                if ((time() - $startTime) >= $maxWait) {
+                if ((microtime(true) - $startTime) >= $maxWait) {
                     break;
                 }
 
-                // Várjunk 0.5 másodpercet a következő próbáig
-                usleep(500000);
+                // Várjunk 0.25 másodpercet a következő próbáig
+                usleep(250000);
             } while (true);
 
             return $response ?? [];
     }
 
-    public function pollTheRedisOneTouch($processId, $authBridgeService): array{
+    public function pollTheRedisOneTouch($processId, $processType): array{
             $startTime = time();
             $maxWait = 8; // seconds
-            $response = null;
-            $toAutoNotification = [];
+            $response = [];
 
             do {
-                $user = $authBridgeService->fetchForOneTouch($processId, 'oneTouchProcessId');
-                           
+                $user = $this->authBridgeService->fetchForOneTouch($processId, $processType);
                 if($user){
-                    $userData = $user->toOneTouchProcessArray();
-                    $response = $this->responseHelper->createSuccessResponse(
-                        $userData
-                    );
+                    $response = $user->toOneTouchProcessArray();
+                    $this->logger->info('One Touch poll result', [
+                        'processId' => $processId,
+                        'payload' => $response,
+                    ]);
                     break;
                 }
 
@@ -270,6 +270,6 @@ class SharedService
                 usleep(500000);
             } while (true);
 
-            return $response ?? [];
+            return $response;
     }
 }

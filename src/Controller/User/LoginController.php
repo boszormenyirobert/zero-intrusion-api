@@ -61,10 +61,21 @@ class LoginController extends AbstractController
             }
 
             $qrData = $this->userService->getQrData($payload, $processKey);
-            $userPublicId = $payload['userPublicId'];
 
-            if($userPublicId)
-            {                
+            if(array_key_exists('userPublicId', $payload) && !empty($payload['userPublicId']))
+            {    
+                $this->logger->info('User public ID found in payload, preparing to send FCM notification', [
+                    'userPublicId' => $payload['userPublicId'],
+                ]);            
+                $userPublicId = $payload['userPublicId'];
+
+                $this->logger->info(json_encode($qrData));
+
+                $this->logger->info('Generated QR data for user login', [
+                    'processId' => $qrData['mobileResponse']->domainProcessId ?? null,
+                    'userPublicId' => $userPublicId,
+                ]);
+
                 $firebaseService->manageFcm(  
                     $userPublicId,                 
                     'Test Title', 

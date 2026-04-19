@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Helper;
-use Psr\Log\LoggerInterface;
 
 final class AuthorizationHelper
 {
@@ -28,6 +27,11 @@ final class AuthorizationHelper
         $signature = hash_hmac('sha256', $message, $this->secretApiKey);
         $authorization = 'HMAC ' . $this->clientApiKey . ':' . $signature;
 
+        $this->logger->info('AuthorizationHelper getAuthHeader generated HMAC header.', [
+            'encrypted_length' => strlen((string) $encryptedDataValue),
+            'iv_present' => !empty($ivBase64),
+        ]);
+
         return $authorization;
     }
 
@@ -35,6 +39,11 @@ final class AuthorizationHelper
     {
         $iv = openssl_random_pseudo_bytes(16);
         $this->ivBase64 = base64_encode($iv);
+
+        $this->logger->info('AuthorizationHelper setIvBase64 generated IV.', [
+            'iv_present' => !empty($this->ivBase64),
+            'iv_length' => strlen((string) $this->ivBase64),
+        ]);
     }
 
     public function getIvBase64()
@@ -53,6 +62,12 @@ final class AuthorizationHelper
             'corporateIdentity' => $encryptedData,
             'iv' => $ivBase64
         ];
+
+        $this->logger->info('AuthorizationHelper buildResponse prepared payload.', [
+            'header_keys' => array_keys($header),
+            'encrypted_length' => strlen((string) $encryptedData),
+            'iv_present' => !empty($ivBase64),
+        ]);
 
         return [
             'headers' => $header,

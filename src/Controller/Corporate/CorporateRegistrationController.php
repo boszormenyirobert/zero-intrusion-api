@@ -37,21 +37,60 @@ class CorporateRegistrationController extends AbstractController
         IdentityRepository $identityRepository
         ): Response    
     {
-        $payload = $this->requestService->requestControll($request);
-        $data = $this->corporateRegistrationService->accessDataByKey($payload, 'getIdentity');        
+        $this->logger->info('Corporate initialize request received.', [
+            'route' => 'service_registration_corporate_data',
+            'path' => $request->getPathInfo(),
+            'has_auth_header' => $request->headers->has('X-Auth'),
+            'content_length' => strlen((string) $request->getContent()),
+        ]);
 
-        if($data['scope'] == 'external'){
-            $identity = $identityRepository->findOneBy(['publicId' => $data['publicId']]);
-            // Bug in the logic. The logged-in user is not forced to be the owner of any Business service
-            $data['businessModel'] = $this->corporateRegistrationService->getSelectedSubscription($identity->getBusinessService());            
-        } 
+        $payload = $this->requestService->requestControll($request);
 
         if (array_key_exists('error', $payload)) {
-            $this->logger->critical('ERROR service_registration_corporate_data: ' . json_encode($payload));
+            $this->logger->critical('Corporate initialize request rejected during request validation.', [
+                'route' => 'service_registration_corporate_data',
+                'error' => $payload,
+            ]);
+
             return $this->json($payload);
         }
 
+        $data = $this->corporateRegistrationService->accessDataByKey($payload, 'getIdentity');        
+
+        $this->logger->info('Corporate initialize payload resolved.', [
+            'route' => 'service_registration_corporate_data',
+            'public_id' => $data['publicId'] ?? null,
+            'scope' => $data['scope'] ?? null,
+            'has_business_model' => array_key_exists('businessModel', $data),
+        ]);
+
+        if($data['scope'] == 'external'){
+            $this->logger->info('Corporate initialize request uses external scope. Resolving business subscription from identity.', [
+                'route' => 'service_registration_corporate_data',
+                'public_id' => $data['publicId'] ?? null,
+            ]);
+
+            $identity = $identityRepository->findOneBy(['publicId' => $data['publicId']]);
+            // Bug in the logic. The logged-in user is not forced to be the owner of any Business service
+            $data['businessModel'] = $this->corporateRegistrationService->getSelectedSubscription($identity->getBusinessService());            
+
+            $this->logger->info('Corporate initialize external scope resolved business model.', [
+                'route' => 'service_registration_corporate_data',
+                'public_id' => $data['publicId'] ?? null,
+                'business_model' => $data['businessModel'] ?? null,
+            ]);
+        } 
+
         $identityConfig = $this->corporateRegistrationService->getSubscriptionData($data);
+
+        $this->logger->info('Corporate initialize response prepared.', [
+            'route' => 'service_registration_corporate_data',
+            'public_id' => $data['publicId'] ?? null,
+            'scope' => $data['scope'] ?? null,
+            'response_header_keys' => array_keys($identityConfig['headers'] ?? []),
+            'response_body_length' => strlen((string) ($identityConfig['body'] ?? '')),
+        ]);
+
         return new Response($identityConfig['body'], 200, $identityConfig['headers']);
     }
 

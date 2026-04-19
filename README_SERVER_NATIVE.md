@@ -92,3 +92,11 @@
     3. CREATE EVENT delete_unvalid_process ON SCHEDULE EVERY 5 SECOND ON COMPLETION PRESERVE DO   DELETE FROM auth_bridge   WHERE created_at < NOW() - INTERVAL 15 SECOND;
     4. On the Server: crontab -e
     * * * * * php /var/www/html/api/zero-intrusion-api/bin/console app:run-procedure
+
+## Local docker:
+```bash
+docker compose -f infrastructure/docker/compose/compose.yml build app
+docker compose -f infrastructure/docker/compose/compose.yml up -d --force-recreate app
+```
+
+## To registrate any other application in the HUB, you should use alias.

@@ -3,6 +3,7 @@
 namespace App\Service\Cache;
 
 use Psr\Cache\CacheItemPoolInterface;
+use RuntimeException;
 
 class ProcessStateCacheService
 {
@@ -30,9 +31,12 @@ class ProcessStateCacheService
     public function set(string $processId, mixed $value, int $ttl = 3600): void
     {
         $item = $this->cachePool->getItem($this->getCacheKey($processId));
+
         $item->set($value);
         $item->expiresAfter($ttl);
 
-        $this->cachePool->save($item);
+        if (!$this->cachePool->save($item)) {
+            throw new RuntimeException(sprintf('Failed to save process state cache for processId: %s', $processId));
+        }
     }
 }

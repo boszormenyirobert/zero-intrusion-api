@@ -146,20 +146,47 @@ class CorporateRegistrationService
     }
 
     public function getSelectedSubscription($businessSubscriptionId){   
+      $this->logger->info('CorporateRegistrationService getSelectedSubscription started.', [
+            'business_subscription_id' => $businessSubscriptionId,
+        ]);
+
       $business = $this->businessServicesRepository->findOneBy(['id' => $businessSubscriptionId]);
 
         foreach((array)$business as $key => $value){
             if($value === true){                
+                $this->logger->info('CorporateRegistrationService getSelectedSubscription resolved business model.', [
+                    'business_subscription_id' => $businessSubscriptionId,
+                    'business_model' => $key,
+                ]);
+
                 return $key;
             }
-        }        
+        }
+
+        $this->logger->warning('CorporateRegistrationService getSelectedSubscription could not resolve business model.', [
+            'business_subscription_id' => $businessSubscriptionId,
+        ]);
     }
 
     public function accessDataByKey($payload, $key)
     {   
+        $this->logger->info('CorporateRegistrationService accessDataByKey started.', [
+            'key' => $key,
+            'payload_keys' => is_array($payload) ? array_keys($payload) : [],
+        ]);
+
         $validatedPayload = $this->requestService->validPayload($payload);
         $dataJson = $validatedPayload[$key];
 
-        return json_decode($dataJson, true);
+        $resolvedData = json_decode($dataJson, true);
+
+        $this->logger->info('CorporateRegistrationService accessDataByKey resolved payload segment.', [
+            'key' => $key,
+            'resolved_keys' => is_array($resolvedData) ? array_keys($resolvedData) : [],
+            'public_id' => $resolvedData['publicId'] ?? null,
+            'scope' => $resolvedData['scope'] ?? null,
+        ]);
+
+        return $resolvedData;
     }    
 }

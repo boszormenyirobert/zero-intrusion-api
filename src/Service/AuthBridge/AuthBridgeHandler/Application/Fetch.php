@@ -51,7 +51,10 @@ class Fetch
         }
 
         if (!$encryptedUser instanceof AuthBridge) {
-            $this->logger->critical("return missing handy validation");
+            $this->logger->info('Process state cache not ready yet.', [
+                'processId' => $applicationProcessId,
+                'processType' => $processType,
+            ]);
             $process = new ResponseDTO(false, false, false);
             return [
                 'process' => $process->toDomainStateArray(),

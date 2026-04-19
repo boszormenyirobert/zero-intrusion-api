@@ -212,14 +212,16 @@ class SharedRegistrationController extends AbstractController
 
         try {
             $processId = $sharedService->getProcessId($request,  $payloadKey);
-
+            $this->logger->info(sprintf('Poll processId: %s', $processId));
             if(!$processId) {
+                 $this->logger->info(sprintf('Invalid or missing processId: %s', $processId));
                 return $this->responseHelper->createErrorResponse('Invalid or missing processId');
             }
             
             //$response = $accessService->getState($processId, 'registrationProcessId');
             //$response = $sharedService->getChacheByProcessId($processId);
             $response = $sharedService->pollTheRedisDefault($processId);
+            $this->logger->info(sprintf('Process state response for processId %s: %s', $processId, json_encode($response)));
 
             return $this->responseHelper->createSuccessResponse($response);
         } catch (\Throwable $e) {

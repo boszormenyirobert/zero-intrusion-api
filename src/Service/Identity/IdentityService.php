@@ -63,12 +63,23 @@ final class IdentityService
 
     private function generateSetOfIds(){
         return [
-            'shared_publicId' => base64_encode(random_bytes(35)), // 280 bits of entropy, encoded in base64 for storage and transmission
-            'shared_privateId' => base64_encode(random_bytes(35)),
-            'shared_secret' => base64_encode(random_bytes(35)),
-            'credential_secret' => base64_encode(random_bytes(35)),
-            'nfcEncryptionKey' => base64_encode(random_bytes(8))
+            'shared_publicId' => $this->sanitizeAlphaNum(base64_encode(random_bytes(35))), // avg 262 bits of entropy, encoded in base64 for storage and transmission
+            'shared_privateId' => $this->sanitizeAlphaNum(base64_encode(random_bytes(35))),
+            'shared_secret' => $this->sanitizeAlphaNum(base64_encode(random_bytes(35))),
+            'credential_secret' => $this->sanitizeAlphaNum(base64_encode(random_bytes(35))),
+            'nfcEncryptionKey' => $this->sanitizeAlphaNum(base64_encode(random_bytes(8)))
         ];
+    }
+
+    /**
+     * Replace all non-alphanumeric characters in a string with an empty string.
+     *
+     * @param string $str
+     * @return string
+     */
+    private function sanitizeAlphaNum(string $str): string
+    {
+        return preg_replace('/[^a-zA-Z0-9]/', '', $str);
     }
 
     /**

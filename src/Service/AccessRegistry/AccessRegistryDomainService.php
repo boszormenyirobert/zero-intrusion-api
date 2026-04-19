@@ -96,5 +96,7 @@ final class AccessRegistryDomainService
             json_encode($status, JSON_UNESCAPED_UNICODE),
             300
         );
+
+        $this->logger->info(sprintf('Process state cached for processId: %s', $processId));
     }    
 }

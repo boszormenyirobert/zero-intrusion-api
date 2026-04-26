@@ -69,6 +69,8 @@ class IdentityController extends AbstractController
     ): Response {
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, 'recoverySettings');
+            $this->logger->critical("Received recovery settings for public ID: " . $validatedPayload['recoverySettings']['publicId']);
+             $this->logger->critical("Recovery settings payload: " . json_encode($validatedPayload['recoverySettings']));
             $this->identityService->updateIdentityRecoverySettings($validatedPayload['recoverySettings']);
 
             return $this->json([

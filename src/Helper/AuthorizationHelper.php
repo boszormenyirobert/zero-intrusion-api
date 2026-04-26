@@ -25,7 +25,8 @@ final class AuthorizationHelper
         $ivBase64 = $this->getIvBase64();
         $message = "$encryptedDataValue|$ivBase64";
         $signature = hash_hmac('sha256', $message, $this->secretApiKey);
-        $authorization = 'HMAC ' . $this->clientApiKey . ':' . $signature;
+        $timestamp = time();
+        $authorization = 'HMAC ' . $this->clientApiKey . ':' . $signature . ':' . $timestamp;
 
         $this->logger->info('AuthorizationHelper getAuthHeader generated HMAC header.', [
             'encrypted_length' => strlen((string) $encryptedDataValue),

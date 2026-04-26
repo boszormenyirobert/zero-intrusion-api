@@ -50,6 +50,7 @@ class AccountController extends AbstractController
         $userPublicId = $payloadArray['publicId'];
         $email = $payloadArray['email'];
 
+    //    Allow access until the righs&roles system is implemented
         $userBusinessData = $identityRepository->findOneBy([
             'publicId' =>  $userPublicId
         ]);

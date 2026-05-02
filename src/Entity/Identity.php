@@ -46,7 +46,7 @@ class Identity
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $fcmToken = null;
 
-    #[ORM\Column(type: 'text')]
+    #[ORM\Column(length: 50)]
     private ?string $nfcEncryptionKey = null;
 
     public function __construct()

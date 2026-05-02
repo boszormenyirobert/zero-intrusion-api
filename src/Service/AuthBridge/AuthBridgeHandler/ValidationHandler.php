@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AuthBridge\AuthBridgeHandler;
 
 use App\Service\Crypters\CrypterDatabaseLoginService;
@@ -10,11 +12,14 @@ use App\Service\AuthBridge\DTO\ValidationDTO;
 
 class ValidationHandler
 {
+    private const VALID_PRIVATE_ID_LOG = 'PrivateId is valid';
+    private const INVALID_PRIVATE_ID_LOG = 'Unvalid PrivateId';
+
     public function __construct(
-        private IdentityRepository $identityRepository,
-        private CrypterDatabaseLoginService $crypterDatabaseLoginService,
-        private LoggerInterface $logger,
-        private SodiumService $sodiumService,
+        private readonly IdentityRepository $identityRepository,
+        private readonly CrypterDatabaseLoginService $crypterDatabaseLoginService,
+        private readonly LoggerInterface $logger,
+        private readonly SodiumService $sodiumService,
     ) {}
 
     // Each user-credential double encrypted
@@ -28,19 +33,24 @@ class ValidationHandler
         // The user-credential encrypted by the credential_secret, which is deleted from the database after NFC Card created
         
         $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabaseidentity($userIntegritySecretObject);
-        $userIntegritySecret = $decrypted->getSecret();
+        $userIntegritySecret = (string) $decrypted->getSecret();
 
         // Decrypt the user secret by the general database key
-        $dbPrivateId = $this->sodiumService->sodiumDecrypt($decrypted->getPrivateId(), $userIntegritySecret);
-        $requestPrivateId = $this->sodiumService->sodiumDecrypt($user['privateId'], $userIntegritySecret);
+        $dbPrivateId = $this->resolvePrivateId((string) $decrypted->getPrivateId(), $userIntegritySecret);
+        $requestPrivateId = $this->resolvePrivateId((string) $user['privateId'], $userIntegritySecret);
         
         if (\strcmp($requestPrivateId, $dbPrivateId) === 0) {
-            $this->logger->critical('PrivateId is valid');
+            $this->logger->critical(self::VALID_PRIVATE_ID_LOG);
             
             return new ValidationDTO(true, $userIntegritySecret);
         }
 
-        $this->logger->critical('Unvalid PrivateId');
+        $this->logger->critical(self::INVALID_PRIVATE_ID_LOG);
         return new ValidationDTO(false);
+    }
+
+    private function resolvePrivateId(string $privateId, string $userIntegritySecret): string
+    {
+        return (string) $this->sodiumService->sodiumDecrypt($privateId, $userIntegritySecret);
     }
 }

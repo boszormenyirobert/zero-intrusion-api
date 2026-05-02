@@ -1,22 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AuthBridge;
 
-use App\Service\AuthBridge\AuthBridgeHandler\AuthBridgeHandler;
-use App\Service\AuthBridge\AuthBridgeHandler\Identity;
-use App\Service\AuthBridge\AuthBridgeHandler\Domain\Credential;
-use App\Service\AuthBridge\AuthBridgeHandler\Application\Fetch;
 use App\DTO\QR\CredentialHubIdentityDTO;
 use App\Entity\AuthBridge;
+use App\Service\AuthBridge\AuthBridgeHandler\Application\Fetch;
+use App\Service\AuthBridge\AuthBridgeHandler\AuthBridgeHandler;
+use App\Service\AuthBridge\AuthBridgeHandler\Domain\Credential;
+use App\Service\AuthBridge\AuthBridgeHandler\Identity;
 
 class AuthBridgeService
 {
     public function __construct(
-        private Identity $identity,
-        private Credential $credential,
-        private AuthBridgeHandler $authBridgeHandler,
-        private Fetch $fetch
-        ) {}
+        private readonly Identity $identity,
+        private readonly Credential $credential,
+        private readonly AuthBridgeHandler $authBridgeHandler,
+        private readonly Fetch $fetch
+    ) {}
 
 
     // Copy user from AccessRegistry into AuthBridge table
@@ -37,7 +39,7 @@ class AuthBridgeService
         return $this->authBridgeHandler->getDecryptedUserDataToMobileRequest($user);
     }    
 
-    public function persistDecryptedUserDataForWeb(array $user): array
+    public function persistDecryptedUserDataForWeb(array $user): ?array
     {
         return $this->authBridgeHandler->persistDecryptedUserDataForWeb($user);
     }
@@ -48,7 +50,7 @@ class AuthBridgeService
     }
 
     // deprecated
-    public function getUserCredentialsByDomainProcessId($domainProcessId): array
+    public function getUserCredentialsByDomainProcessId(string $domainProcessId): array
     {
         return $this->credential->getUserCredentialsByDomainProcessId($domainProcessId);
     }
@@ -58,12 +60,12 @@ class AuthBridgeService
         return $this->identity->generateRequestIdentity($processType);
     }
 
-    public function fetchFromAccessTable($applicationProcessId, $processType): array
+    public function fetchFromAccessTable(string $applicationProcessId, string $processType): array
     {
         return $this->fetch->fetchFromAccessTable($applicationProcessId, $processType);
     }
 
-    public function fetchForOneTouch($oneTouchProcessId, $processType): AuthBridge|false
+    public function fetchForOneTouch(string $oneTouchProcessId, string $processType): AuthBridge|false
     {
         return $this->fetch->fetchForOneTouch($oneTouchProcessId, $processType);
     }
@@ -73,11 +75,13 @@ class AuthBridgeService
         $this->authBridgeHandler->updateProcessState($processKey, $processId);
     }
 
-    public function saveUserCredentialInAuthBridge($userCredential, $registrationProcessId){
+    public function saveUserCredentialInAuthBridge(mixed $userCredential, string $registrationProcessId): bool
+    {
         return $this->authBridgeHandler->saveUserCredentialInAuthBridge($userCredential, $registrationProcessId);
     }
 
-    public function getUserCredentialFromAuthBridge($processId){
-        return $this->authBridgeHandler->getUserCredentialFromAuthBridge($processId);       
+    public function getUserCredentialFromAuthBridge(string $processId): ?string
+    {
+        return $this->authBridgeHandler->getUserCredentialFromAuthBridge($processId);
     }
 }

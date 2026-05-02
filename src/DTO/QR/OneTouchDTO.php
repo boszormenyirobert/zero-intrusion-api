@@ -1,10 +1,11 @@
 <?php
 namespace App\DTO\QR;
 
+use App\DTO\Response\ResponseDataInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\DTO\QR\QrInterface;
 
-class OneTouchDTO  implements QrInterface
+class OneTouchDTO  implements QrInterface, ResponseDataInterface
 {
     #[Assert\NotBlank]
     public array $validCommunication = [];
@@ -12,10 +13,18 @@ class OneTouchDTO  implements QrInterface
     public ?string $createdAt;
     public ?string $xExtensionAuthOne;
     public ?string $xExtensionAuthTwo;
+    public ?string $type;
+    public ?string $source;
+    public ?string $userPublicId;
+    public ?string $targetId;
 
     public ?string $secret;
     public ?string $iv;
 
+    public ?string $registrationProcessId;
+    public ?string $removeProcessId;
+    public ?string $domainProcessId;
+    public ?string $applicationProcessId;
     public ?string $oneTouchProcessId;
     public ?string $qrCode;
 
@@ -175,48 +184,48 @@ class OneTouchDTO  implements QrInterface
         return $this;
     }
 
+    public function toProcessArray(string $processKey): array
+    {
+        return match ($processKey) {
+            'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
+            'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
+            'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
+            'applicationProcessId' => $this->buildProcessArray('applicationProcessId', $this->applicationProcessId),
+            'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
+            default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
+        };
+    }
+
     public function toRegistrationProcessArray(): array
     {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'registrationProcessId' => $this->registrationProcessId,
-            'qrCode' => $this->qrCode
-        ];
+        return $this->toProcessArray('registrationProcessId');
     }  
     public function toDomainProcessArray(): array
     {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'domainProcessId' => $this->domainProcessId,
-            'qrCode' => $this->qrCode
-        ];
+        return $this->toProcessArray('domainProcessId');
     } 
     public function toRemoveProcessArray(): array
     {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'removeProcessId' => $this->removeProcessId,
-            'qrCode' => $this->qrCode
-        ];
+        return $this->toProcessArray('removeProcessId');
     }      
     
     public function toApplicationProcessArray(): array
     {
+        return $this->toProcessArray('applicationProcessId');
+    }
+
+    public function toOneTouchProcessArray(): array
+    {
+        return $this->toProcessArray('oneTouchProcessId');
+    }
+
+    public function toResponseArray(): array
+    {
+        return $this->toOneTouchProcessArray();
+    }
+
+    private function buildProcessArray(string $processKey, ?string $processId): array
+    {
         return [
             'validCommunication' => $this->validCommunication,
             'createdAt' => $this->createdAt,
@@ -224,10 +233,10 @@ class OneTouchDTO  implements QrInterface
             'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
             'secret' => $this->secret,
             'iv' => $this->iv,
-            'applicationProcessId' => $this->applicationProcessId,
+            $processKey => $processId,
             'qrCode' => $this->qrCode
         ];
-    }     
+    }
 
     /**
      * Get the value of qrCode

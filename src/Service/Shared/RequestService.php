@@ -1,108 +1,55 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Shared;
 
+use App\Service\Payload\EncryptedPayloadDecoder;
+use App\Service\Payload\JsonPayloadDecoder;
+use App\Service\Request\JsonRequestEnvelopeValidator;
+use App\Service\Request\RequestHmacAuthorizationValidator;
 use Symfony\Component\HttpFoundation\Request;
-use App\Service\Crypters\CrypterService;
-use App\Helper\UtilityHelper;
-use App\Repository\CorporateIdentityRepository;
-use Psr\Log\LoggerInterface;
-use App\Service\Corporate\CorporateRegistrationDatabaseService;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
-
 
 class RequestService
 {
     public function __construct(
-        private readonly ContainerBagInterface $params,
-        private readonly CorporateRegistrationDatabaseService $corporateRegistrationDatabaseService,
-        private readonly CorporateIdentityRepository $corporateIdentityRepository,
-        private readonly CrypterService $crypterService,
-        private readonly LoggerInterface $logger
-    ) {}            
-
-    public function requestControll(Request $request)
-    {
-        $this->logger->info('RequestService requestControll started.', [
-            'path' => $request->getPathInfo(),
-            'has_auth_header' => $request->headers->has('X-Auth'),
-        ]);
-
-        $payload = UtilityHelper::validateJsonFormat($request);
-        if (array_key_exists('error', $payload)) {
-            $this->logger->critical('RequestService requestControll JSON validation failed.', [
-                'path' => $request->getPathInfo(),
-                'error' => $payload,
-            ]);
-
-            return $payload;
-        }
-
-        $this->logger->info('RequestService requestControll JSON validation succeeded.', [
-            'path' => $request->getPathInfo(),
-            'payload_keys' => array_keys($payload),
-        ]);
-
-        // Validate HMAC authorization header
-        $authHeader = $request->headers->get('X-Auth');
-
-        $this->logger->info('RequestService requestControll validating auth header.', [
-            'path' => $request->getPathInfo(),
-            'has_iv' => array_key_exists('iv', $payload),
-        ]);
-
-        return $this->validateAuthHeader($authHeader, $payload, $payload['iv']);
+        private readonly JsonRequestEnvelopeValidator $jsonRequestEnvelopeValidator,
+        private readonly RequestHmacAuthorizationValidator $requestHmacAuthorizationValidator,
+        private readonly EncryptedPayloadDecoder $encryptedPayloadDecoder,
+    ) {
     }
 
-    /**
-     * Validates the HMAC-based Authorization header
-     */
-    private function validateAuthHeader(string $authHeader, array $payload, string $iv): bool|array
+    public function validateRequest(Request $request): array
     {
-        $matches = UtilityHelper::validateAuthHeaderFormat($authHeader);
-        if (array_key_exists('error', $matches)) {
-            $this->logger->critical('Autheader matches: ' . json_encode((array)$matches));
-            return $matches;
+        try {
+            return $this->validateRequestOrFail($request);
+        } catch (\InvalidArgumentException $exception) {
+            return ['error' => $exception->getMessage()];
+        }
+    }
+
+    public function validateRequestOrFail(Request $request): array
+    {
+        $payload = $this->jsonRequestEnvelopeValidator->validate($request);
+        if (array_key_exists('error', $payload)) {
+            throw new \InvalidArgumentException((string) $payload['error']);
         }
 
-        $this->logger->info('RequestService validateAuthHeader format validated.', [
-            'payload_keys' => array_keys($payload),
-        ]);
-        
-        $validateExpectedKey = UtilityHelper::compareExpectations(
-            $matches,
-            $this->params,
-            $payload['zeroIntrusionProyApi'],
-            $iv
-        );
-
-        if (!$validateExpectedKey) {
-            $this->logger->critical('Validated expected key: ' . json_encode($validateExpectedKey));
-            return $validateExpectedKey;
-        }
-
-        $this->logger->info('RequestService validateAuthHeader HMAC validation succeeded.', [
-            'payload_keys' => array_keys($payload),
-        ]);
-
-        return $payload;
+        return $this->requestHmacAuthorizationValidator->validateOrFail($request, $payload);
     }
 
     // Every request accepted only from the HUB application with the key: zeroIntrusionProyApi
-    public function validPayload($payload)
+    public function validPayload(array $payload): ?array
     {
-        $this->logger->info('RequestService validPayload decrypting payload.', [
-            'payload_keys' => is_array($payload) ? array_keys($payload) : [],
-        ]);
-
-        $this->crypterService->setData($payload['zeroIntrusionProyApi']);
-        $validatedPayload = json_decode($this->crypterService->decryptData(), true);
-
-        $this->logger->info('RequestService validPayload decrypted payload.', [
-            'validated_payload_keys' => is_array($validatedPayload) ? array_keys($validatedPayload) : [],
-        ]);
-
-        return $validatedPayload;
+        try {
+            return $this->validPayloadOrFail($payload);
+        } catch (\UnexpectedValueException) {
+            return null;
+        }
     }
 
+    public function validPayloadOrFail(array $payload): array
+    {
+        return $this->encryptedPayloadDecoder->decodeOrFail($payload);
+    }
 }

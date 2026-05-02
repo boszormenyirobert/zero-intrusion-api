@@ -1,21 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AccessRegistry\CredentialHubResolver;
 
-use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\AccessRegistryRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 class DeleteService
 {
     public function __construct(
-        private AccessRegistryRepository $accessRegistryRepository,
-        private EntityManagerInterface $entityManager,
-        private LoggerInterface $logger,
+        private readonly AccessRegistryRepository $accessRegistryRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly LoggerInterface $logger,
     ) {}
 
-    public function deleteAccessRegistry(string $targetId):bool{
-        
+    public function deleteAccessRegistry(string $targetId): bool
+    {
         $accessRegistry = $this->accessRegistryRepository->findOneBy([
             'targetId' => $targetId
         ]);
@@ -23,19 +25,19 @@ class DeleteService
         if ($accessRegistry) {
             $this->entityManager->remove($accessRegistry);
             $this->entityManager->flush();
+
             return true;
         }
+
         return false;
     }
 
-    public function deleteUserDomainCombination(array $user, $collecion)
+    public function deleteUserDomainCombination(array $user, array $collecion): array
     {
         $newCombination = true;
-
         $existingPages = [];
 
         foreach ($collecion as $page) {
-
             if ($page['encrypted']->getPublicId() === $user['publicId'] && 
                 $page['decrypted']->getDomain() === $user['domain'] &&
                 $page['decrypted']->getTargetId() === $user['targetId']

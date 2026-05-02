@@ -1,30 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Firebase;
 
-use Psr\Log\LoggerInterface;
-use GuzzleHttp\Client;
 use App\Repository\IdentityRepository;
 use App\Service\Identity\Database\CrypterDatabaseIdentityService;
+use App\Service\Payload\JsonPayloadDecoder;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 class FirebaseService
 {
-        public function __construct(
-            private ContainerBagInterface $params,
-            private IdentityRepository $identityRepository,
-            private CrypterDatabaseIdentityService $crypterDatabaseIdentityService,
-            private LoggerInterface $logger
-        ) {
-        }
+    private ?FirebaseMessagePayloadFactory $firebaseMessagePayloadFactory = null;
+    private ?FirebaseHttpClientAdapter $firebaseHttpClientAdapter = null;
+    private ?FirebaseConfig $firebaseConfig = null;
+    private ?FirebaseTokenProvider $firebaseTokenProvider = null;
+
+    public function __construct(
+        private readonly ContainerBagInterface $params,
+        private readonly IdentityRepository $identityRepository,
+        private readonly CrypterDatabaseIdentityService $crypterDatabaseIdentityService,
+        private readonly LoggerInterface $logger,
+        private readonly JsonPayloadDecoder $jsonPayloadDecoder,
+    ) {
+    }
 
     // Find the user by publicId, retrieve all stored FCM tokens,
     // decrypt each token using the database's default encryption (IV + key),
     // and send a push notification to every associated device.
-    public function manageFcm($publicId, $title, $body, $qrData)
+    public function manageFcm($publicId, $title, $body, $qrData): void
     {
         $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $publicId]);
-        if($identityEncrypted){
+        if ($identityEncrypted) {
             $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
             $this->logger->info('Preparing FCM delivery.', [
                 'publicId' => $publicId,
@@ -53,17 +61,9 @@ class FirebaseService
      * 2. Exchanges the JWT for an access token with getAccessToken().
      * 3. Calls sendFCM() to deliver the notification to the given deviceToken with the provided title, body, and QR data.
      */
-    public function sendFcmMessage($deviceToken, $title, $body, $qrData) {        
-        $jwt = $this->getJwt();
-        if (!$jwt) {
-            $this->logger->critical('FCM send aborted because JWT generation failed.', [
-                'maskedToken' => $this->maskToken($deviceToken),
-                'title' => $title,
-            ]);
-            return;
-        }
-
-        $accessToken = $this->getAccessToken($jwt);
+    public function sendFcmMessage($deviceToken, $title, $body, $qrData): void
+    {
+        $accessToken = $this->tokenProvider()->getAccessToken();
         if (!$accessToken) {
             $this->logger->critical('FCM send aborted because access token retrieval failed.', [
                 'maskedToken' => $this->maskToken($deviceToken),
@@ -83,37 +83,9 @@ class FirebaseService
      * 3. Signs the header and claim using the service account's private key.
      * 4. Returns the complete JWT for authentication with Firebase APIs.
      */    
-    private function getJwt() {
-        $client_email = $this->params->get('FIREBASE_CLIENT_EMAIL');
-        $private_key = $this->params->get('FIREBASE_PRIVATE_KEY');
-        $header = base64_encode(json_encode([
-            "alg" => "RS256",
-            "typ" => "JWT"
-        ]));
-
-        $now = time();
-        $claim = base64_encode(json_encode([
-            "iss" => $client_email,
-            "scope" => "https://www.googleapis.com/auth/firebase.messaging",
-            "aud" => $this->params->get('FIREBASE_TOKEN_URI'),
-            "iat" => $now,
-            "exp" => $now + 3600
-        ]));
-
-
-        $success = openssl_sign("$header.$claim", $signature, $private_key, "SHA256");
-        if (!$success) {
-            $this->logger->critical('JWT aláírás sikertelen');       
-            return null;
-        } else {
-            $this->logger->critical('JWT aláírás sikeres: '. $success);       
-        }
-
-       // 2. JWT signing
-        openssl_sign("$header.$claim", $signature, $private_key, "SHA256");
-        $jwt = "$header.$claim." . base64_encode($signature);
-
-        return $jwt;
+    private function getJwt(): ?string
+    {
+        return $this->tokenProvider()->createJwt();
     }
 
     /**
@@ -125,51 +97,13 @@ class FirebaseService
      * 4. Logs errors if the token request fails or the response is invalid.
      * 5. Returns the access token for authenticated FCM requests.
      */    
-    private function getAccessToken($jwt) {
+    private function getAccessToken($jwt): ?string
+    {
         if (!$jwt) {
             return null;
         }
 
-        $client = new Client();
-        $data = [];
-
-        try {
-            $response = $client->post($this->params->get('FIREBASE_TOKEN_URI'), [
-                'form_params' => [
-                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                    'assertion'  => $jwt,
-                ],
-                'headers' => [
-                    'Content-Type' => 'application/x-www-form-urlencoded',
-                ],
-                'verify' => $this->params->get('FIREBASE_CACERT_PATH'), 
-            ]);
-
-            $body = $response->getBody()->getContents();
-            $data = json_decode($body, true);
-
-            if (!empty($data['access_token'])) {
-                $this->logger->info('Firebase access token successfully received.');
-            } else {
-                $this->logger->error('Firebase response did not contain an access_token.', [
-                    'responseBody' => $body,
-                ]);
-            }
-
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            $context = [
-                'message' => $e->getMessage(),
-            ];
-
-            if ($e->hasResponse()) {
-                $context['statusCode'] = $e->getResponse()->getStatusCode();
-                $context['responseBody'] = $e->getResponse()->getBody()->getContents();
-            }
-
-            $this->logger->critical('Firebase access token request failed.', $context);
-        }
-
-        return $data['access_token'] ?? null;
+        return $this->tokenProvider()->getAccessTokenFromJwt((string) $jwt);
     }
 
     /**
@@ -180,50 +114,25 @@ class FirebaseService
      * 3. Handles and logs Firebase responses or errors, including HTTP status and error body.
      * 4. Returns the response body on success.
      */    
-    private function sendFCM($deviceToken, $title, $body, $accessToken, $qrData) {
-        $project_id = $this->params->get('FIREBASE_PROJECT_ID');
+    private function sendFCM($deviceToken, $title, $body, $accessToken, $qrData): ?string
+    {
+        $project_id = $this->config()->getProjectId();
 
-        $client = new Client();
         $url = "https://fcm.googleapis.com/v1/projects/$project_id/messages:send";
 
-        $message = [
-            "message" => [
-                "token" => $deviceToken,
-                "android" => [
-                    "priority" => "HIGH",
-                    "ttl" => "7s"
-                ],     
-                "apns" => [
-                    "headers" => [
-                        "apns-priority" => "10"
-                    ],
-                    "payload" => [
-                        "aps" => [
-                            "content-available" => 1
-                        ]
-                    ]
-                ],
-                "data"=> [
-                    "title" => $title,
-                    "body" => $body,
-                    "action" => "show_allow_close",
-                    "message"=> "Allow or Decline login to the requested domain: ",
-                    "qrData" => json_encode($qrData)
-                ]
-            ]
-        ];
+        $message = $this->createMessagePayload((string) $deviceToken, (string) $title, (string) $body, $qrData);
 
         try {
-            $responseFcm = $client->post($url, [
-                'headers' => [
+            $body = $this->httpClientAdapter()->postJson(
+                $url,
+                (string) json_encode($message),
+                [
                     'Authorization' => 'Bearer ' . $accessToken,
                     'Content-Type'  => 'application/json',
                 ],
-                'body' => json_encode($message),
-                'verify' => $this->params->get('FIREBASE_CACERT_PATH'),
-            ]);
+                $this->config()->getCaCertPath(),
+            );
 
-            $body = $responseFcm->getBody()->getContents();
             $this->logger->info('FCM request succeeded.', [
                 'projectId' => $project_id,
                 'maskedToken' => $this->maskToken($deviceToken),
@@ -243,7 +152,7 @@ class FirebaseService
             if ($e->hasResponse()) {
                 $resp = $e->getResponse();
                 $responseBody = $resp->getBody()->getContents();
-                $decodedBody = json_decode($responseBody, true);
+                $decodedBody = $this->jsonPayloadDecoder->decodeArray($responseBody) ?? [];
 
                 $context['statusCode'] = $resp->getStatusCode();
                 $context['responseBody'] = $responseBody;
@@ -255,6 +164,8 @@ class FirebaseService
 
             $this->logger->critical('FCM request failed.', $context);
         }
+
+        return null;
     }
 
     private function maskToken(?string $token): string
@@ -269,5 +180,44 @@ class FirebaseService
         }
 
         return substr($token, 0, 6) . '...' . substr($token, -4);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function createMessagePayload(string $deviceToken, string $title, string $body, mixed $qrData): array
+    {
+        return $this->messagePayloadFactory()->create($deviceToken, $title, $body, $qrData);
+    }
+
+    private function config(): FirebaseConfig
+    {
+        return $this->firebaseConfig ??= new FirebaseConfig(
+            (string) $this->params->get('FIREBASE_PROJECT_ID'),
+            (string) $this->params->get('FIREBASE_CLIENT_EMAIL'),
+            (string) $this->params->get('FIREBASE_PRIVATE_KEY'),
+            (string) $this->params->get('FIREBASE_TOKEN_URI'),
+            (string) $this->params->get('FIREBASE_CACERT_PATH'),
+        );
+    }
+
+    private function messagePayloadFactory(): FirebaseMessagePayloadFactory
+    {
+        return $this->firebaseMessagePayloadFactory ??= new FirebaseMessagePayloadFactory();
+    }
+
+    private function httpClientAdapter(): FirebaseHttpClientAdapter
+    {
+        return $this->firebaseHttpClientAdapter ??= new FirebaseHttpClientAdapter();
+    }
+
+    private function tokenProvider(): FirebaseTokenProvider
+    {
+        return $this->firebaseTokenProvider ??= new FirebaseTokenProvider(
+            $this->config(),
+            $this->httpClientAdapter(),
+            $this->logger,
+            $this->jsonPayloadDecoder,
+        );
     }
 }

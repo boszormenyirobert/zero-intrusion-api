@@ -1,219 +1,118 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\CredentialHub\Domain\Read;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
-use Psr\Log\LoggerInterface;
-use App\Service\AuthBridge\AuthBridgeService;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use App\Helper\ResponseHelper;
-use App\Controller\PayloadValidator\PayloadValidator;
 use App\Attribute\RequireHmac;
 use App\Attribute\ExtensionHmac;
 use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
-use App\Service\QrService\QrService;
-use App\Controller\CredentialHub\Domain\Read\DomainReadService;
 use App\Controller\CredentialHub\PayloadKeys;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Helper\ResponseHelper;
+use App\Service\CredentialHub\Domain\Read\DomainReadCredentialDecryptedService;
+use App\Service\CredentialHub\Domain\Read\DomainReadCredentialService;
+use App\Service\CredentialHub\Domain\Read\DomainReadQrIdentityRequestMapper;
+use App\Service\CredentialHub\Domain\Read\DomainReadQrIdentityService;
+use App\Service\CredentialHub\Domain\Read\DomainReadStateService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use App\Controller\CredentialHub\SharedService;
 
 #[Route('/api/credential-hub/domain/read')]
 class DomainReadController extends AbstractController
 {
     public function __construct(
-        private LoggerInterface $logger,
-        private PayloadValidator $payloadValidator,
-        private ResponseHelper $responseHelper,
-        private SharedService $sharedService
-    ) {}
+        private readonly PayloadValidator $payloadValidator,
+        private readonly ResponseHelper $responseHelper,
+        private readonly DomainReadQrIdentityRequestMapper $domainReadQrIdentityRequestMapper,
+        private readonly DomainReadQrIdentityService $domainReadQrIdentityService,
+        private readonly DomainReadCredentialDecryptedService $domainReadCredentialDecryptedService,
+        private readonly DomainReadCredentialService $domainReadCredentialService,
+        private readonly DomainReadStateService $domainReadStateService,
+    ) {
+    }
 
-
-    /**
-     * Called by Browser-Extension
-     * 
-     * This is used to create a browser extension DOMAIN identity
-     *
-     * Generate two HMAC and applicationProcessId
-     * Generated HMAC added to the extension Header as X-Extension-Auth  to verify the identity
-     * Generated HMAC included in the QR-Code. Used by Mobile App - added to the header - to verify the identity
-     * The generated processId is added to the QR-Code and to the extension body as applicationProcessId
-     * 
-     * Saved in the AuthBridge Database
-     * 
-     * The database is automatically cleaned by a cron-based process:
-     * any row older than X minutes is automatically deleted.     
-     * @param Request $request
-     * @return JsonResponse
-     */
     #[Route('/qr-identity', name: 'domain_read_qr_identity', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
     public function domainReadQrIdentity(
         Request $request,
-        AuthBridgeService $authBridgeService,
-        QrService $qrService,
-        DomainReadService $domainReadService,
         ValidatorInterface $validator
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_READ_QR_IDENTITY;
-        $processKey = PayloadKeys::DOMAIN_PROCESS_ID;
-
         try {
-            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
-            $domain = $validatedPayload[$payloadKey]['domain'];
-            $userPublicId = $validatedPayload[$payloadKey]['userPublicId'];
-           
-            /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
-            $identity = $authBridgeService->generateRequestIdentity($processKey);
+            $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::DOMAIN_READ_QR_IDENTITY);
+            $domainReadRequest = $this->domainReadQrIdentityRequestMapper->map($validatedPayload);
 
-            // X-Extension-Auth-One used always from mobile application to verify the identity
-            $authToken = $identity->getXExtensionAuthOne();
-            
-            // Generate QR Content from the identity, domain and authToken
-            $qrContent = $domainReadService->getQrContent($domain, $authToken, $identity);
-
-            // Validate the QR Content DTO
-            $errors = $validator->validate($qrContent);
-
-            if (count($errors) > 0) {
-                foreach ($errors as $error) {
-                    $this->logger->critical('domainReadQrIdentity: ' . $error->getMessage());
-                }
-            }
-
-            // Generate a base64-encoded PNG QR code from input data.
-            $qrCode = $qrService->getQrCode($qrContent);
-
-            // Extend the identity with the generated QR code
-            $identity->setQrCode($qrCode);
-
-            // Notify the Mobile App with FCM. Extension get the same response with QR code
-            $this->sharedService->sendFcmNotification(
-                'domainRead',
-                $userPublicId,
-                $qrContent
-            );
-            
             return $this->responseHelper->createSuccessResponse(
-                $identity->toDomainProcessArray()
+                $this->domainReadQrIdentityService->handle($domainReadRequest, $validator)
             );
             
         } catch (\Exception $e) {
-            $this->logger->critical(\json_encode($e->getMessage()));
             return $this->responseHelper->handleException($e);
         }
     }
 
-    /**
-     * Called by Mobile App
-     * 
-     * DB decrypt user credentials to the domains in the AccessRegistry by PublicId 
-     * Return with the user-secrets encrypted credentials to the Mobile App for decryption
-     * @param Request $request
-     * @return JsonResponse
-     */
     #[RequireHmac]
     #[MobileHmac]
     #[RequireJson]
     #[Route('/credential/decrypted', name: 'domain_read_credential_encrypted', methods: "POST")]
     public function domainReadCredentialDecrypted(
         Request $request,
-        DomainReadService $domainReadService
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED;
- 
         try {
-            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
-            $user = $validatedPayload[$payloadKey];
-            $processId = $user['domainProcessId'] ?? 'missing';
-
-            $this->logger->info(sprintf('domainReadCredentialDecrypted started for processId: %s', $processId));
-            
-            // User credentials by domain, decrypted by Database but still encrypted by the userSecret
-            $response = $domainReadService->getDecryptedCredentials($user);
-            $this->logger->info(sprintf('domainReadCredentialDecrypted finished for processId: %s', $processId));
-
-            return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
+            return $this->responseHelper->createSuccessResponse(
+                $this->domainReadCredentialDecryptedService->handle($request)
+            );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
-    /**
-     * Called by Mobile App
-     * 
-     * Find and decrypt to the domains related credentials in the AccessRegistry by PublicId
-     * Encrypt and move into the Redis cache the related record by domainProcessId => key is the domainProcessId
-     * The record decrypted with the default DB secret in the Redis
-     * Delete the record from the AuthBridge => automatically deleted by Database job (15second)
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
     #[Route('/credential', name: 'domain_read_credential', methods: "POST")]
     #[RequireHmac]
     #[MobileHmac]
     #[RequireJson]
     public function domainReadCredential(
         Request $request,
-        DomainReadService $domainReadService
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_READ_CREDENTIAL;
-
         try {
-            $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
-            $user = $validatedPayload[$payloadKey];
-            $processId = $user['domainProcessId'] ?? 'missing';
-
-            $this->logger->info(sprintf('domainReadCredential started for processId: %s', $processId));
-
-            // Process the credential read request
-            $response = $domainReadService->processCredentialRead($user);
-            $this->logger->info(sprintf('domainReadCredential finished for processId: %s', $processId));
-
-            return $this->responseHelper->createSuccessResponse(['credentials' => $response]);
+            return $this->responseHelper->createSuccessResponse(
+                $this->domainReadCredentialService->handle($request)
+            );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
-    /**
-     * Called by Browser-Extension
-     * Get User Credentials By domainProcessId from the Redis cache.     
-     * Get User Email and publicId by targetId for auto-notification
-     * 
-     * @param Request $request
-     * @return JsonResponse
-     */
     #[Route('/state', name: 'domain_read_state', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
     #[ExtensionHmac]
     public function domainReadState(
         Request $request,
-        AuthBridgeService $authBridgeService
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_READ_STATE;
-
         try {
-            $processId = $this->sharedService->getProcessId($request, $payloadKey);
+            $payload = $this->domainReadStateService->handle($request);
 
-            if (!$processId) {
-                return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+            if ($payload === null) {
+                return $this->missingProcessResponse();
             }
-
-            $payload = $this->sharedService->pollTheRedis($processId, $authBridgeService, 'domain');
 
             return $this->responseHelper->createSuccessResponse(
                 $payload
             );
 
         } catch (\Exception $e) {
-            $this->logger->critical('Error: ' . $e->getMessage());
-            return $this->responseHelper->handleException($e, ['login_process_check' => false]);            
-        }        
+            return $this->responseHelper->handleException($e, ['login_process_check' => false]);
+        }
+    }
+
+    private function missingProcessResponse(): JsonResponse
+    {
+        return $this->responseHelper->createErrorResponse('Invalid or missing processId');
     }
 }

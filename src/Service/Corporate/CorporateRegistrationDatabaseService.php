@@ -1,75 +1,37 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Corporate;
 
-use Doctrine\ORM\EntityManagerInterface;
-use App\Entity\CorporateIdentity;
-use Psr\Log\LoggerInterface;
 use App\Entity\BusinessServices;
+use App\Entity\CorporateIdentity;
+use App\Entity\Identity;
 use App\Entity\UserRegistratedCorporate;
 use App\Repository\IdentityRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 
 class CorporateRegistrationDatabaseService
 {
-
     public function __construct(
-        private EntityManagerInterface $entityManager,
+        private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
-        private IdentityRepository $identityRepository
-    ) {  }
+        private readonly IdentityRepository $identityRepository,
+        private readonly ?CorporateBusinessStateConfigurator $corporateBusinessStateConfigurator = null,
+        private readonly ?CorporateFollowUpDataApplier $corporateFollowUpDataApplier = null,
+    ) {
+    }
 
-    public function generateBusinessService($businessModel){
+    public function generateBusinessService(string $businessModel): BusinessServices
+    {
         $this->logger->info('CorporateRegistrationDatabaseService generateBusinessService started.', [
             'business_model' => $businessModel,
         ]);
 
         $businessServices = new BusinessServices();
-
-        switch($businessModel){
-            case 'businessPro' : {
-                $businessServices->setPro(true);
-                $businessServices->setPlus(false);
-                $businessServices->setBasic(false);
-                $businessServices->setBiometric(false);
-                $businessServices->setPasswordManager(false);
-                break;
-            }
-            case 'businessPlus' : {                
-                $businessServices->setPro(false);
-                $businessServices->setPlus(true);
-                $businessServices->setBasic(false);
-                $businessServices->setBiometric(false);
-                $businessServices->setPasswordManager(false);
-                break;
-            }
-            case 'businessBasic' : {                
-                $businessServices->setPro(false);
-                $businessServices->setPlus(false);
-                $businessServices->setBasic(true);
-                $businessServices->setBiometric(false);
-                $businessServices->setPasswordManager(false);
-                break;
-            }          
-            case 'biometric' : {                
-                $businessServices->setPro(false);
-                $businessServices->setPlus(false);
-                $businessServices->setBasic(false);
-                $businessServices->setBiometric(true);
-                $businessServices->setPasswordManager(false);
-                break;
-            } 
-            case 'passwordManager' : {                
-                $businessServices->setPro(false);
-                $businessServices->setPlus(false);
-                $businessServices->setBasic(false);
-                $businessServices->setBiometric(false);
-                $businessServices->setPasswordManager(true);
-                break;
-            }                           
-        }
-
-        $this->entityManager->persist($businessServices);
-        $this->entityManager->flush();
+        $this->businessStateConfigurator()->apply($businessServices, $businessModel);
+        $this->persistAndFlush($businessServices);
 
         $this->logger->info('CorporateRegistrationDatabaseService generateBusinessService persisted business service.', [
             'business_model' => $businessModel,
@@ -79,7 +41,7 @@ class CorporateRegistrationDatabaseService
         return $businessServices;
     }
 
-    public function addNewIdentity(CorporateIdentity $corporateIdentity, $businessModel, $publicId, $scope): void
+    public function addNewIdentity(CorporateIdentity $corporateIdentity, string $businessModel, string $publicId, string $scope): void
     {
         $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity started.', [
             'public_id' => $publicId,
@@ -88,58 +50,14 @@ class CorporateRegistrationDatabaseService
             'corporate_id' => $corporateIdentity->getCorporateId(),
         ]);
 
-        if($scope === 'internal'){
-            $businessServices = $this->generateBusinessService($businessModel);
-
-            $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity generated internal business service.', [
-                'public_id' => $publicId,
-                'corporate_id' => $corporateIdentity->getCorporateId(),
-                'business_service_id' => $businessServices->getId(),
-            ]);
-
-            $corporateIdentity->setBusinessServices($businessServices);
-            $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity assigned business service to corporate identity.', [
-                'public_id' => $publicId,
-                'corporate_id' => $corporateIdentity->getCorporateId(),
-                'business_service_id' => $businessServices->getId(),
-            ]);
-
-            // TODO : should not called by the FE HUB registration: updateUserIdentity
-            $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity calling updateUserIdentity.', [
-                'public_id' => $publicId,
-                'corporate_id' => $corporateIdentity->getCorporateId(),
-                'business_service_id' => $businessServices->getId(),
-            ]);
-
-            $this->updateUserIdentity($publicId, $businessServices);
-
-            $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity updateUserIdentity returned.', [
-                'public_id' => $publicId,
-                'corporate_id' => $corporateIdentity->getCorporateId(),
-                'business_service_id' => $businessServices->getId(),
-            ]);
-
-            $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity linked internal business service.', [
-                'public_id' => $publicId,
-                'corporate_id' => $corporateIdentity->getCorporateId(),
-                'business_service_id' => $businessServices->getId(),
-            ]);
-        }else if($scope === 'external'){
-            $identity = $this->identityRepository->findOneBy([
-                'publicId' => $publicId
-            ]);                   
-            $corporateIdentity->setBusinessServices($identity->getBusinessService());
-
-            $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity linked external business service.', [
-                'public_id' => $publicId,
-                'corporate_id' => $corporateIdentity->getCorporateId(),
-                'business_service_id' => $identity->getBusinessService()?->getId(),
-            ]);
+        if ($scope === 'internal') {
+            $this->attachInternalBusinessService($corporateIdentity, $businessModel, $publicId);
+        } elseif ($scope === 'external') {
+            $this->attachExternalBusinessService($corporateIdentity, $publicId);
         }
 
         try {
-            $this->entityManager->persist($corporateIdentity);
-            $this->entityManager->flush();
+            $this->persistAndFlush($corporateIdentity);
 
             $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity persisted corporate identity.', [
                 'public_id' => $publicId,
@@ -147,29 +65,31 @@ class CorporateRegistrationDatabaseService
                 'scope' => $scope,
             ]);
         } catch (\Throwable $e) {
-             $this->logger->critical('--------------Error' . json_encode((array)$e));
+            $this->logger->critical('CorporateRegistrationDatabaseService addNewIdentity failed.', [
+                'public_id' => $publicId,
+                'corporate_id' => $corporateIdentity->getCorporateId(),
+                'scope' => $scope,
+                'error' => $e->getMessage(),
+            ]);
+
             throw $e;
         }
     }
 
-    public function addFollowUpData(CorporateIdentity $corporateIdentity, $followUpDecryptedCorporateData): CorporateIdentity|Array
+    public function addFollowUpData(CorporateIdentity $corporateIdentity, array $followUpDecryptedCorporateData): CorporateIdentity
     {
         try {
-            $corporateIdentity->setCallbackUserLogin($followUpDecryptedCorporateData['updateIdentity']['callbackUserLogin']);
-            $corporateIdentity->setCallbackUserRegistration($followUpDecryptedCorporateData['updateIdentity']['callbackUserRegistration']);
-            $corporateIdentity->setDomain($followUpDecryptedCorporateData['updateIdentity']['domain']);
-            
+            $this->followUpDataApplier()->apply($corporateIdentity, $followUpDecryptedCorporateData);
             $this->entityManager->flush();
+
             return $corporateIdentity;
         } catch (\Throwable $e) {
-            return [
-                'error' => true,
-                'message' => 'Corporate not saved in database'
-            ];             
+            throw new \RuntimeException('Corporate not saved in database', 0, $e);
         }
     }
 
-    public function createUserCorporateRelation($publicId, $corporateId){
+    public function createUserCorporateRelation(string $publicId, string $corporateId): void
+    {
         $this->logger->info('CorporateRegistrationDatabaseService createUserCorporateRelation started.', [
             'public_id' => $publicId,
             'corporate_id' => $corporateId,
@@ -188,7 +108,7 @@ class CorporateRegistrationDatabaseService
         ]);
     }
 
-    public function updateUserIdentity($publicId, $businessServices)
+    public function updateUserIdentity(string $publicId, BusinessServices $businessServices): void
     {
         $this->logger->info('CorporateRegistrationDatabaseService updateUserIdentity started.', [
             'public_id' => $publicId,
@@ -199,20 +119,88 @@ class CorporateRegistrationDatabaseService
             'public_id' => $publicId,
         ]);
 
-        $identity = $this->identityRepository->findOneBy([
-            'publicId' => $publicId
-        ]);
-
-
-        if ($identity === null) {
-            $this->logger->critical('CorporateRegistrationDatabaseService updateUserIdentity identity not found for public id.', [
-                'public_id' => $publicId,
-                'new_business_service_id' => $businessServices?->getId(),
-            ]);
-        }
+        $identity = $this->resolveIdentityByPublicId($publicId, $businessServices);
 
         $identity->setBusinessService($businessServices);
-        $this->entityManager->persist($identity);
+        $this->persistAndFlush($identity);
+    }
+
+    private function attachInternalBusinessService(CorporateIdentity $corporateIdentity, string $businessModel, string $publicId): void
+    {
+        $businessServices = $this->generateBusinessService($businessModel);
+
+        $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity generated internal business service.', [
+            'public_id' => $publicId,
+            'corporate_id' => $corporateIdentity->getCorporateId(),
+            'business_service_id' => $businessServices->getId(),
+        ]);
+
+        $corporateIdentity->setBusinessServices($businessServices);
+
+        $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity assigned business service to corporate identity.', [
+            'public_id' => $publicId,
+            'corporate_id' => $corporateIdentity->getCorporateId(),
+            'business_service_id' => $businessServices->getId(),
+        ]);
+
+        $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity calling updateUserIdentity.', [
+            'public_id' => $publicId,
+            'corporate_id' => $corporateIdentity->getCorporateId(),
+            'business_service_id' => $businessServices->getId(),
+        ]);
+
+        $this->updateUserIdentity($publicId, $businessServices);
+
+        $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity updateUserIdentity returned.', [
+            'public_id' => $publicId,
+            'corporate_id' => $corporateIdentity->getCorporateId(),
+            'business_service_id' => $businessServices->getId(),
+        ]);
+    }
+
+    private function attachExternalBusinessService(CorporateIdentity $corporateIdentity, string $publicId): void
+    {
+        $identity = $this->resolveIdentityByPublicId($publicId);
+        $corporateIdentity->setBusinessServices($identity->getBusinessService());
+
+        $this->logger->info('CorporateRegistrationDatabaseService addNewIdentity linked external business service.', [
+            'public_id' => $publicId,
+            'corporate_id' => $corporateIdentity->getCorporateId(),
+            'business_service_id' => $identity->getBusinessService()?->getId(),
+        ]);
+    }
+
+    private function resolveIdentityByPublicId(string $publicId, ?BusinessServices $businessServices = null): Identity
+    {
+        $identity = $this->identityRepository->findOneBy([
+            'publicId' => $publicId,
+        ]);
+
+        if ($identity instanceof Identity) {
+            return $identity;
+        }
+
+        $this->logger->critical('CorporateRegistrationDatabaseService updateUserIdentity identity not found for public id.', [
+            'public_id' => $publicId,
+            'new_business_service_id' => $businessServices?->getId(),
+        ]);
+
+        throw new \RuntimeException('Identity not found.');
+    }
+
+    private function persistAndFlush(object $entity): void
+    {
+        $this->entityManager->persist($entity);
         $this->entityManager->flush();
+    }
+
+    private function businessStateConfigurator(): CorporateBusinessStateConfigurator
+    {
+        return $this->corporateBusinessStateConfigurator ?? new CorporateBusinessStateConfigurator();
+    }
+
+    private function followUpDataApplier(): CorporateFollowUpDataApplier
+    {
+        return $this->corporateFollowUpDataApplier ?? new CorporateFollowUpDataApplier();
     }
 }

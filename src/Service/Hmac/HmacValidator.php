@@ -1,23 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Hmac;
 
 use App\Exception\InvalidHmacException;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use App\Repository\AuthBridgeRepository;
-use Psr\Log\LoggerInterface;
 use App\Service\Crypters\CrypterDatabaseLoginService;
+use App\Service\Payload\JsonPayloadDecoder;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class HmacValidator
 {
     public function __construct(
-        private ParameterBagInterface $params,
-        private AuthBridgeRepository $authBridgeRepository,
-        private LoggerInterface $logger,
-        private CrypterDatabaseLoginService $crypterDatabaseLoginService
-    ) {}
+        private readonly ParameterBagInterface $params,
+        private readonly AuthBridgeRepository $authBridgeRepository,
+        private readonly LoggerInterface $logger,
+        private readonly CrypterDatabaseLoginService $crypterDatabaseLoginService,
+        private readonly JsonPayloadDecoder $jsonPayloadDecoder
+    ) {
+    }
 
-    public function validate(string $payload, ?string $authHeader, string $iv, array $encryptedData)
+    public function validate(string $payload, ?string $authHeader, string $iv, array $encryptedData): bool
     {
         if (!$authHeader || !preg_match("/^HMAC (\S+):(\S+):(\d+)$/", $authHeader, $matches)) {
             throw new InvalidHmacException('Invalid Authentication header format');
@@ -51,18 +56,24 @@ class HmacValidator
         return true;
     }
 
-    public function extensionValidate(?string $authHeader, $payload, $type = "domainProcessId")
+    public function extensionValidate(?string $authHeader, string $payload, string $type = 'domainProcessId'): bool
     {
         if (!$authHeader || !preg_match("/^HMAC (\S+)$/", $authHeader, $matches)) {
             $this->logger->critical('Invalid Authentication header format');
             return false;
         }
 
-        $payload = json_decode($payload, true);
+        $decodedPayload = $this->jsonPayloadDecoder->decodeArray($payload);
+
+        if ($decodedPayload === null) {
+            $this->logger->critical('Invalid extension payload JSON');
+
+            return false;
+        }
 
         $recvSignature = trim($matches[1]);
-        $recIv = $payload['iv'] ?? null;
-        $domainProcessId = $payload[$type] ?? null;
+        $recIv = $decodedPayload['iv'] ?? null;
+        $domainProcessId = $decodedPayload[$type] ?? null;
 
         if (!$recvSignature) {
             $this->logger->critical('Missing HMAC signature');
@@ -91,6 +102,12 @@ class HmacValidator
         $bridgeFromDb = $this->crypterDatabaseLoginService->decryptFromDatabaseToHmac($expectedBridgeFromDb);
 
         $secretFromDb = $bridgeFromDb->getSecret();
+
+        if (!is_string($secretFromDb) || $secretFromDb === '') {
+            $this->logger->critical('Missing HMAC secret');
+
+            return false;
+        }
 
 
         $expectedSignature = hash_hmac('sha256', $domainProcessId, $secretFromDb);

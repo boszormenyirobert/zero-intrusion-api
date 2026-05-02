@@ -1,0 +1,19 @@
+test_response_helper_success:
+    path: /_test/response-helper/success
+    controller: App\Controller\Test\ResponseHelperTestController::success
+    methods: [GET]
+
+test_response_helper_success_false_flag:
+    path: /_test/response-helper/success-false-flag
+    controller: App\Controller\Test\ResponseHelperTestController::successWithFalseFlag
+    methods: [GET]
+
+test_response_helper_process:
+    path: /_test/response-helper/process
+    controller: App\Controller\Test\ResponseHelperTestController::process
+    methods: [GET]
+
+test_response_helper_exception:
+    path: /_test/response-helper/exception
+    controller: App\Controller\Test\ResponseHelperTestController::exception
+    methods: [GET]

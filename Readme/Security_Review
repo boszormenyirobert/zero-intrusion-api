@@ -1,0 +1,161 @@
+
+
+
+1. End-to-end titkosítás a read flow-ra
+A legfontosabb lépés, hogy a mobil ne plaintext credentialt küldjön vissza a HUB/API felé, hanem a végső kliensnek titkosított payloadot.
+Gyakorlatban: az extension generáljon session-enként ephemeral kulcspárt, a public key menjen bele a bootstrap folyamatba, a mobil pedig ezzel titkosítson vissza.
+Így a HUB és az API csak ciphertext relay lenne.
+
+2. Az X-Extension-Auth erősebb process-bindingja
+A continuation headert szorosabban kell kötni:
+
+processId-hoz,
+route-típushoz,
+TTL-hez,
+egyszeri vagy nagyon limitált felhasználáshoz,
+opcionálisan kliens-fingerprinthez.
+Ezzel csökken a replay és header-eltérítés kockázata.
+
+
+3. A callback aláírások kiterjesztése
+A callbackekben ne csak a user identity mezők legyenek aláírva, hanem legalább:
+
+processId
+action
+timestamp / nonce
+is kerüljön a signed payloadba.
+Így a callback teljes folyamatkötést kap.
+
+
+4. A trust boundary egyszerűsítése
+Dokumentációban és implementációban is érdemes egyértelműsíteni:
+
+mi validál a HUB,
+mi validál az API,
+mi csak forwarding,
+mi tekinthető authority-nek.
+A cél, hogy egy adott auth-adatnak pontosan egy végső ellenőrzési helye legyen.
+
+
+5. State-store hardening
+A processhez kötött Redis vagy cache adatoknál kell:
+
+rövid TTL,
+egyszeri kiolvashatóság,
+explicit törlés siker után,
+failed-flow cleanup,
+audit log secret nélkül.
+
+
+6. Publikus endpointok további szűkítése
+A bootstrap és callback route-okra érdemes:
+
+szigorúbb rate limit,
+IP / actor alapú throttling,
+payload size limit,
+abuse detection,
+egységes hibaválaszok
+bevezetése.
+
+
+7. Demo és integrációs oldalak hardeningje
+A demo-page-one-ban:
+
+productionban Secure cookie,
+szigorúbb callback-verification,
+localStorage csak UX-célra,
+sessionkötés javítása.
+Ez azért fontos, mert a mintaimplementáció gyakran “kvázi referenciává” válik.
+
+
+8. Kriptográfiai modell modernizálása
+Új funkcióknál nem klasszikus ad hoc symmetric wrappinget erősítenék tovább, hanem inkább modern session-alapú megoldást:
+
+X25519
+vagy sealed box / libsodium stílusú modell.
+Ez egyszerűbbé és tisztábbá teheti a mobile ↔ extension confidential transportot.
+
+
+
+
+
+
+2. A write flow jó mintája szerintem ez lenne
+Ha a mobil marad az egyetlen igazán trusted cryptographic endpoint, akkor az új credential hozzáadás így nézhet ki:
+
+az extension indít egy write/bootstrap folyamatot,
+a mobil beszkenneli a QR-t és létrejön a process,
+a mobil ad egy session write public keyt ehhez a processhez,
+a user az extensionben beírja az új credentialt,
+az extension ezt azzal a mobil-session public key-jel titkosítja,
+a HUB/API csak továbbítja az opaque ciphertextet,
+a mobil visszafejti, validálja, majd a saját tartós vault-kulcsával újratitkosítja,
+végül a mobil vagy a mobil nevében a flow eljuttatja a már végleges, tárolható ciphertextet a backendhez.
+
+
+Bootstrap indítás az extensionből
+Az extension kér egy write/bootstrap folyamatot.
+A szerver létrehoz egy processId-t, flow-típust, rövid kezdeti TTL-t, és visszaad egy QR payloadot.
+
+Mobil csatlakozás a processhez
+A mobil beolvassa a QR-t, hitelesíti a folyamatot, majd a szerver oldalon a process státusza átmegy például mobile_attached állapotba.
+
+Mobil session write key létrehozása
+A mobil generál egy ideiglenes session kulcspárt vagy submission public keyt, és ennek public részét a processhez köti.
+Ez nem hosszú távú vault kulcs, hanem csak az aktuális bevitelhez tartozó transport key.
+
+Extension lekéri a friss submission paramétereket
+Az extension nem a régi bootstrap-authot használja tovább, hanem lekér egy friss submission challenget:
+
+processId
+submissionNonce
+submissionExpiresAt
+mobile session public key
+rövid életű continuation token
+A user beírja a credentialt az extensionben
+Ez a hosszú emberi szakasz.
+Itt még nincs végső submission, csak lokális szerkesztés.
+
+Beküldés pillanatában friss cryptographic step
+Amikor a user megnyomja a mentést, az extension ellenőrzi, hogy a submission challenge még él-e.
+Ha nem él, kér egy újat.
+Ezután a plaintext credentialt a mobile session public key-jel titkosítja.
+
+Opaque ciphertext továbbítása
+Az extension csak a ciphertextet + processId + submissionNonce + continuation tokent küldi.
+A HUB/API ezt nem fejti vissza, csak ellenőrzi:
+
+process aktív-e,
+nonce helyes-e,
+token él-e,
+még nem volt-e felhasználva.
+Mobil oldali végső feldolgozás
+A mobil visszafejti a session kulccsal kapott adatot, validálja, majd a saját tartós vault-kulcsával újratitkosítja.
+Ez lesz a végleges storage ciphertext.
+
+Tárolható payload backendbe juttatása
+A mobil vagy a mobil által jóváhagyott flow elküldi a végső ciphertextet a backendnek.
+A backend ezt már csak tárolja és állapotot frissít.
+
+Process lezárás és token-ek érvénytelenítése
+Siker után:
+
+submission token invalid,
+nonce invalid,
+session write key lezárva,
+cache törölve,
+process státusz completed.
+Miért jobb ez?
+a hosszú emberi input-idő nem tolja ki a HMAC freshness ablakot,
+a bootstrap és a submission kriptográfiailag külön szakasz lesz,
+a HUB/API nem lát plaintextet,
+a mobil marad a végső trusted crypto endpoint,
+a replay kockázat jelentősen kisebb lesz.
+Rövid elv
+Nem egy hosszú életű HMAC védi a teljes write folyamatot, hanem egy process-bound állapotgép és a beküldés pillanatában kiadott friss submission challenge.
+
+Ha akarod, következő lépésként ezt át tudom fordítani konkrét repository-feladatokra:
+
+mi kell az extensionbe,
+mi kell a HUB-ba,
+mi kell az API-ba.

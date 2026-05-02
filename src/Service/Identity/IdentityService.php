@@ -12,7 +12,7 @@ use App\Entity\Identity;
 use App\Repository\AuthBridgeRepository;
 use App\Service\Identity\DTO\IdentityKeyDTO;
 
-final class IdentityService
+class IdentityService
 {
     public function __construct(
         private IdentityDatabaseService $identityDatabaseService,
@@ -45,7 +45,7 @@ final class IdentityService
         );
 
         // Encrypt the IdentityKeyDTO object with the global database encryption
-        $secret = $this->crypterDatabaseIdentityService->encyptDataObject($identityKey->toArray());
+        $secret = $this->crypterDatabaseIdentityService->encryptDataObjectOrFail($identityKey->toArray());
         // Save the encrypted IdentityKeyDTO object in the database
         $this->identityDatabaseService->addIdentity($secret);
         // Set the unencrypted privateId in the IdentityKeyDTO object before returning

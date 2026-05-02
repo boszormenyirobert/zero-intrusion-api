@@ -1,76 +1,58 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Handling an registrated Corporate account
- * 
+ *
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
- * 
+ *
  */
 namespace App\Controller\Account;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use App\Service\Corporate\CorporateRegistrationService;
-use App\Service\Shared\RequestService;
-use Psr\Log\LoggerInterface;
 use App\Attribute\RequireHmac;
 use App\Attribute\RequireJson;
-use App\Repository\CorporateIdentityRepository;
-use App\Repository\UserRegistratedCorporateRepository;
-use App\Repository\IdentityRepository;
-use App\Service\Crypters\CrypterDatabaseService;
+use App\Helper\ResponseHelper;
+use App\Service\Account\AccountLookupService;
+use App\Service\Account\AccountRequestMapper;
+use App\Service\Account\AccountRequestResolver;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
 
 
 #[Route('/api/account')]
 class AccountController extends AbstractController
 {
     public function __construct(
-        private CorporateRegistrationService $corporateRegistrationService,
-        private LoggerInterface $logger,
-        private RequestService $requestService,
-        private CrypterDatabaseService $crypterDatabaseService
-    ) {    }
+        private readonly AccountRequestResolver $accountRequestResolver,
+        private readonly AccountRequestMapper $accountRequestMapper,
+        private readonly AccountLookupService $accountLookupService,
+        private readonly ResponseHelper $responseHelper,
+    ) {
+    }
 
 
     /*
     * Get all registrated Corporate accounts for user
     */
     #[Route('/all', name: 'account', methods: ['POST'])]
-    public function account(
-        Request $request,
-        CorporateIdentityRepository $corporateIdentityRepository,
-        UserRegistratedCorporateRepository $userRegistratedCorporateRepository,
-        IdentityRepository $identityRepository
-        ): Response    {
-        $payload = $this->requestService->requestControll($request);
-        $validatedPayload = $this->requestService->validPayload($payload);
-        $payloadArray = $validatedPayload['get_registrated_business'];
-        
-        $userPublicId = $payloadArray['publicId'];
-        $email = $payloadArray['email'];
+    #[RequireHmac]
+    #[RequireJson]
+    public function account(Request $request): JsonResponse
+    {
+        try {
+            $validatedPayload = $this->accountRequestResolver->resolve($request);
+            $accountRequest = $this->accountRequestMapper->map($validatedPayload);
 
-    //    Allow access until the righs&roles system is implemented
-        $userBusinessData = $identityRepository->findOneBy([
-            'publicId' =>  $userPublicId
-        ]);
-
-        $businessId = $userBusinessData->getBusinessService();
-        // Database encrypted data
-        $corporates = $corporateIdentityRepository->findBy([
-            'businessServices' => $businessId
-        ]);
-
-        // Decrypted data for response
-        $decryptedCorporates = [];
-        foreach ($corporates as $corporate) {
-            $decryptedCorporates[] = $this->crypterDatabaseService->decryptFromDatabase($corporate);
+            return new JsonResponse(
+                $this->accountLookupService
+                    ->handle($accountRequest)
+                    ->toArray()
+            );
+        } catch (\Exception $exception) {
+            return $this->responseHelper->handleException($exception);
         }
-
-        return $this->json(
-            [
-                'accounts' => $decryptedCorporates,
-                'businessSubscription' => $userBusinessData->getBusinessService()
-            ]);
     }
 }

@@ -1,155 +1,102 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\CredentialHub\Domain\Delete;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
-use Psr\Log\LoggerInterface;
-use App\Service\AuthBridge\AuthBridgeService;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use App\Helper\ResponseHelper;
-use App\Controller\PayloadValidator\PayloadValidator;
 use App\Attribute\RequireHmac;
 use App\Attribute\ExtensionHmac;
 use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
-use App\Service\QrService\QrService;
 use App\Controller\CredentialHub\PayloadKeys;
-use App\Controller\CredentialHub\Domain\Delete\DomainDeleteService;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use App\DTO\QR\DomainDeleteQrContentDTO;
-use App\Service\AccessRegistry\AccessRegistryRegistrationService;
-use App\Controller\CredentialHub\SharedService;
-use App\Service\Cache\ProcessStateCacheService;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Helper\ResponseHelper;
+use App\Service\CredentialHub\Domain\Delete\DomainDeleteCredentialService;
+use App\Service\CredentialHub\Domain\Delete\DomainDeleteQrIdentityRequestMapper;
+use App\Service\CredentialHub\Domain\Delete\DomainDeleteQrIdentityService;
+use App\Service\CredentialHub\Domain\Delete\DomainDeleteStateService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/credential-hub/domain/delete')]
 class DomainDeleteController extends AbstractController
 {
     public function __construct(
-        private LoggerInterface $logger,
-        private PayloadValidator $payloadValidator,
-        private ResponseHelper $responseHelper,
-        private ValidatorInterface $validator,
-        private SharedService $sharedService,
-        private ProcessStateCacheService $processStateCacheService
-    ) {}
+        private readonly PayloadValidator $payloadValidator,
+        private readonly ResponseHelper $responseHelper,
+        private readonly DomainDeleteQrIdentityRequestMapper $domainDeleteQrIdentityRequestMapper,
+        private readonly DomainDeleteQrIdentityService $domainDeleteQrIdentityService,
+        private readonly DomainDeleteCredentialService $domainDeleteCredentialService,
+        private readonly DomainDeleteStateService $domainDeleteStateService,
+    ) {
+    }
 
-    /**
-     * Generates a QR code for domain deletion.
-     * Called by the Browser Extension.
-     */
     #[Route('/qr-identity', name: 'domain_delete_qr_identity', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
     public function domainDeleteQrIdentity(
         Request $request,
-        AuthBridgeService $authBridgeService,
-        QrService $qrService,
-        DomainDeleteService $domainDeleteService
     ): JsonResponse {
-        $processKey = PayloadKeys::REMOVE_PROCESS_ID;
-        $payloadKey = PayloadKeys::DOMAIN_DELETE_QR_IDENTITY;
-
         try {
-            $validatedPayloadJson = $this->payloadValidator->validatePayload($request, $payloadKey);
-            $validatedPayload = json_decode($validatedPayloadJson[$payloadKey],true);
-            /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
-            $identity = $authBridgeService->generateRequestIdentity($processKey);
-
-            /** @var DomainDeleteQrContentDTO */
-            $qrContent = $domainDeleteService->getQrContent(
-                $validatedPayload, 
-                $identity->getXExtensionAuthOne(),
-                $identity->getRemoveProcessId()
+            $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::DOMAIN_DELETE_QR_IDENTITY);
+            $domainDeleteRequest = $this->domainDeleteQrIdentityRequestMapper->map(
+                $validatedPayload
             );
-            $errors = $this->validator->validate($qrContent);
 
-            if (count($errors) > 0) {                
-                foreach ($errors as $error) {
-                    $this->logger->critical('DomainDeleteController validation error: ' . $error->getPropertyPath() . ': ' . $error->getMessage());
-                }
-            }
-            $qrCode = $qrService->getQrCode($qrContent);
-            $identity->setQrCode($qrCode);
-            if(isset($validatedPayload['userPublicId']) && $validatedPayload['userPublicId'])
-            { 
-                $this->sharedService->sendFcmNotification(
-                    'domainDelete',
-                    $validatedPayload['userPublicId'],
-                    $qrContent
-                );
-            }
-            return $this->responseHelper->createSuccessResponse($identity->toRemoveProcessArray());
+            return $this->responseHelper->createSuccessResponse(
+                $this->domainDeleteQrIdentityService->handle($domainDeleteRequest)
+            );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
-    /**
-     * Handles credential-based domain deletion.
-     * Called by the Mobile App.
-     */
     #[Route('/credential', name: 'domain_delete_credential', methods: "POST")]
     #[RequireHmac]
     #[MobileHmac]
     #[RequireJson]
     public function domainDeleteCredential(
         Request $request,
-        DomainDeleteService $domainDeleteService,
-        ): JsonResponse
+    ): JsonResponse
     {
-        $this->logger->critical('DomainDeleteController: domainDeleteCredential processId ');
-         $payloadKey = PayloadKeys::DOMAIN_DELETE_CREDENTIAL;
-
         try {
-            $process = $this->sharedService->getProcessId($request, $payloadKey, true);
+            $response = $this->domainDeleteCredentialService->handle($request);
 
-            if(!$process) {
-                return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+            if ($response === null) {
+                return $this->missingProcessResponse();
             }
-            $response = $domainDeleteService->deleteDomain($process);
-            
-            return $this->json([
-                'delete_process' => $response,
-                'error' => ''
-            ]);
-            // return $this->responseHelper->createSuccessResponse($response);
+
+            return new JsonResponse($response->toArray());
             
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
-    /**
-     * Checks whether the domain deletion process has completed.
-     * Called by the Browser Extension.
-     */
     #[Route('/state', name: 'domain_delete_state', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
     #[ExtensionHmac]
     public function domainDeleteState(
         Request $request,
-        AccessRegistryRegistrationService $stateService,
-        AuthBridgeService $authBridgeService
     ): JsonResponse {
-        $payloadKey = PayloadKeys::DOMAIN_DELETE_STATE;
-        $processKey = PayloadKeys::REMOVE_PROCESS_ID;
-
         try {
-            $processId = $this->sharedService->getProcessId($request, $payloadKey);
+            $response = $this->domainDeleteStateService->handle($request);
 
-            if(!$processId) {
-                return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+            if ($response === null) {
+                return $this->missingProcessResponse();
             }
-
-            //$response = $stateService->getState($processId, $processKey);
-            $response = $this->sharedService->pollTheRedisDefault($processId);            
 
             return $this->responseHelper->createSuccessResponse($response ?? []);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
+    }
+
+    private function missingProcessResponse(): JsonResponse
+    {
+        return $this->responseHelper->createErrorResponse('Invalid or missing processId');
     }
 }

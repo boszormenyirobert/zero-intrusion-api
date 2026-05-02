@@ -10,6 +10,6 @@ class EmptyController
     #[Route('/', name: 'empty')]
     public function empty(): Response
     {
-        dd("Healty ok");
+        return new Response('Healty ok');
     }
 }

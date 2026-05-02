@@ -1,33 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AuthBridge\AuthBridgeHandler\Domain;
 
 use App\Entity\AccessRegistry;
+use App\Entity\AuthBridge;
 use App\Repository\AccessRegistryRepository;
 use App\Repository\AuthBridgeRepository;
-use App\Service\Crypters\CrypterDatabaseLoginService;
-use App\Service\Crypters\SodiumService;
 use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
-use Psr\Log\LoggerInterface;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use App\Service\AuthBridge\AuthBridgeHandler\Application\Encryptor as ApplicationEncryptor;
-use App\Service\Firebase\FirebaseService;
-use App\Entity\AuthBridge;
 use App\Service\Cache\ProcessStateCacheService;
+use App\Service\Crypters\CrypterDatabaseLoginService;
+use App\Service\Crypters\SodiumService;
+use JsonException;
+use Psr\Log\LoggerInterface;
+use App\Service\Firebase\FirebaseService;
 
 class Encryptor
 {
     public function __construct(
-        private AccessRegistryRepository $accessRegistryRepository,
-        private CrypterDatabaseAccessRegistryService $crypterDatabaseUserService,
-        private SodiumService $sodiumService,
-        private AuthBridgeRepository $authBridgeRepository,
-        private CrypterDatabaseLoginService $crypterDatabaseLoginService,
-        private LoginDatabaseService $loginDatabaseService,
-        private LoggerInterface $logger,
-        private ApplicationEncryptor $applicationEncryptor,
-        private FirebaseService $firebaseService,
-        private ProcessStateCacheService $processStateCacheService
+        private readonly AccessRegistryRepository $accessRegistryRepository,
+        private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseUserService,
+        private readonly SodiumService $sodiumService,
+        private readonly AuthBridgeRepository $authBridgeRepository,
+        private readonly CrypterDatabaseLoginService $crypterDatabaseLoginService,
+        private readonly LoginDatabaseService $loginDatabaseService,
+        private readonly LoggerInterface $logger,
+        private readonly ApplicationEncryptor $applicationEncryptor,
+        private readonly FirebaseService $firebaseService,
+        private readonly ProcessStateCacheService $processStateCacheService
     ) {}
 
     // Set decrypted values for domain login
@@ -55,20 +58,20 @@ class Encryptor
             'email' => $user['email'],
         ];
 
-        $authBridge->setUserIdentity(json_encode($identity));
-        // $this->loginDatabaseService->addUserLogin($authBridge);
+        $authBridge->setUserIdentity($this->encodeJson($identity));
         $this->writeLoginEntryInRedis($user['oneTouchProcessId'], $authBridge);
 
         return true;
     }
     
-    private function writeLoginEntryInRedis(string $processId, AuthBridge $authBridge) {       
+    private function writeLoginEntryInRedis(string $processId, AuthBridge $authBridge): void
+    {
         $this->processStateCacheService->set(
             $processId,
-            json_encode($authBridge->toCacheArray(), JSON_UNESCAPED_UNICODE),
+            $this->encodeJson($authBridge->toCacheArray(), JSON_UNESCAPED_UNICODE),
             300
         );
-    }  
+    }
 
 
     // Extract the credentials, description and targetId from the database by publicId and domain
@@ -183,5 +186,14 @@ class Encryptor
         }
         $this->logger->critical('credential not found to the domain'); 
         return null;       
-    }    
+    }
+
+    private function encodeJson(array $payload, int $flags = 0): string
+    {
+        try {
+            return json_encode($payload, JSON_THROW_ON_ERROR | $flags);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON encoding failed.', 0, $exception);
+        }
+    }
 }

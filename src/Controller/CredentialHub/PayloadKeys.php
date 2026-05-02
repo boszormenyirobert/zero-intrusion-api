@@ -4,6 +4,11 @@ namespace App\Controller\CredentialHub;
 
 final class PayloadKeys
 {
+    public const SHARED_REGISTRATION_QR_IDENTITY = 'shared_registration_qr_identity';
+    public const SHARED_REGISTRATION_NEW_TO_ENCRYPT = 'shared_registration_new_to_encrypt';
+    public const SHARED_REGISTRATION_NEW = 'shared_registration_new';
+    public const SHARED_REGISTRATION_STATE = 'shared_registration_state';
+
     public const DOMAIN_DELETE_QR_IDENTITY = 'domain_delete_qr_identity';
     public const DOMAIN_DELETE_CREDENTIAL = 'domain_delete_credential';
     public const DOMAIN_DELETE_STATE = 'domain_delete_state';

@@ -1,36 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * User login on the HUB or on any registrated WEB site
- * 
+ *
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between HUB and API
  */
 
 namespace App\Controller\User;
 
+use App\Attribute\RequireHmac;
+use App\Attribute\RequireJson;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Helper\ResponseHelper;
+use App\Service\User\Login\LoginQrIdentityRequestMapper;
+use App\Service\User\Login\LoginQrIdentityService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Service\Shared\RequestService;
-use Psr\Log\LoggerInterface;
-use App\Controller\User\UserService;
-use App\Controller\PayloadValidator\PayloadValidator;
-use App\Helper\ResponseHelper;
-use Exception;
-use App\Attribute\RequireHmac;
-use App\Attribute\RequireJson;
-use App\Service\Firebase\FirebaseService;
 
 #[Route('/api/user')]
 class LoginController extends AbstractController
 {
 
     public function __construct(
-        private LoggerInterface $logger,
-        private RequestService $requestService,
-        private UserService $userService,
-        private PayloadValidator $payloadValidator
+        private readonly PayloadValidator $payloadValidator,
+        private readonly LoginQrIdentityRequestMapper $loginQrIdentityRequestMapper,
+        private readonly LoginQrIdentityService $loginQrIdentityService,
     ) {
     }
 
@@ -47,45 +45,16 @@ class LoginController extends AbstractController
     public function loginQrIdentity(
         Request $request,
         ResponseHelper $responseHelper,
-        FirebaseService $firebaseService
-    ) {
-            $processKey = 'domainProcessId';
-            $payloadKey = 'user_login';
+    ): Response {
+        try {
+            $validatedPayload = $this->payloadValidator->getValidatedPayload($request, 'user_login');
+            $loginRequest = $this->loginQrIdentityRequestMapper->map($validatedPayload);
 
-            $data = $this->requestService->validPayload(json_decode($request->getContent(),true));
-           
-            try{
-                $payload = $data[$payloadKey];
-            }catch(Exception $e){
-                return $responseHelper->handleException($e);
-            }
-
-            $qrData = $this->userService->getQrData($payload, $processKey);
-
-            if(array_key_exists('userPublicId', $payload) && !empty($payload['userPublicId']))
-            {    
-                $this->logger->info('User public ID found in payload, preparing to send FCM notification', [
-                    'userPublicId' => $payload['userPublicId'],
-                ]);            
-                $userPublicId = $payload['userPublicId'];
-
-                $this->logger->info(json_encode($qrData));
-
-                $this->logger->info('Generated QR data for user login', [
-                    'processId' => $qrData['mobileResponse']->domainProcessId ?? null,
-                    'userPublicId' => $userPublicId,
-                ]);
-
-                $firebaseService->manageFcm(  
-                    $userPublicId,                 
-                    'Test Title', 
-                    'Test Body',
-                    $qrData['mobileResponse']
-                );               
-            }
-            
-            $defaultResponse = $qrData['defaultResponse'];     
-
-        return new Response($defaultResponse['body'], 200, $defaultResponse['headers']);
+            return $this->loginQrIdentityService
+                ->handle($loginRequest)
+                ->toResponse();
+        } catch (\Exception $exception) {
+            return $responseHelper->handleException($exception);
+        }
     }         
 }

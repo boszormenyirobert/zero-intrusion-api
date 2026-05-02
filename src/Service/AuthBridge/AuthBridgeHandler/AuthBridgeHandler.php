@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AuthBridge\AuthBridgeHandler;
 
 use Doctrine\ORM\EntityManagerInterface;
+use JsonException;
 use App\Repository\AuthBridgeRepository;
 use Symfony\Component\Serializer\SerializerInterface;
 use Psr\Log\LoggerInterface;
@@ -16,134 +19,136 @@ use App\Entity\AuthBridge;
 class AuthBridgeHandler
 {
     public function __construct(
-        private AuthBridgeRepository $authBridgeRepository,
-        private EntityManagerInterface $entityManager,
-        private LoggerInterface $logger,
-        private SerializerInterface $serializer,
-        private ValidationHandler $validationHandler,
-        private Encryptor $encryptor,
-        private ApplicationCredential $applicationCredential,
-        private CrypterDatabaseService $crypterDatabaseService        
+        private readonly AuthBridgeRepository $authBridgeRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly LoggerInterface $logger,
+        private readonly SerializerInterface $serializer,
+        private readonly ValidationHandler $validationHandler,
+        private readonly Encryptor $encryptor,
+        private readonly ApplicationCredential $applicationCredential,
+        private readonly CrypterDatabaseService $crypterDatabaseService
     ) {}
 
     public function persistDecryptedUserData(array $user): bool
     {
-        $success = false;
-        // Validate the extension request by user privateId.
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
-        if($validation->getValid() === false){
+        if ($validation->getValid() === false) {
             return false;
         }
 
-        if ($validation->getValid()) {
-            if($user['type'] === 'domain-login'){
-                $success = $this->encryptor->setDecryptedValuesForDomain($user);
-            } else if($user['type'] === 'secure'){
-                $success = $this->encryptor->setDecryptedUserIdentity($user);
-            }            
-            else {
-                $success = $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
-            }
-        }
-
-        return $success;
+        return match ($user['type'] ?? null) {
+            'domain-login' => $this->encryptor->setDecryptedValuesForDomain($user),
+            'secure' => $this->encryptor->setDecryptedUserIdentity($user),
+            default => $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret()),
+        };
     }
 
     public function persistOneTouchUserData(array $user): bool
     {
-        // Validate the extension request by user privateId.
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
 
-        if ($validation->getValid()) {
-            return $user['type'] === 'domain-login'
-                ? $this->encryptor->setDecryptedValuesForDomain($user)
-                : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
+        if (!$validation->getValid()) {
+            return false;
         }
 
-        return $validation->getValid();
-    }    
+        return $user['type'] === 'domain-login'
+            ? $this->encryptor->setDecryptedValuesForDomain($user)
+            : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
+    }
     
 
     // Deprecated fs, use getDecryptedUserDataToMobileRequest instead
     public function getDecryptedUserData(array $user): bool
     {
-        // Validate the extension request by user privateId
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
 
-        if ($validation->getValid()) {
-            return $user['type'] === 'domain-login'
-                ? $this->encryptor->getDecryptedCredentials($user, $validation->getUserSecret())
-                : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
+        if (!$validation->getValid()) {
+            return false;
         }
 
-        return $validation->getValid();
+        return $user['type'] === 'domain-login'
+            ? $this->encryptor->getDecryptedCredentials($user, $validation->getUserSecret())
+            : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
     }
 
     public function getDecryptedUserDataToMobileRequest(array $user): array
     {
-        // Validate the extension request by user privateId
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
 
-        if ($validation->getValid()) {
-            return $user['type'] === 'domain-login'
-                ? $this->encryptor->getDecryptedCredentials($user)
-                : $this->applicationCredential->setDecryptedValuesForApplication($user);
+        if (!$validation->getValid()) {
+            return [];
         }
 
-        return [];
-    }    
+        return $user['type'] === 'domain-login'
+            ? $this->encryptor->getDecryptedCredentials($user)
+            : $this->applicationCredential->setDecryptedValuesForApplication($user);
+    }
 
     public function persistDecryptedUserDataForWeb(array $user): ?array
     {
-        $response = new ValidationDTO(false);
-        
         $validation = $this->validationHandler->checkExtensionRequestValidation($user);
 
-        if ($validation->getValid()) {
-            return $this->encryptor->findDecryptedCredentialForWeb($user, $validation->getUserSecret());
+        if (!$validation->getValid()) {
+            return null;
         }
 
-        return null;
-    }    
+        return $this->encryptor->findDecryptedCredentialForWeb($user, $validation->getUserSecret());
+    }
 
     public function updateProcessState(string $processKey, string $processId): bool
     {
         $process = $this->authBridgeRepository->findOneBy([$processKey => $processId]);
 
-        if ($process) {
-            $process->setProcessState(true);
-            $this->entityManager->persist($process);
-            $this->entityManager->flush();
-            return true;
+        if (!$process instanceof AuthBridge) {
+            return false;
         }
-        return false;
+
+        $process->setProcessState(true);
+        $this->entityManager->persist($process);
+        $this->entityManager->flush();
+
+        return true;
     }
 
-    public function saveUserCredentialInAuthBridge($userCredential, $registrationProcessId){
+    public function saveUserCredentialInAuthBridge(mixed $userCredential, string $registrationProcessId): bool
+    {
         $authBridge = $this->authBridgeRepository->findOneBy(['registrationProcessId' => $registrationProcessId]);
+        if (!$authBridge instanceof AuthBridge) {
+            return false;
+        }
 
         $iv = $authBridge->getIv();
         $this->logger->critical('IV exist: ' . $iv);
-        $encryptedCredential = $this->crypterDatabaseService->enrcyptUserCredential($userCredential, $iv);
+        $encryptedCredential = $this->crypterDatabaseService->encryptUserCredentialOrFail($userCredential, (string) $iv);
 
-        $authBridge->setUserCredential($encryptedCredential['encryptedCredential']);    
-        
+        $authBridge->setUserCredential($encryptedCredential);    
+
         $this->entityManager->persist($authBridge);
         $this->entityManager->flush();
 
         return true;
     }
 
-    public function getUserCredentialFromAuthBridge($processId){
+    public function getUserCredentialFromAuthBridge(string $processId): ?string
+    {
         $authBridge = $this->authBridgeRepository->findOneBy(['registrationProcessId' => $processId]);
 
-        if (!$authBridge) {
+        if (!$authBridge instanceof AuthBridge) {
             $this->logger->error("No AuthBridge entry found for processId: {$processId}");
+
             return null;
         }
 
-        $clear =  $this->crypterDatabaseService->decryptUserCredential($authBridge->getUserCredential(), $authBridge->getIv());
-        $this->logger->critical('Decrypted user credential: ' . $clear);
-        return $clear;
+        $clear = $this->crypterDatabaseService->decryptUserCredentialOrFail((string) $authBridge->getUserCredential(), (string) $authBridge->getIv());
+
+        try {
+            $encodedCredential = json_encode($clear, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON encoding failed', 0, $exception);
+        }
+
+        $this->logger->critical('Decrypted user credential: ' . $encodedCredential);
+
+        return $encodedCredential;
     }
 }

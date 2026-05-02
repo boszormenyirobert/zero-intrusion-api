@@ -1,21 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AuthBridge\AuthBridgeHandler;
 
-use App\Service\Crypters\CrypterDatabaseLoginService;
-use App\Service\AccessRegistry\Database\LoginDatabaseService;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use App\DTO\QR\CredentialHubIdentityDTO;
-use App\DTO\QR\OneTouchDTO;
+use App\Entity\AuthBridge;
+use App\Service\AccessRegistry\Database\LoginDatabaseService;
+use App\Service\Crypters\CrypterDatabaseLoginService;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Psr\Log\LoggerInterface;
 
 class Identity
 {
     public function __construct(
-        private CrypterDatabaseLoginService $crypterDatabaseLoginService,
-        private LoginDatabaseService $loginDatabaseService,
-        private ContainerBagInterface $params,  
-        private LoggerInterface $logger      
+        private readonly CrypterDatabaseLoginService $crypterDatabaseLoginService,
+        private readonly LoginDatabaseService $loginDatabaseService,
+        private readonly ContainerBagInterface $params,
+        private readonly LoggerInterface $logger
     ) {}
 
 /**
@@ -33,20 +35,15 @@ class Identity
     public function generateRequestIdentity(string $processType): CredentialHubIdentityDTO
     {
         $identity = $this->getBrowserExtensionIdentity($processType);
-        /* Database timestamp */
-        $createdAt = $identity->getCreatedAt(); 
+        $createdAt = $identity->getCreatedAt();
 
-        // exchanged secrets for HMAC generation
-        $secret =  $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
-        $message =  $this->params->get('EXTENSION_REGISTRATION_POOL_MESSAGE');
+        $secret = (string) $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
+        $message = (string) $this->params->get('EXTENSION_REGISTRATION_POOL_MESSAGE');
 
-        //Used by Mobile App to verify the identity: Secure against replay attacks, and tampering
         $identity->setXExtensionAuthOne(hash_hmac('sha256', $message . '|' . $createdAt, $secret));
-        
-        //Used by Extension to verify the identity: Secure against replay attacks, and tampering
         $identity->setXExtensionAuthTwo(hash_hmac('sha1', $message . '|' . $createdAt, $secret));
 
-        return $identity;        
+        return $identity;
     }
 
     /**
@@ -62,22 +59,21 @@ class Identity
      */    
     public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
     {
-        /* $processType : registrationProcessId || removeProcessId || domainProcessId || oneTouchProcessId*/
         $processId = $this->getGeneratedId();
         $targetId = $this->getGeneratedId();
 
+        $validCommunication = [];
         $validCommunication['secret'] = base64_encode(random_bytes(35));
         $validCommunication[$processType] = $processId;
 
-        // Create AuthBridge and store in DB
         $authBridge = $this->initializeAuthBridge($validCommunication, $processType, $targetId, $processId);
         $createdAuthBridge = $this->loginDatabaseService->addUserLogin($authBridge);
 
         $identity = new CredentialHubIdentityDTO();
         $identity->setSecret($validCommunication['secret']);
-        $identity->setCreatedAt($createdAuthBridge->getCreatedAt()->getTimestamp());
+        $identity->setCreatedAt((string) $createdAuthBridge->getCreatedAt()->getTimestamp());
         $identity->setIv($authBridge->getIv());
-        $method = 'set' . ucfirst($processType);        
+        $method = 'set' . ucfirst($processType);
         $identity->$method($processId);
 
         return $identity;
@@ -93,17 +89,17 @@ class Identity
      *      - registrationProcessId → setRegistrationProcessId()
      * 4. Returns the prepared AuthBridge entity ready for persistence.
      */    
-    private function initializeAuthBridge($extensionValidCommunication, $processType, $targetId, $processId): \App\Entity\AuthBridge
+    private function initializeAuthBridge(array $extensionValidCommunication, string $processType, string $targetId, string $processId): AuthBridge
     {
         $authBridge = $this->crypterDatabaseLoginService->encyptExtensionIdentityDataObject($extensionValidCommunication, $processType);
-        $authBridge->setTargetId($targetId);      
+        $authBridge->setTargetId($targetId);
         $authBridge->setProcessState(false);
 
-        if($processType === 'removeProcessId'){
+        if ($processType === 'removeProcessId') {
             $authBridge->setRemoveProcessId($processId);
-        } else if($processType === 'registrationProcessId'){
+        } elseif ($processType === 'registrationProcessId') {
             $authBridge->setRegistrationProcessId($processId);
-        } else if($processType === 'oneTouchProcessId'){
+        } elseif ($processType === 'oneTouchProcessId') {
             $authBridge->setOneTouchProcessId($processId);
         }
 
@@ -114,7 +110,8 @@ class Identity
      * Generates a random alphanumeric string of fixed length (12 characters).
      * Used as unique identifiers for process IDs or target IDs.
      */    
-    private function getGeneratedId_Original(){
+    private function getGeneratedId_Original(): string
+    {
         $length = 12;
         return substr(str_shuffle(str_repeat('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $length)), 0, $length);
     }
@@ -127,14 +124,11 @@ class Identity
      * @param int $length Desired length of the generated key (default 22 for 128-bit entropy)
      * @return string Alphanumeric key
      */
-    private function getGeneratedId(int $length = 22): string {
-        // 16 bytes = 128 bits of cryptographically secure random data
+    private function getGeneratedId(int $length = 22): string
+    {
         $bytes = random_bytes(16);
-
-        // Base64 encode and make URL-safe + alphanumeric
         $base64 = rtrim(strtr(base64_encode($bytes), '+/', 'AB'), '=');
 
-        // Truncate to the desired length
         return substr($base64, 0, $length);
     }
 }

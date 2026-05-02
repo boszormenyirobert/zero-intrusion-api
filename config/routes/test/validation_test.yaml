@@ -1,0 +1,9 @@
+test_validation_require_json:
+    path: /_test/validation/require-json
+    controller: App\Controller\Test\ValidationTestController::requireJson
+    methods: [POST]
+
+test_validation_require_hmac:
+    path: /_test/validation/require-hmac
+    controller: App\Controller\Test\ValidationTestController::requireHmac
+    methods: [POST]

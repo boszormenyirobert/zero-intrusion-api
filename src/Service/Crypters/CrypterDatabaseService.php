@@ -1,21 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Crypters;
 
 use App\Entity\CorporateIdentity;
+use JsonException;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
-final class CrypterDatabaseService
+class CrypterDatabaseService
 {
-    private string $key;
-    private string $cipher = 'aes-256-cbc';
+    private const CIPHER = 'aes-256-cbc';
+    private const IV_LENGTH = 16;
 
-    public function __construct(private ContainerBagInterface $params) {}
+    private string $key;
+
+    public function __construct(private readonly ContainerBagInterface $params) {}
 
     public function encyptDataObject(array $identityData): CorporateIdentity
     {
-        $iv = openssl_random_pseudo_bytes(16);
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        $iv = openssl_random_pseudo_bytes(self::IV_LENGTH);
+        $this->initializeDatabaseKey();
 
         $encryptedIdentity = new CorporateIdentity();
         $encryptedIdentity->setIv(base64_encode($iv));
@@ -41,19 +46,20 @@ final class CrypterDatabaseService
 
     private function encryptData(string $value, string $iv): string
     {
-        $encrypted = openssl_encrypt($value, $this->cipher, $this->key, 0, $iv);
+        $encrypted = openssl_encrypt($value, self::CIPHER, $this->key, 0, $iv);
         if ($encrypted === false) {
             throw new \RuntimeException('Encryption failed: ' . openssl_error_string());
         }
+
         return base64_encode($encrypted);
     }
 
     public function decryptFromDatabase(CorporateIdentity $value): CorporateIdentity
     {
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $iv = base64_decode($value->getIv());
+        $this->initializeDatabaseKey();
+        $iv = base64_decode((string) $value->getIv(), true);
 
-        if (strlen($iv) !== 16) {
+        if (!is_string($iv) || strlen($iv) !== self::IV_LENGTH) {
             throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
         }
 
@@ -73,8 +79,12 @@ final class CrypterDatabaseService
 
     private function decryptData(string $value, string $iv): string
     {
-        $decoded = base64_decode($value);
-        $decrypted = openssl_decrypt($decoded, $this->cipher, $this->key, 0, $iv);
+        $decoded = base64_decode($value, true);
+        if (!is_string($decoded)) {
+            throw new \RuntimeException('Decryption failed: invalid base64 payload');
+        }
+
+        $decrypted = openssl_decrypt($decoded, self::CIPHER, $this->key, 0, $iv);
 
         if ($decrypted === false) {
             throw new \RuntimeException('Decryption failed: ' . openssl_error_string());
@@ -83,36 +93,78 @@ final class CrypterDatabaseService
         return $decrypted;
     }
 
-    public function enrcyptUserCredential(array $userCredential, string $iv)
+    public function enrcyptUserCredential(array $userCredential, string $iv): array
     {
-       $ivDecoded = base64_decode($iv);
-        $this->key = hash('sha256', $this->params->get('DATABASE_HASH_SECRET'), true);
+        return ['encryptedCredential' => $this->encryptUserCredentialOrFail($userCredential, $iv)];
+    }
 
-        $jsonCredential = json_encode($userCredential);
-        if ($jsonCredential === false) {
-            throw new \RuntimeException('JSON encoding failed');
+    public function encryptUserCredentialOrFail(array $userCredential, string $iv): string
+    {
+        $ivDecoded = $this->decodeCredentialIv($iv);
+        $this->initializeCredentialKey();
+
+        try {
+            $jsonCredential = json_encode($userCredential, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON encoding failed', 0, $exception);
         }
-        
-        return ['encryptedCredential' =>$this->encryptData($jsonCredential, $ivDecoded)];
+
+        return $this->encryptData($jsonCredential, $ivDecoded);
     }
     
     // The credential is by the default DB encrypted
-    public function decryptUserCredential(string $encryptedCredential, string $iv)
-    {        
-        $this->key = hash('sha256', $this->params->get('DATABASE_HASH_SECRET'), true);
-        $ivDecoded = base64_decode($iv);
+    public function decryptUserCredential(string $encryptedCredential, string $iv): string
+    {
+        try {
+            return json_encode($this->decryptUserCredentialOrFail($encryptedCredential, $iv), JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON encoding failed', 0, $exception);
+        }
+    }
 
-        if (strlen($ivDecoded) !== 16) {
+    public function decryptUserCredentialOrFail(string $encryptedCredential, string $iv): array
+    {
+        $this->initializeCredentialKey();
+        $ivDecoded = $this->decodeCredentialIv($iv);
+
+        $decryptedJson = $this->decryptData($encryptedCredential, $ivDecoded);
+        return $this->decodeJsonArray($decryptedJson);
+    }
+
+    private function decodeJsonArray(string $json): array
+    {
+        try {
+            $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON decoding failed: ' . $exception->getMessage(), 0, $exception);
+        }
+
+        if (!is_array($decoded)) {
+            throw new \RuntimeException('JSON decoding failed: Decoded value is not an array');
+        }
+
+        return $decoded;
+    }
+
+    private function initializeDatabaseKey(): void
+    {
+        $this->key = (string) $this->params->get('DATABASE_HASH_SECRET');
+    }
+
+    private function initializeCredentialKey(): void
+    {
+        $this->key = hash('sha256', (string) $this->params->get('DATABASE_HASH_SECRET'), true);
+    }
+
+    private function decodeCredentialIv(string $iv): string
+    {
+        $ivDecoded = base64_decode($iv, true);
+
+        if (!is_string($ivDecoded) || strlen($ivDecoded) !== self::IV_LENGTH) {
             throw new \RuntimeException('Invalid IV length');
         }
 
-            $decryptedJson = $this->decryptData($encryptedCredential, $ivDecoded);
-            $decoded = json_decode($decryptedJson, true);
-
-            if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
-                throw new \RuntimeException('JSON decoding failed: ' . json_last_error_msg());
-            }
-
-        return $decryptedJson;
+        return $ivDecoded;
     }
+
 }

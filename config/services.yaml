@@ -53,50 +53,15 @@ services:
         arguments:
             $entityManager: '@doctrine.orm.entity_manager'
 
-    App\Service\Corporate\CorporateRegistrationService:
-        arguments:
-            MAILER_HOST: '%(MAILER_HOST)%'
-            MAILER_UNAME: '%(MAILER_UNAME)%'
-            MAILER_UPASSWORD: '%(MAILER_UPASSWORD)%'
-            MAILER_PORT: '%(MAILER_PORT)%'    
-
-            VONAGE_API_KEY: '%(VONAGE_API_KEY)%'
-            VONAGE_API_SECRET: '%(VONAGE_API_SECRET)%'
-
-            EASYLOGIN_DOMAIN: '%EASYLOGIN_DOMAIN%'
-            EASYLOGIN_SERVICE_REGISTRATION_PARTNER: '%EASYLOGIN_SERVICE_REGISTRATION_PARTNER%'
-            $EASYLOGIN_SERVICE_IDENTITY: '%EASYLOGIN_SERVICE_IDENTITY%'
-            $EASYLOGIN_SERVICE_REGISTRATION: '%EASYLOGIN_SERVICE_REGISTRATION%'
-            EASYLOGIN_SERVICE_REGISTRATION_NEW: '%EASYLOGIN_SERVICE_REGISTRATION_NEW%'
-
-            CORPORATE_ID_KEY: '%CORPORATE_ID_KEY%'
-            CORPORATE_ID_SECRET: '%CORPORATE_ID_SECRET%'
-            SERVICE_API_KEY: '%SERVICE_API_KEY%'
-            SERVICE_API_SECRET: '%SERVICE_API_SECRET%'
-            DATA_HASH_SECRET: '%DATA_HASH_SECRET%'
-            DATABASE_HASH_SECRET: '%DATABASE_HASH_SECRET%'
-            DATABASE_IV_SECRET: '%DATABASE_IV_SECRET%'
-
-            EXTENSION_REGISTRATION_POOL_MESSAGE: '%EXTENSION_REGISTRATION_POOL_MESSAGE%'
-            EXTENSION_REGISTRATION_POOL_SECRET: '%EXTENSION_REGISTRATION_POOL_SECRET%'
-
-            FIREBASE_TYPE: '%FIREBASE_TYPE%'
-            FIREBASE_PROJECT_ID: '%FIREBASE_PROJECT_ID%'
-            FIREBASE_PRIVATE_ID_KEY: '%FIREBASE_PRIVATE_ID_KEY%'
-            FIREBASE_PRIVATE_KEY: '%FIREBASE_PRIVATE_KEY%'
-            FIREBASE_CLIENT_EMAIL: '%FIREBASE_CLIENT_EMAIL%'
-            FIREBASE_CLIENT_ID: '%FIREBASE_CLIENT_ID%'    
-            FIREBASE_AUTH_URI: '%FIREBASE_AUTH_URI%'
-            FIREBASE_TOKEN_URI: '%FIREBASE_TOKEN_URI%'
-            FIREBASE_AUTH_PROVIDER_X509_CERT_URL: '%FIREBASE_AUTH_PROVIDER_X509_CERT_URL%'
-            FIREBASE_CLIENT_X509_CERT_URL: '%FIREBASE_CLIENT_X509_CERT_URL%'
-            FIREBASE_UNIVERSE_DOMAIN: '%FIREBASE_UNIVERSE_DOMAIN%'   
-            FIREBASE_CACERT_PATH: '%FIREBASE_CACERT_PATH%' 
-            OPENSSL_CNF: '%OPENSSL_CNF%'  
-
     App\Service\Cache\ProcessStateCacheService:
         arguments:
             $cachePool: '@cache.app'
+
+    App\Logger\RequestIdProcessor:
+        tags: ['monolog.processor']
+
+    App\Logger\SensitiveDataProcessor:
+        tags: ['monolog.processor']
 
     App\:
         resource: '../src/'

@@ -5,7 +5,7 @@ namespace App\Service\Crypters;
 use Psr\Log\LoggerInterface;
 
 
-final class SodiumService
+class SodiumService
 {
     public function __construct(
         private LoggerInterface $logger

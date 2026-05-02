@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AccessRegistry\CredentialHubResolver;
 
+use App\Entity\AccessRegistry;
 
 final class CheckService
 {
-    public function userDomainCombinationExists(array $user, $decryptedUserPages, $key)
+    public function userDomainCombinationExists(array $user, array $decryptedUserPages, string $key): array
     {
         $newCombination = true;
-
         $existingPages = [];
 
         foreach ($decryptedUserPages as $registratedPage) {
@@ -31,7 +33,7 @@ final class CheckService
         ];
     }
 
-    public function getUserDomainCombination(array $user, $decryptedUserPages)
+    public function getUserDomainCombination(array $user, array $decryptedUserPages): ?AccessRegistry
     {
         $decryptedPage = null;
 

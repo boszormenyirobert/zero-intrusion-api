@@ -1,27 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Crypters;
 
 use App\Entity\AuthBridge;
-use App\Entity\identity;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
+use App\Entity\Identity;
+use JsonException;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
-final class CrypterDatabaseLoginService
+class CrypterDatabaseLoginService
 {
+    private const CIPHER = 'aes-256-cbc';
+    private const IV_LENGTH = 16;
+
     private string $key;
-    private string $cipher = 'aes-256-cbc';
 
     public function __construct(
-        private ContainerBagInterface $params,
-        private LoggerInterface $logger
+        private readonly ContainerBagInterface $params,
+        private readonly LoggerInterface $logger
     ) {}
 
     public function encryptDataFromArray(array $user): AuthBridge
     {
-
-        $iv = openssl_random_pseudo_bytes(16);
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        $iv = openssl_random_pseudo_bytes(self::IV_LENGTH);
+        $this->initializeDatabaseKey();
 
         $login = new AuthBridge();
         $login->setDomainProcessId($user['domainProcessId']);
@@ -30,7 +34,7 @@ final class CrypterDatabaseLoginService
         $credential['userName'] = $user['userCredential']->userName;
         $credential['userPassword'] = $user['userCredential']->userPassword;
 
-        $jsonCredential = \json_encode($credential);
+        $jsonCredential = json_encode($credential, JSON_THROW_ON_ERROR);
         $internaleEncryptedCredential = $this->encryptData($jsonCredential, $iv);
         $login->setUserCredential($internaleEncryptedCredential);
 
@@ -40,47 +44,65 @@ final class CrypterDatabaseLoginService
 
     public function encryptData(string $value, string $iv): string
     {
-        $encrypted = openssl_encrypt($value, $this->cipher, $this->key, 0, $iv);
+        $encrypted = openssl_encrypt($value, self::CIPHER, $this->key, 0, $iv);
         if ($encrypted === false) {
             throw new \RuntimeException('Encryption failed: ' . openssl_error_string());
         }
+
         return base64_encode($encrypted);
     }
 
-    public function decryptFromDatabase(AuthBridge $value, string $type = "applications"): AuthBridge|bool
+    public function decryptFromDatabase(AuthBridge $value, string $type = 'applications'): AuthBridge|bool
     {
-        return match($type) {
-            'domain' => $this->decryptDomain($value),
-            'applications' => $this->decryptApplications($value),
-            default => false,
+        if (!in_array($type, ['domain', 'applications'], true)) {
+            return false;
+        }
+
+        try {
+            return $this->decryptFromDatabaseOrFail($value, $type);
+        } catch (\UnexpectedValueException) {
+            return false;
+        }
+    }
+
+    public function decryptFromDatabaseOrFail(AuthBridge $value, string $type = 'applications'): AuthBridge
+    {
+        return match ($type) {
+            'domain' => $this->decryptDomainOrFail($value),
+            'applications' => $this->decryptApplicationsOrFail($value),
+            default => throw new \InvalidArgumentException(sprintf('Unsupported decrypt type: %s', $type)),
         };
     }
 
-    private function decryptDomain(AuthBridge $value): AuthBridge|bool
+    private function decryptDomainOrFail(AuthBridge $value): AuthBridge
     {
-        $iv = base64_decode($value->getIv());
-        if (strlen($iv) !== 16) throw new \InvalidArgumentException('Invalid IV length');
+        $iv = $this->decodeIv((string) $value->getIv(), 'Invalid IV length');
         $credential = $value->getUserCredential();
-        if (!$credential) return false;
+        if (!$credential) {
+            throw new \UnexpectedValueException('Missing domain credential payload.');
+        }
+
         $decrypted = new AuthBridge();
 
         $decrypted->setUserCredential($this->decryptData($credential, $iv));
         $description = $value->getDescription();
 
-        if($description){     
+        if ($description) {
             $decrypted->setDescription($this->decryptData($description, $iv));
         }
         $decrypted->setPublicId($value->getPublicId());
+
         return $decrypted;
     }
 
-    private function decryptApplications(AuthBridge $value): AuthBridge|bool
+    private function decryptApplicationsOrFail(AuthBridge $value): AuthBridge
     {
-        $iv = base64_decode($value->getIv());
-        if (strlen($iv) !== 16) throw new \InvalidArgumentException('Invalid IV length');
+        $iv = $this->decodeIv((string) $value->getIv(), 'Invalid IV length');
 
         $applications = $value->getApplications();
-        if (!$applications) return false;
+        if (!$applications) {
+            throw new \UnexpectedValueException('Missing applications payload.');
+        }
 
         $decrypted = new AuthBridge();
         $decrypted->setApplications($this->decryptData($applications, $iv));
@@ -91,37 +113,39 @@ final class CrypterDatabaseLoginService
     // Decrypt User Identity from database
     public function decryptFromDatabaseidentity(Identity $value): Identity
     {
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $iv = base64_decode($value->getIv());
+        $this->initializeDatabaseKey();
+        $iv = $this->decodeIv((string) $value->getIv(), 'Invalid IV length, expected 16 bytes');
 
-        if (strlen($iv) !== 16) {
-            throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
-        }
+        try {
+            $decrypted = new Identity();
+            $decrypted->setPrivateId($this->decryptData((string) $value->getPrivateId(), $iv));
+            $decrypted->setSecret($this->decryptData((string) $value->getSecret(), $iv));
+            $decrypted->setPublicId((string) $value->getPublicId());
+            $decrypted->setIv((string) $value->getIv());
+            $decrypted->setEmail($this->decryptData((string) $value->getEmail(), $iv));
+            $decrypted->setCredentialSecret($this->decryptData((string) $value->getCredentialSecret(), $iv));
 
-        try{
-        $decrypted = new identity();
-        $decrypted->setPrivateId($this->decryptData($value->getPrivateId(), $iv));
-        $decrypted->setSecret($this->decryptData($value->getSecret(), $iv)); // userIntegritySecret => Secret will be deleted after NFC-card activation
-        $decrypted->setPublicId($value->getPublicId());
-        $decrypted->setIv($value->getIv());
-        $decrypted->setEmail($this->decryptData($value->getEmail(), $iv));
-        $decrypted->setCredentialSecret($this->decryptData($value->getCredentialSecret(), $iv));
-
-        return $decrypted;
-        }catch(\Exception $e){
+            return $decrypted;
+        } catch (\Exception $e) {
             $this->logger->critical('Decryption error in CrypterDatabaseLoginService: ' . $e->getMessage());
+
             throw new \RuntimeException('Decryption error in CrypterDatabaseLoginService: ' . $e->getMessage());
         }
     }
 
     private function decryptData(string $value, string $iv): string
     {
-        if(!$value){
+        if ($value === '') {
             return '';
         }
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $decoded = base64_decode($value);
-        $decrypted = openssl_decrypt($decoded, $this->cipher, $this->key, 0, $iv);
+
+        $this->initializeDatabaseKey();
+        $decoded = base64_decode($value, true);
+        if (!is_string($decoded)) {
+            throw new \RuntimeException('Decryption failed: invalid base64 payload');
+        }
+
+        $decrypted = openssl_decrypt($decoded, self::CIPHER, $this->key, 0, $iv);
         if ($decrypted === false) {
             throw new \RuntimeException('Decryption failed: ' . openssl_error_string());
         }
@@ -129,19 +153,19 @@ final class CrypterDatabaseLoginService
         return $decrypted;
     }
 
-    public function encyptExtensionIdentityDataObject(array $secretData, $type = "domainProcessId"): AuthBridge
+    public function encyptExtensionIdentityDataObject(array $secretData, string $type = 'domainProcessId'): AuthBridge
     {
-        $iv = openssl_random_pseudo_bytes(16);
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        $iv = openssl_random_pseudo_bytes(self::IV_LENGTH);
+        $this->initializeDatabaseKey();
 
         $encryptedSecret = new AuthBridge();
         if ($type === 'domainProcessId') {
             $encryptedSecret->setDomainProcessId($secretData['domainProcessId']); //Read
-        } else if ($type === 'applicationProcessId') {
+        } elseif ($type === 'applicationProcessId') {
             $encryptedSecret->setApplicationProcessId($secretData['applicationProcessId']); //Read
-        } else if ($type === 'registrationProcessId') {
+        } elseif ($type === 'registrationProcessId') {
             $encryptedSecret->setRegistrationProcessId($secretData['registrationProcessId']); //Write -domain and vault
-        } else if ($type === 'removeProcessId') {
+        } elseif ($type === 'removeProcessId') {
         //    $encryptedSecret->setRemoveProcessId($secretData['removeProcessId']); //Delete -domain 
         }
         $encryptedSecret->setIv(base64_encode($iv));
@@ -162,17 +186,34 @@ final class CrypterDatabaseLoginService
 
     public function decryptFromDatabaseToHmac(AuthBridge $value): AuthBridge
     {
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $iv = base64_decode($value->getIv());
+        $this->initializeDatabaseKey();
+        $iv = base64_decode((string) $value->getIv(), true);
 
-        if (strlen($iv) !== 16) {
+        if (!is_string($iv) || strlen($iv) !== self::IV_LENGTH) {
             $this->logger->critical(base64_encode($iv) . ' : ' . strlen($iv));
+
             throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
         }
 
         $decrypted = new AuthBridge();
-        $decrypted->setSecret($this->decryptData($value->getSecret(), $iv));
+        $decrypted->setSecret($this->decryptData((string) $value->getSecret(), $iv));
 
         return $decrypted;
+    }
+
+    private function initializeDatabaseKey(): void
+    {
+        $this->key = (string) $this->params->get('DATABASE_HASH_SECRET');
+    }
+
+    private function decodeIv(string $iv, string $exceptionMessage): string
+    {
+        $decodedIv = base64_decode($iv, true);
+
+        if (!is_string($decodedIv) || strlen($decodedIv) !== self::IV_LENGTH) {
+            throw new \InvalidArgumentException($exceptionMessage);
+        }
+
+        return $decodedIv;
     }
 }

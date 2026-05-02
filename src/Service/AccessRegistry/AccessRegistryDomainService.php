@@ -1,23 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AccessRegistry;
 
-use Psr\Log\LoggerInterface;
+use App\Entity\AccessRegistry;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\AccessRegistry\CredentialHubResolver\ResolverService;
 use App\Service\Cache\ProcessStateCacheService;
+use JsonException;
+use Psr\Log\LoggerInterface;
 
 final class AccessRegistryDomainService
 {
-
     public function __construct(
-        private LoggerInterface $logger,
-        private AuthBridgeService $authBridgeService,
-        private ResolverService $resolverService,
-        private ProcessStateCacheService $processStateCacheService
+        private readonly LoggerInterface $logger,
+        private readonly AuthBridgeService $authBridgeService,
+        private readonly ResolverService $resolverService,
+        private readonly ProcessStateCacheService $processStateCacheService
     ) {}
 
-    public function isAllowedUserDomainApplicationCombination($user, $type): array
+    public function isAllowedUserDomainApplicationCombination(array $user, string $type): array
     {
         $encryptedUserPages = $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
         $decryptedUserPages = [];
@@ -37,12 +40,11 @@ final class AccessRegistryDomainService
         return $result;
     }
 
-    public function createDomain($userData, $type)
+    public function createDomain(array $userData, string $type): array
     {
-        $processKey = 'registrationProcessId';
         $processId = $userData['registrationProcessId'];
         
-        //$this->authBridgeService->updateProcessState($processKey, $processId);
+        //$this->authBridgeService->updateProcessState('registrationProcessId', $processId);
         $encryptedUserData = $this->resolverService->getWrite()->createAccessRegistryDomain($userData, $type);
 
         $userData['encryptedAuthId'] = $encryptedUserData->getUserCredential();
@@ -57,7 +59,7 @@ final class AccessRegistryDomainService
         return $userData;
     }    
 
-    public function deleteDomainRegistraions($user, $type = 'domain')
+    public function deleteDomainRegistraions(array $user, string $type = 'domain')
     {
         $encryptedUserPages =  $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
         $collection = [];
@@ -72,7 +74,7 @@ final class AccessRegistryDomainService
     }
 
     /** use case not found */
-    public function getDecryptedUser($user, $type)
+    public function getDecryptedUser(array $user, string $type): ?AccessRegistry
     {
         $decryptedUserPages = [];
         $decryptedPage = null;
@@ -90,13 +92,23 @@ final class AccessRegistryDomainService
         return $decryptedPage;
     }
 
-    private function writeLoginEntryInRedis(string $processId, array $status) {       
+    private function writeLoginEntryInRedis(string $processId, array $status): void
+    {
         $this->processStateCacheService->set(
             $processId,
-            json_encode($status, JSON_UNESCAPED_UNICODE),
+            $this->encodeJson($status, JSON_UNESCAPED_UNICODE),
             300
         );
 
         $this->logger->info(sprintf('Process state cached for processId: %s', $processId));
-    }    
+    }
+
+    private function encodeJson(array $payload, int $flags = 0): string
+    {
+        try {
+            return json_encode($payload, JSON_THROW_ON_ERROR | $flags);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON encoding failed.', 0, $exception);
+        }
+    }
 }

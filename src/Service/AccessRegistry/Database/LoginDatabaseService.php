@@ -1,25 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AccessRegistry\Database;
 
-use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\AuthBridge;
 use App\Repository\AuthBridgeRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-
 
 class LoginDatabaseService
 {
-
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private LoggerInterface $logger,
-        private AuthBridgeRepository $authBridgeRepository
-    ) {
-        $this->entityManager = $entityManager;
-    }
+        private readonly EntityManagerInterface $entityManager,
+        private readonly LoggerInterface $logger,
+        private readonly AuthBridgeRepository $authBridgeRepository
+    ) {}
 
-    public function addUserLogin(AuthBridge $data):AuthBridge
+    public function addUserLogin(AuthBridge $data): AuthBridge
     {
         try {
             $this->entityManager->persist($data);
@@ -34,13 +32,13 @@ class LoginDatabaseService
         }
     }
 
-    public function removeUserLogin($encryptedUser)
+    public function removeUserLogin(AuthBridge $encryptedUser): void
     {
         $this->entityManager->remove($encryptedUser);
         $this->entityManager->flush();
     }
 
-    public function removeUserLogins(array $encryptedUsers)
+    public function removeUserLogins(array $encryptedUsers): void
     {
         foreach ($encryptedUsers as $user) {
             $this->entityManager->remove($user);

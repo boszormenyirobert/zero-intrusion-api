@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AccessRegistry\CredentialHubResolver;
 
 use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
@@ -7,29 +9,29 @@ use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
 final class DecryptService
 {
     public function __construct(
-        private CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,
+        private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,
     ) {}
 
-    public function getUserDecryptedPages($userPages, $key)
+    public function getUserDecryptedPages(array $userPages, string $key): array
     {
         $decrypted = [];
+
         foreach ($userPages as $user) {
-            array_push($decrypted, $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($user, $key));
+            $decrypted[] = $this->crypterDatabaseAccessRegistryService->decryptFromDatabaseOrFail($user, $key);
         }
 
         return $decrypted;
     }
 
-    public function getUserEncryptedDecryptedPageCollection($userPages)
+    public function getUserEncryptedDecryptedPageCollection(array $userPages): array
     {
         $collecion = [];
 
         foreach ($userPages as $user) {
-            $page = [
+            $collecion[] = [
                 'encrypted' => $user,
-                'decrypted' => $this->crypterDatabaseAccessRegistryService->decryptFromDatabase($user)
+                'decrypted' => $this->crypterDatabaseAccessRegistryService->decryptFromDatabaseOrFail($user)
             ];
-            array_push($collecion, $page);
         }
 
         return $collecion;

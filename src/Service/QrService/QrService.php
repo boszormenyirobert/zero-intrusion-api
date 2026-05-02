@@ -6,7 +6,7 @@ use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use App\DTO\QR\QrInterface;
 
-final class QrService
+class QrService
 {
     /**
      * Generate a base64-encoded PNG QR code from input data.

@@ -1,52 +1,56 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AuthBridge\AuthBridgeHandler\Application;
 
+use App\Entity\AuthBridge;
 use App\Repository\AuthBridgeRepository;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
-use App\Service\AuthBridge\AuthBridgeHandler\Application\Encryptor;
-use Psr\Log\LoggerInterface;
 use App\Service\Cache\ProcessStateCacheService;
-use App\Entity\AuthBridge;
+use JsonException;
+use Psr\Log\LoggerInterface;
 
 class Credential
 {
     public function __construct(
-        private AuthBridgeRepository $authBridgeRepository,
-        private LoginDatabaseService $loginDatabaseService,
-        private LoggerInterface $logger,
-        private Encryptor $encryptor,
-        private ProcessStateCacheService $processStateCacheService
+        private readonly AuthBridgeRepository $authBridgeRepository,
+        private readonly LoginDatabaseService $loginDatabaseService,
+        private readonly LoggerInterface $logger,
+        private readonly Encryptor $encryptor,
+        private readonly ProcessStateCacheService $processStateCacheService
     ) {}
 
     public function setDecryptedValuesForApplication(array $user): bool
     {
-        $apps = $user['credentials'];
-        $decryptedCredentials = $this->getDecryptedCredentials($apps);
-        $state = false;
-        
         $authBridge = $this->authBridgeRepository->findOneBy([
             'applicationProcessId' => $user['applicationProcessId']
         ]);
 
-        if($authBridge){
-            $encrypted = $this->encryptor->encrypt($decryptedCredentials, base64_decode($authBridge->getIv()));
-            $authBridge->setApplications($encrypted);
-            $authBridge->setProcessState(true);
-
-           //$this->loginDatabaseService->addUserLogin($process);
-
-            $this->writeLoginEntryInRedis($user['applicationProcessId'], $authBridge);
-            $state = true;
+        if (!$authBridge instanceof AuthBridge) {
+            return false;
         }
 
-        return $state;
+        $encrypted = $this->encryptor->encrypt(
+            $this->getDecryptedCredentials($user['credentials']),
+            base64_decode((string) $authBridge->getIv())
+        );
+
+        $authBridge->setApplications($encrypted);
+        $authBridge->setProcessState(true);
+
+        //$this->loginDatabaseService->addUserLogin($process);
+
+        $this->writeLoginEntryInRedis($user['applicationProcessId'], $authBridge);
+
+        return true;
     }
     
-    private function writeLoginEntryInRedis(string $processId, $authBridge) {       
+    private function writeLoginEntryInRedis(string $processId, AuthBridge $authBridge): void
+    {
         $this->processStateCacheService->set(
             $processId,
-            json_encode($authBridge->toCacheArray(), JSON_UNESCAPED_UNICODE),
+            $this->encodeJson($authBridge->toCacheArray(), JSON_UNESCAPED_UNICODE),
             300
         );
     }
@@ -56,7 +60,7 @@ class Credential
      * @param object $process
      * @return array
      */
-    public function processToArray($process): array
+    public function processToArray(mixed $process): array
     {
         if (is_null($process)) {
             return [];
@@ -81,6 +85,15 @@ class Credential
             ];
         }
         return $decryptedCredentials;
+    }
+
+    private function encodeJson(array $payload, int $flags = 0): string
+    {
+        try {
+            return json_encode($payload, JSON_THROW_ON_ERROR | $flags);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON encoding failed.', 0, $exception);
+        }
     }
 }
 

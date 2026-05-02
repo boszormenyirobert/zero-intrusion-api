@@ -1,0 +1,257 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\EventListener;
+
+use App\Attribute\MobileHmac;
+use App\Entity\AuthBridge;
+use App\EventListener\HmacMobileValidationListener;
+use App\Http\ApiErrorResponseFactory;
+use App\Repository\AuthBridgeRepository;
+use App\Service\Crypters\CrypterService;
+use App\Service\Hmac\ListenerHmacPolicy;
+use App\Service\Hmac\ListenerPayloadResolver;
+use App\Service\Payload\JsonPayloadDecoder;
+use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\TestCase;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Psr\Log\LoggerInterface;
+
+final class HmacMobileValidationListenerTest extends TestCase
+{
+    public function testOnKernelControllerSetsErrorResponseForInvalidJsonBody(): void
+    {
+        $params = $this->createParameterBag();
+        $repository = $this->createMock(AuthBridgeRepository::class);
+        $repository->expects(self::never())->method('findOneBy');
+
+        $listener = new HmacMobileValidationListener(
+            new CrypterService($params),
+            $this->createMock(LoggerInterface::class),
+            $repository,
+            $this->createMock(EntityManagerInterface::class),
+            $params,
+            new ApiErrorResponseFactory(),
+            new JsonPayloadDecoder(),
+            new ListenerHmacPolicy($params, $this->createMock(LoggerInterface::class)),
+            new ListenerPayloadResolver(new JsonPayloadDecoder(), new CrypterService($params)),
+        );
+
+        $controller = new class {
+            #[MobileHmac]
+            public function handle(): JsonResponse
+            {
+                return new JsonResponse(['success' => true]);
+            }
+        };
+
+        $event = $this->createEvent($controller, '{invalid', 'domain_read_credential');
+
+        $listener->onKernelController($event);
+
+        $resolvedController = $event->getController();
+        self::assertIsCallable($resolvedController);
+
+        $response = $resolvedController();
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(400, $response->getStatusCode());
+        self::assertSame(['success' => false, 'error' => 'Invalid JSON body'], json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR));
+    }
+
+    public function testOnKernelControllerSetsErrorResponseWhenPayloadKeyIsMissing(): void
+    {
+        $params = $this->createParameterBag();
+        $repository = $this->createMock(AuthBridgeRepository::class);
+        $repository->expects(self::never())->method('findOneBy');
+
+        $listener = new HmacMobileValidationListener(
+            new CrypterService($params),
+            $this->createMock(LoggerInterface::class),
+            $repository,
+            $this->createMock(EntityManagerInterface::class),
+            $params,
+            new ApiErrorResponseFactory(),
+            new JsonPayloadDecoder(),
+            new ListenerHmacPolicy($params, $this->createMock(LoggerInterface::class)),
+            new ListenerPayloadResolver(new JsonPayloadDecoder(), new CrypterService($params)),
+        );
+
+        $encryptedPayload = $this->encryptPayload($params, ['other_route' => ['domainProcessId' => 'process-123']]);
+        $requestBody = json_encode([
+            'zeroIntrusionProyApi' => $encryptedPayload,
+            'iv' => 'ignored-for-listener',
+        ], JSON_THROW_ON_ERROR);
+
+        $controller = new class {
+            #[MobileHmac]
+            public function handle(): JsonResponse
+            {
+                return new JsonResponse(['success' => true]);
+            }
+        };
+
+        $event = $this->createEvent($controller, $requestBody, 'domain_read_credential');
+
+        $listener->onKernelController($event);
+
+        $resolvedController = $event->getController();
+        self::assertIsCallable($resolvedController);
+
+        $response = $resolvedController();
+        self::assertInstanceOf(JsonResponse::class, $response);
+        self::assertSame(400, $response->getStatusCode());
+        self::assertSame(['success' => false, 'error' => 'payloadKey missing or null'], json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR));
+    }
+
+    public function testOnKernelControllerLeavesAnnotatedControllerUntouchedForValidRequest(): void
+    {
+        $params = $this->createParameterBag();
+        $process = (new AuthBridge())
+            ->setDomainProcessId('process-123')
+            ->setCreatedAt(new \DateTimeImmutable());
+
+        $repository = $this->createMock(AuthBridgeRepository::class);
+        $repository
+            ->expects(self::once())
+            ->method('findOneBy')
+            ->with(['domainProcessId' => 'process-123'])
+            ->willReturn($process);
+
+        $listener = new HmacMobileValidationListener(
+            new CrypterService($params),
+            $this->createMock(LoggerInterface::class),
+            $repository,
+            $this->createMock(EntityManagerInterface::class),
+            $params,
+            new ApiErrorResponseFactory(),
+            new JsonPayloadDecoder(),
+            new ListenerHmacPolicy($params, $this->createMock(LoggerInterface::class)),
+            new ListenerPayloadResolver(new JsonPayloadDecoder(), new CrypterService($params)),
+        );
+
+        $encryptedPayload = $this->encryptPayload($params, ['domain_read_credential' => ['domainProcessId' => 'process-123']]);
+        $requestBody = json_encode([
+            'zeroIntrusionProyApi' => $encryptedPayload,
+            'iv' => 'ignored-for-listener',
+        ], JSON_THROW_ON_ERROR);
+
+        $authHeader = 'HMAC ' . hash_hmac('sha256', 'mobile-message|' . $process->getCreatedAt()?->getTimestamp(), 'mobile-secret');
+
+        $controller = new class {
+            #[MobileHmac]
+            public function handle(): JsonResponse
+            {
+                return new JsonResponse(['success' => true]);
+            }
+        };
+
+        $originalController = [$controller, 'handle'];
+        $event = $this->createEvent($controller, $requestBody, 'domain_read_credential', ['HTTP_X_EXTENSION_AUTH' => $authHeader]);
+
+        $listener->onKernelController($event);
+
+        self::assertSame($originalController, $event->getController());
+    }
+
+    private function createEvent(object $controller, string $content, string $route, array $server = []): ControllerEvent
+    {
+        $request = Request::create('/mobile', 'POST', [], [], [], $server, $content);
+        $request->attributes->set('_route', $route);
+
+        return new ControllerEvent(
+            $this->createMock(HttpKernelInterface::class),
+            [$controller, 'handle'],
+            $request,
+            HttpKernelInterface::MAIN_REQUEST,
+        );
+    }
+
+    private function encryptPayload(ContainerBagInterface $params, array $payload): string
+    {
+        $crypter = new CrypterService($params);
+        $crypter->setData($payload);
+
+        return $crypter->encryptData();
+    }
+
+    private function createParameterBag(): ContainerBagInterface&ParameterBagInterface
+    {
+        return new class () implements ContainerBagInterface, ParameterBagInterface {
+            public function all(): array
+            {
+                return [
+                    'DATA_HASH_SECRET' => '12345678901234567890123456789012',
+                    'EXTENSION_REGISTRATION_POOL_SECRET' => 'mobile-secret',
+                    'EXTENSION_REGISTRATION_POOL_MESSAGE' => 'mobile-message',
+                ];
+            }
+
+            public function resolve(): void
+            {
+            }
+
+            public function resolveValue(mixed $value): mixed
+            {
+                return $value;
+            }
+
+            public function escapeValue(mixed $value): mixed
+            {
+                return $value;
+            }
+
+            public function unescapeValue(mixed $value): mixed
+            {
+                return $value;
+            }
+
+            public function add(array $parameters): void
+            {
+            }
+
+            public function get(string $name): array|bool|string|int|float|\UnitEnum|null
+            {
+                return match ($name) {
+                    'DATA_HASH_SECRET' => '12345678901234567890123456789012',
+                    'EXTENSION_REGISTRATION_POOL_SECRET' => 'mobile-secret',
+                    'EXTENSION_REGISTRATION_POOL_MESSAGE' => 'mobile-message',
+                    default => null,
+                };
+            }
+
+            public function set(string $name, array|bool|string|int|float|\UnitEnum|null $value): void
+            {
+            }
+
+            public function has(string $name): bool
+            {
+                return in_array($name, ['DATA_HASH_SECRET', 'EXTENSION_REGISTRATION_POOL_SECRET', 'EXTENSION_REGISTRATION_POOL_MESSAGE'], true);
+            }
+
+            public function getIterator(): \Traversable
+            {
+                return new \ArrayIterator($this->all());
+            }
+
+            public function count(): int
+            {
+                return count($this->all());
+            }
+
+            public function remove(string $name): void
+            {
+            }
+
+            public function clear(): void
+            {
+            }
+
+        };
+    }
+}

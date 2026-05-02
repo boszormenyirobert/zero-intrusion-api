@@ -1,21 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Identity\Database;
 
 use App\Entity\Identity;
 use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
-final class CrypterDatabaseIdentityService
+class CrypterDatabaseIdentityService
 {
-    private string $key;
-    private string $cipher = 'aes-256-cbc';
+    private const CIPHER = 'aes-256-cbc';
+    private const IV_LENGTH = 16;
 
-    public function __construct(private ContainerBagInterface $params) {}
+    private string $key;
+
+    public function __construct(private readonly ContainerBagInterface $params) {}
 
     public function encyptDataObject(array $secretData): Identity
     {
-        $iv = openssl_random_pseudo_bytes(16);
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        return $this->encryptDataObjectOrFail($secretData);
+    }
+
+    public function encryptDataObjectOrFail(array $secretData): Identity
+    {
+        $iv = openssl_random_pseudo_bytes(self::IV_LENGTH);
+        $this->initializeKey();
 
         $encryptedSecret = new Identity();
         $encryptedSecret->setPublicId($secretData['publicId']);
@@ -50,7 +59,7 @@ final class CrypterDatabaseIdentityService
 
     public function encryptData(string $value, string $iv): string
     {
-        $encrypted = openssl_encrypt($value, $this->cipher, $this->key, 0, $iv);
+        $encrypted = openssl_encrypt($value, self::CIPHER, $this->key, 0, $iv);
         if ($encrypted === false) {
             throw new \RuntimeException('Encryption failed: ' . openssl_error_string());
         }
@@ -59,12 +68,8 @@ final class CrypterDatabaseIdentityService
 
     public function decryptFromDatabase(Identity $value): Identity
     {
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $iv = base64_decode($value->getIv());
-
-        if (strlen($iv) !== 16) {
-            throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
-        }
+        $this->initializeKey();
+        $iv = $this->decodeIv((string) $value->getIv());
 
         $decrypted = new Identity();
         $decrypted->setPublicId($value->getPublicId());
@@ -76,10 +81,14 @@ final class CrypterDatabaseIdentityService
 
     public function decryptData(string $value, string $iv): string
     {
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        $this->initializeKey();
         
-        $decoded = base64_decode($value);
-        $decrypted = openssl_decrypt($decoded, $this->cipher, $this->key, 0, $iv);
+        $decoded = base64_decode($value, true);
+        if (!is_string($decoded)) {
+            throw new \RuntimeException('Decryption failed: invalid base64 payload');
+        }
+
+        $decrypted = openssl_decrypt($decoded, self::CIPHER, $this->key, 0, $iv);
 
         if ($decrypted === false) {
             throw new \RuntimeException('Decryption failed: ' . openssl_error_string());
@@ -90,8 +99,8 @@ final class CrypterDatabaseIdentityService
 
     public function encyptUpdateIdentity(Identity $decryptedDatabaseIdentity, array $secretData): Identity
     {
-        $iv = base64_decode($decryptedDatabaseIdentity->getIv());
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        $iv = $this->decodeIv((string) $decryptedDatabaseIdentity->getIv());
+        $this->initializeKey();
 
         $decryptedDatabaseIdentity->setPrivacyPolicy($secretData['privacyPolicy']);
         $fields = [
@@ -110,12 +119,8 @@ final class CrypterDatabaseIdentityService
 
     public function decryptFromDatabaseDevice(Identity $value): Identity
     {
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $iv = base64_decode($value->getIv());
-
-        if (strlen($iv) !== 16) {
-            throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
-        }
+        $this->initializeKey();
+        $iv = $this->decodeIv((string) $value->getIv());
 
         $decrypted = new Identity();
         $decrypted->setPublicId($value->getPublicId());
@@ -125,5 +130,21 @@ final class CrypterDatabaseIdentityService
         $decrypted->setEmail($this->decryptData($value->getEmail(), $iv));
 
         return $decrypted;
+    }
+
+    private function initializeKey(): void
+    {
+        $this->key = (string) $this->params->get('DATABASE_HASH_SECRET');
+    }
+
+    private function decodeIv(string $iv): string
+    {
+        $decodedIv = base64_decode($iv, true);
+
+        if (!is_string($decodedIv) || strlen($decodedIv) !== self::IV_LENGTH) {
+            throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
+        }
+
+        return $decodedIv;
     }
 }

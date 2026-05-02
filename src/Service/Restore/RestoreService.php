@@ -20,7 +20,7 @@ use App\Exception\EntityNotFoundException;
  * It includes methods for sending recovery notifications, sending emails and SMS,
  * and saving identifiers to the database.
  */
-final class RestoreService
+class RestoreService
 {
 
     private $vonageClient = null;

@@ -1,0 +1,14 @@
+test_exception_runtime:
+    path: /_test/exception/runtime
+    controller: App\Controller\Test\ExceptionTestController::runtime
+    methods: [GET]
+
+test_exception_not_found:
+    path: /_test/exception/not-found
+    controller: App\Controller\Test\ExceptionTestController::notFound
+    methods: [GET]
+
+test_exception_entity_not_found:
+    path: /_test/exception/entity-not-found
+    controller: App\Controller\Test\ExceptionTestController::entityNotFound
+    methods: [GET]

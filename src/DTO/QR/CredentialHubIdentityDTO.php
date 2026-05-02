@@ -163,61 +163,42 @@ class CredentialHubIdentityDTO
         return $this;
     }
 
+    public function toProcessArray(string $processKey): array
+    {
+        return match ($processKey) {
+            'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
+            'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
+            'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
+            'applicationProcessId' => $this->buildProcessArray('applicationProcessId', $this->applicationProcessId),
+            'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
+            default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
+        };
+    }
+
     public function toRegistrationProcessArray(): array
     {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'registrationProcessId' => $this->registrationProcessId,
-            'qrCode' => $this->qrCode
-        ];
+        return $this->toProcessArray('registrationProcessId');
     }  
     public function toDomainProcessArray(): array
     {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'domainProcessId' => $this->domainProcessId,
-            'qrCode' => $this->qrCode
-        ];
+        return $this->toProcessArray('domainProcessId');
     } 
     public function toRemoveProcessArray(): array
     {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'removeProcessId' => $this->removeProcessId,
-            'qrCode' => $this->qrCode
-        ];
+        return $this->toProcessArray('removeProcessId');
     }      
     
     public function toApplicationProcessArray(): array
     {
-        return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
-            'iv' => $this->iv,
-            'applicationProcessId' => $this->applicationProcessId,
-            'qrCode' => $this->qrCode
-        ];
+        return $this->toProcessArray('applicationProcessId');
     } 
     
     public function toOneTouchProcessArray(): array
+    {
+        return $this->toProcessArray('oneTouchProcessId');
+    }
+
+    private function buildProcessArray(string $processKey, ?string $processId): array
     {
         return [
             'validCommunication' => $this->validCommunication,
@@ -226,10 +207,10 @@ class CredentialHubIdentityDTO
             'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
             'secret' => $this->secret,
             'iv' => $this->iv,
-            'oneTouchProcessId' => $this->oneTouchProcessId,
+            $processKey => $processId,
             'qrCode' => $this->qrCode
         ];
-    }      
+    }
 
     /**
      * Get the value of qrCode

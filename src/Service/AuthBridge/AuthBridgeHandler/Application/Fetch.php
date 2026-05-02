@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AuthBridge\AuthBridgeHandler\Application;
 
-use App\Repository\AuthBridgeRepository;
-use Psr\Log\LoggerInterface;
-use App\Service\Crypters\CrypterDatabaseLoginService;
-use Exception;
-use Symfony\Component\Serializer\SerializerInterface;
-use App\Service\AccessRegistry\CredentialHubHandler\RegistryState;
-use App\Entity\AuthBridge;
-use App\Service\Cache\ProcessStateCacheService;
+use App\DTO\AuthBridge\Application\FetchFromAccessTableResultDTO;
 use App\DTO\CredentialHub\ResponseDTO;
+use App\Entity\AuthBridge;
+use App\Repository\AuthBridgeRepository;
+use App\Service\AccessRegistry\CredentialHubHandler\RegistryState;
+use App\Service\Cache\ProcessStateCacheService;
+use App\Service\Crypters\CrypterDatabaseLoginService;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class Fetch
 {
@@ -21,29 +23,34 @@ class Fetch
         private SerializerInterface $serializerInterface,
         private RegistryState $registryState,
         private ProcessStateCacheService $processStateCacheService
-    ) {}
+    ) {
+    }
 
-    public function fetchForOneTouch($oneTouchProcessId, $processType): AuthBridge|false
-    {        
-        // $user = $this->authBridgeRepository->findOneBy([$processType => $oneTouchProcessId]);
+    public function fetchForOneTouch(string $oneTouchProcessId, string $processType): AuthBridge|false
+    {
         $cachedValue = $this->processStateCacheService->get($oneTouchProcessId);
-        if(!$cachedValue){
+
+        if (!is_string($cachedValue) || $cachedValue === '') {
             return false;
         }
 
-        $authBridge = new AuthBridge();
-        return $authBridge->fromCacheArray(json_decode($cachedValue, true));
-    }   
+        $cachedPayload = $this->decodeCachePayload($cachedValue);
 
-    public function fetchFromAccessTable($applicationProcessId, $processType): array
+        return is_array($cachedPayload) ? AuthBridge::fromCacheArray($cachedPayload) : false;
+    }
+
+    public function fetchFromAccessTable(string $applicationProcessId, string $processType): array
     {
-        $process = $processType === 'application' ? 'applicationProcessId' : 'domainProcessId';
-    //    $encryptedUserFromDatabase = $this->authBridgeRepository->findOneBy([$process => $applicationProcessId]);
+        return $this->fetchFromAccessTableOrFail($applicationProcessId, $processType)->toArray();
+    }
+
+    public function fetchFromAccessTableOrFail(string $applicationProcessId, string $processType): FetchFromAccessTableResultDTO
+    {
         $cachedValue = $this->processStateCacheService->get($applicationProcessId);
         $encryptedUser = null;
 
         if (is_string($cachedValue) && $cachedValue !== '') {
-            $cachedPayload = json_decode($cachedValue, true);
+            $cachedPayload = $this->decodeCachePayload($cachedValue);
 
             if (is_array($cachedPayload)) {
                 $encryptedUser = AuthBridge::fromCacheArray($cachedPayload);
@@ -56,32 +63,34 @@ class Fetch
                 'processType' => $processType,
             ]);
             $process = new ResponseDTO(false, false, false);
-            return [
-                'process' => $process->toDomainStateArray(),
-                'response' => false,
-            ];
+            return new FetchFromAccessTableResultDTO($process->toDomainStateArray(), false);
         }
- 
+
         // TODO => Rename column "applications" to "credentials" => This store the list of credentials by domain or a user application credentials
         $decrypted = $this->crypterDatabaseLoginService->decryptFromDatabase($encryptedUser, "applications");
         $process = new ResponseDTO(true, true, true);
-       
-        return [
-            'process' => $process->toVaultStateArray(),
-            'response' => $decrypted ? $this->buildResponseFromApplications($decrypted->getApplications(), $processType) : false
-        ];        
+
+        return new FetchFromAccessTableResultDTO(
+            $process->toVaultStateArray(),
+            $decrypted ? $this->buildResponseFromApplications($decrypted->getApplications(), $processType) : false,
+        );
     }
 
     private function buildResponseFromApplications(string $json, string $processType): array
     {
         try {
-            $apps = json_decode($json);
-            if($processType === 'application') {
+            $apps = $this->decodeApplications($json);
+
+            if ($apps === null) {
+                throw new \UnexpectedValueException('Invalid application data payload.');
+            }
+
+            if ($processType === 'application') {
                 return array_map(fn($a) => $this->mapApplication($a, $processType), $apps);
             } else {
-               return array_map(fn($a) => $this->mapDomain($a, $processType), $apps);
-            }                   
-        } catch (Exception $e) {
+                return array_map(fn($a) => $this->mapDomain($a, $processType), $apps);
+            }
+        } catch (\Throwable $e) {
             $this->logger->critical("Error: " . $this->serializerInterface->serialize($e, 'json'));
             return ['error' => 'Failed to process application data'];
         }
@@ -91,19 +100,48 @@ class Fetch
     private function mapApplication(object $a): array
     {
         $this->logger->critical("Mapping application data for database storage application !!! :" . json_encode($a));
-        return [            
+        return [
             'application' => $a->application,
             'userCredential' => $a->decrypted,
             'description' => $a->description,
-            'targetId' => $a->targetId
+            'targetId' => $a->targetId,
         ];
     }
+
     private function mapDomain(object $a): array
     {
         return [
             'credential' => $a->userCredential,
             'description' => $a->description,
-            'targetId' => $a->targetId
+            'targetId' => $a->targetId,
         ];
-    }    
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function decodeCachePayload(string $cachedValue): ?array
+    {
+        try {
+            $cachedPayload = json_decode($cachedValue, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        return is_array($cachedPayload) ? $cachedPayload : null;
+    }
+
+    /**
+     * @return list<object>|null
+     */
+    private function decodeApplications(string $json): ?array
+    {
+        try {
+            $decodedApplications = json_decode($json, false, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        return is_array($decodedApplications) ? $decodedApplications : null;
+    }
 }

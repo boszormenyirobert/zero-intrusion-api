@@ -1,26 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Identity\Database;
 
-use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Identity;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 class IdentityDatabaseService
 {
-
     public function __construct(
-        private LoggerInterface $logger,
-        private EntityManagerInterface $entityManager
+        private readonly LoggerInterface $logger,
+        private readonly EntityManagerInterface $entityManager
     ) {}
 
-    public function addIdentity(Identity $secret)
+    public function addIdentity(Identity $secret): void
     {
         $this->entityManager->persist($secret);
         $this->entityManager->flush();
     }
 
-    public function updateIdentity(Identity $secret)
+    public function updateIdentity(Identity $secret): void
     {
         $this->entityManager->persist($secret);
         $this->entityManager->flush();

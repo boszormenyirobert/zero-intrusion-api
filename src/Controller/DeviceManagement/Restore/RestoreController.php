@@ -1,34 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Restore => Device replacement and recovery process => The user have the device. E-mail or Phone-number changed
- * 
+ *
  * SERVICE_API_KEY, SERVICE_API_SECRET, DATA_HASH_SECRET ex-changed between easylogin and ProxyApi
  */
 
 namespace App\Controller\DeviceManagement\Restore;
 
+use App\Attribute\RequireHmac;
+use App\Attribute\RequireJson;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Helper\ResponseHelper;
+use App\Service\Device\Restore\ReplaceDevicePinRequestMapper;
+use App\Service\Device\Restore\ReplaceDevicePinService;
+use App\Service\Device\Restore\ReplaceDeviceRequestMapper;
+use App\Service\Device\Restore\ReplaceDeviceService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Service\Identity\IdentityService;
-use App\Service\Restore\RestoreService;
-use App\Controller\PayloadValidator\PayloadValidator;
-use App\Helper\ResponseHelper;
-use App\Attribute\RequireHmac;
-use App\Attribute\RequireJson;
 
 
 #[Route('/api/device')]
 class RestoreController extends AbstractController
 {
     public function __construct(
-        private PayloadValidator $payloadValidator,
-        private IdentityService $identityService,
-        private ResponseHelper $responseHelper,
-        private RestoreService $restoreService
-    ) {}
+        private readonly PayloadValidator $payloadValidator,
+        private readonly ResponseHelper $responseHelper,
+        private readonly ReplaceDeviceRequestMapper $replaceDeviceRequestMapper,
+        private readonly ReplaceDeviceService $replaceDeviceService,
+        private readonly ReplaceDevicePinRequestMapper $replaceDevicePinRequestMapper,
+        private readonly ReplaceDevicePinService $replaceDevicePinService,
+    ) {
+    }
 
 
     /** Called by ProxyApi
@@ -43,19 +51,13 @@ class RestoreController extends AbstractController
     #[RequireJson]
     public function replaceDevice(Request $request): Response
     {
-        $notifications = $this->getDefaultNotifications();
-
         try {
-            $validatedPayload = $this->payloadValidator->validatePayload($request);
-            $secret = $this->identityService->getSecret($validatedPayload['replaceDevice']);
+            $validatedPayload = $this->payloadValidator->validatePayload($request, 'replaceDevice');
+            $replaceDeviceRequest = $this->replaceDeviceRequestMapper->map($validatedPayload);
 
-            if (!empty($secret)) {
-                $notifications = $this->restoreService->recoveryNotification($secret);
-            }
-
-            return $this->json($notifications);
-        } catch (\Exception $e) {
-            return $this->responseHelper->handleException($e);
+            return new JsonResponse($this->replaceDeviceService->handle($replaceDeviceRequest));
+        } catch (\Exception $exception) {
+            return $this->responseHelper->handleException($exception);
         }
     }
 
@@ -73,21 +75,12 @@ class RestoreController extends AbstractController
         Request $request
     ): Response {
         try {
-            $validatedPayload = $this->payloadValidator->validatePayload($request);
-            $handyIdentifier = $this->restoreService->replaceValidation($validatedPayload);
+            $validatedPayload = $this->payloadValidator->validatePayload($request, 'restorePin');
+            $replaceDevicePinRequest = $this->replaceDevicePinRequestMapper->map($validatedPayload);
 
-            return $this->json($handyIdentifier);
-        } catch (\Exception $e) {
-            return $this->responseHelper->handleException($e);
+            return new JsonResponse($this->replaceDevicePinService->handle($replaceDevicePinRequest));
+        } catch (\Exception $exception) {
+            return $this->responseHelper->handleException($exception);
         }
-    }
-
-    private function getDefaultNotifications()
-    {
-        return [
-            'success' => false,
-            'deviceHash' => "missing",
-            "message" => "Something went wrong. Please try again later"
-        ];
     }
 }

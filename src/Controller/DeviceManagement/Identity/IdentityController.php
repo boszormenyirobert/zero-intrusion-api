@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Identity => Describe an USER, USER DEVICE
  * Device Registration Process => Start with the Mobile-Application installation finish with user-email and phone-number
@@ -8,31 +10,31 @@
 
 namespace App\Controller\DeviceManagement\Identity;
 
+use App\Attribute\RequireHmac;
+use App\Attribute\RequireJson;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Helper\ResponseHelper;
+use App\Service\Device\Identity\FirstSecretService;
+use App\Service\Device\Identity\RecoverySettingsRequestMapper;
+use App\Service\Device\Identity\RecoverySettingsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Psr\Log\LoggerInterface;
-use App\Service\Shared\RequestService;
-use App\Service\Identity\IdentityService;
-use App\Controller\PayloadValidator\PayloadValidator;
-use App\Attribute\RequireHmac;
-use App\Attribute\RequireJson;
-use App\Helper\ResponseHelper;
-use App\Exception\MissingKeyException;
 
 #[Route('/api/secret')]
 class IdentityController extends AbstractController
 {
 
     public function __construct(
-        private PayloadValidator $payloadValidator,
-        private LoggerInterface $logger,
-        private ResponseHelper $responseHelper,
-        private RequestService $requestService,
-        private IdentityService $identityService
-
-    ) {}
+        private readonly PayloadValidator $payloadValidator,
+        private readonly ResponseHelper $responseHelper,
+        private readonly FirstSecretService $firstSecretService,
+        private readonly RecoverySettingsRequestMapper $recoverySettingsRequestMapper,
+        private readonly RecoverySettingsService $recoverySettingsService,
+    ) {
+    }
 
     /* Called by Mobil forwarded by ProxyApi
      * 
@@ -45,13 +47,11 @@ class IdentityController extends AbstractController
     public function createSecret(
         Request $request
     ): Response {
-        try {            
+        try {
             $this->payloadValidator->validatePayload($request, 'firstSecret');
-            $keys = $this->identityService->getKey();
-            $this->logger->critical("To the HUB Registration the registrator Public ID: " . json_encode($keys->toIdentityArray()));
-            return $this->json($keys->toIdentityArray());
-        } catch (\Exception $e) {
-            return $this->responseHelper->handleException($e);
+            return new JsonResponse($this->firstSecretService->handle());
+        } catch (\Exception $exception) {
+            return $this->responseHelper->handleException($exception);
         }
     }
 
@@ -69,15 +69,11 @@ class IdentityController extends AbstractController
     ): Response {
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, 'recoverySettings');
-            $this->logger->critical("Received recovery settings for public ID: " . $validatedPayload['recoverySettings']['publicId']);
-             $this->logger->critical("Recovery settings payload: " . json_encode($validatedPayload['recoverySettings']));
-            $this->identityService->updateIdentityRecoverySettings($validatedPayload['recoverySettings']);
+            $recoverySettingsRequest = $this->recoverySettingsRequestMapper->map($validatedPayload);
 
-            return $this->json([
-                'success' => true
-            ]);
-        } catch (MissingKeyException $e) {
-            return $this->responseHelper->handleException($e);
+            return new JsonResponse($this->recoverySettingsService->handle($recoverySettingsRequest));
+        } catch (\Exception $exception) {
+            return $this->responseHelper->handleException($exception);
         }
     }
 }

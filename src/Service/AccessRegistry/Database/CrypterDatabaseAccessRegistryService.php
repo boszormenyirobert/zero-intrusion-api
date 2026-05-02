@@ -1,26 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AccessRegistry\Database;
 
 use App\Entity\AccessRegistry;
-use Exception;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 final class CrypterDatabaseAccessRegistryService
 {
+    private const CIPHER = 'aes-256-cbc';
+    private const IV_LENGTH = 16;
+
     private string $key;
-    private string $cipher = 'aes-256-cbc';
 
     public function __construct(
-        private ContainerBagInterface $params,
-        private LoggerInterface $logger
+        private readonly ContainerBagInterface $params,
+        private readonly LoggerInterface $logger
     ) {}
 
-    public function encyptDataObject(array $userData, $type): AccessRegistry
+    public function encyptDataObject(array $userData, string $type): AccessRegistry
     {
-        $iv = openssl_random_pseudo_bytes(16);
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+        return $this->encryptDataObjectOrFail($userData, $type);
+    }
+
+    public function encryptDataObjectOrFail(array $userData, string $type): AccessRegistry
+    {
+        $iv = openssl_random_pseudo_bytes(self::IV_LENGTH);
+        $this->key = (string) $this->params->get('DATABASE_HASH_SECRET');
 
         $encryptedIdentity = new AccessRegistry();
         $encryptedIdentity->setRegistrationState($userData['registrationState']);
@@ -29,9 +37,9 @@ final class CrypterDatabaseAccessRegistryService
         $encryptedIdentity->setRegistrationProcessId($userData['registrationProcessId']);
         $encryptedIdentity->setTargetId($userData['targetId']);
 
-        if(array_key_exists('corporateId', $userData)){
+        if (array_key_exists('corporateId', $userData)) {
             $encryptedIdentity->setCorporateId($userData['corporateId']);
-        }        
+        }
 
         if ($type === 'domain') {
             return $this->encyptDataObjectDomain($userData, $encryptedIdentity, $iv);
@@ -42,7 +50,7 @@ final class CrypterDatabaseAccessRegistryService
         return $encryptedIdentity;
     }
 
-    private function encyptDataObjectDomain($userData, $encryptedIdentity, $iv)
+    private function encyptDataObjectDomain(array $userData, AccessRegistry $encryptedIdentity, string $iv): AccessRegistry
     {
         $fields = [
             'domain' => 'setDomain',
@@ -59,7 +67,8 @@ final class CrypterDatabaseAccessRegistryService
         return $encryptedIdentity;
     }
 
-    private function encyptDataObjecApplication($userData, $encryptedIdentity, $iv){     
+    private function encyptDataObjecApplication(array $userData, AccessRegistry $encryptedIdentity, string $iv): AccessRegistry
+    {
         $fields = [
             'application' => 'setApplication',
             'userCredential' => 'setUserCredential',
@@ -76,9 +85,9 @@ final class CrypterDatabaseAccessRegistryService
     }
 
     public function encyptDataObjectApplication(array $userData): AccessRegistry
-    {        
-        $iv = openssl_random_pseudo_bytes(16);
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
+    {
+        $iv = openssl_random_pseudo_bytes(self::IV_LENGTH);
+        $this->key = (string) $this->params->get('DATABASE_HASH_SECRET');
 
         $encryptedIdentity = new AccessRegistry();
         $encryptedIdentity->setRegistrationState($userData['registrationState']);
@@ -107,47 +116,54 @@ final class CrypterDatabaseAccessRegistryService
 
     private function encryptData(string $value, string $iv): string
     {
-        $encrypted = openssl_encrypt($value, $this->cipher, $this->key, 0, $iv);
+        $encrypted = openssl_encrypt($value, self::CIPHER, $this->key, 0, $iv);
         if ($encrypted === false) {
             throw new \RuntimeException('Encryption failed: ' . openssl_error_string());
         }
         return base64_encode($encrypted);
     }
 
-    public function decryptFromDatabase(AccessRegistry $value, $type = "domain", $description = true): AccessRegistry|array
+    public function decryptFromDatabaseOrFail(AccessRegistry $value, string $type = 'domain', bool $description = true): AccessRegistry
     {
-        if ($type === "domain") {
+        if ($type === 'domain') {
             return $this->getDecryptedAccessRegistryDomain($value, $description);
+        }
 
-        } else if ($type === "application") {
-            return $this->getDecryptedAccessRegistryApplication($value);            
+        if ($type === 'application') {
+            return $this->getDecryptedAccessRegistryApplication($value);
+        }
+
+        throw new \InvalidArgumentException('invalid type');
+    }
+
+    public function decryptFromDatabase(AccessRegistry $value, string $type = 'domain', bool $description = true): AccessRegistry|array
+    {
+        if ($type === 'domain' || $type === 'application') {
+            return $this->decryptFromDatabaseOrFail($value, $type, $description);
         }
 
         return ['error' => 'invalid type'];
     }
 
-    private function getDecryptedAccessRegistryDomain($value, $descriptionExist): AccessRegistry{
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $iv = base64_decode($value->getIv());
+    private function getDecryptedAccessRegistryDomain(AccessRegistry $value, bool $descriptionExist): AccessRegistry
+    {
+        $this->key = (string) $this->params->get('DATABASE_HASH_SECRET');
+        $iv = $this->decodeIv((string) $value->getIv());
 
-        if (strlen($iv) !== 16) {
-            throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
-        }
-
-        $credential = $value->getUserCredential() ? $value->getUserCredential() : false;        
+        $credential = $value->getUserCredential() ? $value->getUserCredential() : false;
         $domain = $value->getDomain() ? $value->getDomain() : false;
 
-        if($descriptionExist){
+        if ($descriptionExist) {
             $description = $value->getDescription() ? $value->getDescription() : false;
         }
         $decrypted = new AccessRegistry();
-        if($credential){
+        if ($credential) {
             $decrypted->setUserCredential($this->decryptData($credential, $iv));
         }
-        if($domain){
-            $decrypted->setDomain($this->decryptData( $domain, $iv));
+        if ($domain) {
+            $decrypted->setDomain($this->decryptData($domain, $iv));
         }
-        if($descriptionExist && $description){
+        if ($descriptionExist && $description) {
             $decrypted->setDescription($this->decryptData($description, $iv));
         }
 
@@ -158,13 +174,10 @@ final class CrypterDatabaseAccessRegistryService
         return $decrypted;
     }
 
-    private function getDecryptedAccessRegistryApplication($value): AccessRegistry{
-        $this->key = $this->params->get('DATABASE_HASH_SECRET');
-        $iv = base64_decode($value->getIv());
-
-        if (strlen($iv) !== 16) {
-            throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
-        }
+    private function getDecryptedAccessRegistryApplication(AccessRegistry $value): AccessRegistry
+    {
+        $this->key = (string) $this->params->get('DATABASE_HASH_SECRET');
+        $iv = $this->decodeIv((string) $value->getIv());
 
         $decrypted = new AccessRegistry();
         $decrypted->setUserCredential($this->decryptData($value->getUserCredential(), $iv));
@@ -173,21 +186,36 @@ final class CrypterDatabaseAccessRegistryService
         $decrypted->setTargetId($value->getTargetId());
 
         $decrypted->setApplication($this->decryptData($value->getApplication(), $iv));
-        if($value->getDescription()){
+        if ($value->getDescription()) {
             $decrypted->setDescription($this->decryptData($value->getDescription(), $iv));
         }
-        return $decrypted;        
+        return $decrypted;
     }
 
     private function decryptData(string $value, string $iv): string
     {
-        $decoded = base64_decode($value);
-        $decrypted = openssl_decrypt($decoded, $this->cipher, $this->key, 0, $iv);
+        $decoded = base64_decode($value, true);
+        if (!is_string($decoded)) {
+            throw new \RuntimeException('Decryption failed: invalid base64 payload');
+        }
+
+        $decrypted = openssl_decrypt($decoded, self::CIPHER, $this->key, 0, $iv);
 
         if ($decrypted === false) {
             throw new \RuntimeException('Decryption failed: ' . openssl_error_string());
         }
 
         return $decrypted;
+    }
+
+    private function decodeIv(string $iv): string
+    {
+        $decodedIv = base64_decode($iv, true);
+
+        if (!is_string($decodedIv) || strlen($decodedIv) !== self::IV_LENGTH) {
+            throw new \InvalidArgumentException('Invalid IV length, expected 16 bytes');
+        }
+
+        return $decodedIv;
     }
 }

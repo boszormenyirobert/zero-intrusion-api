@@ -1,158 +1,100 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\CredentialHub\Vault\Edit;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
-use Psr\Log\LoggerInterface;
-use App\Service\AccessRegistry\AccessRegistryRegistrationService;
-use App\Service\AccessRegistry\AccessRegistryVaultService;
-use App\Service\AuthBridge\AuthBridgeService;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use App\Helper\ResponseHelper;
-use App\Controller\PayloadValidator\PayloadValidator;
 use App\Attribute\RequireHmac;
 use App\Attribute\ExtensionHmac;
 use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
-use App\Service\QrService\QrService;
-use App\Controller\CredentialHub\Vault\Edit\VaultEditService;
 use App\Controller\CredentialHub\PayloadKeys;
-use App\Controller\CredentialHub\SharedService;
-use App\Controller\CredentialHub\Shared\SharedRegistrationService;
+use App\Controller\PayloadValidator\PayloadValidator;
+use App\Helper\ResponseHelper;
+use App\Service\CredentialHub\Vault\Edit\VaultEditCredentialService;
+use App\Service\CredentialHub\Vault\Edit\VaultEditQrIdentityRequestMapper;
+use App\Service\CredentialHub\Vault\Edit\VaultEditQrIdentityService;
+use App\Service\CredentialHub\Vault\Edit\VaultEditStateService;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
 
-/**
- * Flow: 
- * 1. Extension push user-credentials
- * 2. /qr-identity 
- *  - Generate processId and authToken, save the user-credential in the database with the processId and targetId (applicationId or domainId)
- * 3. /new/to-encrypt => Shared endpoint => SharedRegistrationController::sharedRegistrationNewToEncrypt
- *  - Mobile application pull the "unencrypted" user-credential with the processId, encrypt with the mobile app and return to the mobile application
- * 4. /new
- * - Mobile application push the "encrypted" user-credential with the processId, save the "encrypted" user-credential in the database with the processId
- * 5. /state
- * - Extension pull the registration state with the processId, return the registration state to the extension
- */
 #[Route('/api/credential-hub/vault/edit')]
 class VaultEditController extends AbstractController
 {
     public function __construct(
-        private LoggerInterface $logger,
-        private PayloadValidator $payloadValidator,
-        private ResponseHelper $responseHelper,
-        private AccessRegistryRegistrationService $accessRegistryRegistrationService,
-        private SharedService $sharedService,
-        private SharedRegistrationService $sharedRegistrationService
-    ) {}
-
-    /*
-     * Called by Browser-Extension
-    */    
+        private readonly PayloadValidator $payloadValidator,
+        private readonly ResponseHelper $responseHelper,
+        private readonly VaultEditQrIdentityRequestMapper $vaultEditQrIdentityRequestMapper,
+        private readonly VaultEditQrIdentityService $vaultEditQrIdentityService,
+        private readonly VaultEditCredentialService $vaultEditCredentialService,
+        private readonly VaultEditStateService $vaultEditStateService,
+    ) {
+    }
 
     #[Route('/qr-identity', name: 'vault_edit_qr_identity', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
     public function vaultEditQrIdentity(
         Request $request,
-        QrService $qrService,
-        VaultEditService $vaultEditService,
-        AuthBridgeService $authBridgeService
-        ): JsonResponse
+    ): JsonResponse
     {
-        // update and registration is the same process. We do not make any update. Delete and create new
-        $payloadKey = PayloadKeys::VAULT_EDIT_QR_IDENTITY;
-        $processKey = PayloadKeys::VAULT_EDIT_PROCESS_ID;        
-
         try {
-            $validatedPayloadJson = $this->payloadValidator->validatePayload($request, $payloadKey);
-            $validatedPayload = json_decode($validatedPayloadJson[$payloadKey]);
-            /** @var \App\DTO\QR\CredentialHubIdentityDTO $identity */
-            $identity = $authBridgeService->generateRequestIdentity($processKey);
-            // Save the user credential in the database with the targetId and             
-            $this->sharedRegistrationService->saveUserCredentialInAuthBridge($validatedPayload, $identity->getRegistrationProcessId());
+            $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::VAULT_EDIT_QR_IDENTITY);
+            $vaultEditRequest = $this->vaultEditQrIdentityRequestMapper->map($validatedPayload);
 
-            $qrContent = $vaultEditService->getQrContent($validatedPayload, $identity->getXExtensionAuthOne(), $identity->getRegistrationProcessId());
-            
-            $qrCode = $qrService->getQrCode($qrContent);  
-            $identity->setQrCode($qrCode);
-
-            if(isset($validatedPayload->userPublicId) && $validatedPayload->userPublicId)
-            {     
-                $this->sharedService->sendFcmNotification(
-                    'vaultEdit',
-                    $validatedPayload->userPublicId,
-                    $qrContent
-                );  
-            }   
-
-            return $this->responseHelper->createSuccessResponse($identity->toRegistrationProcessArray());
+            return $this->responseHelper->createSuccessResponse(
+                $this->vaultEditQrIdentityService->handle($vaultEditRequest)
+            );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
-    /*
-     * Called by Mobile App
-    */
     #[Route('/credential', name: 'vault_edit_credential', methods: "POST")]
     #[RequireHmac]
     #[MobileHmac]    
     #[RequireJson]
     public function vaultEditCredential(
         Request $request,
-        AccessRegistryVaultService $accessRegistryVaultService
-        ): JsonResponse
+    ): JsonResponse
     {
-        $payloadKey = PayloadKeys::VAULT_EDIT_CREDENTIAL;
-
         try {
-            $process = $this->sharedService->getProcessId($request,  $payloadKey, true);
+            $response = $this->vaultEditCredentialService->handle($request);
 
-            if(!$process) {
-                return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+            if ($response === null) {
+                return $this->missingProcessResponse();
             }
 
-            $response = $accessRegistryVaultService->editApplicationAccessRegistry($process);
-
-            return $this->json([
-                'delete_process' => $response,
-                'error' => ''
-            ]);
+            return new JsonResponse($response->toArray());
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
-    /**
-     * Called by Browser-Extension
-     */
     #[Route('/state', name: 'vault_edit_state', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
     #[ExtensionHmac]    
     public function vaultEditState(
         Request $request,
-        AccessRegistryRegistrationService $accessRegistryRegistrationService,
     ): JsonResponse {
-        $payloadKey = PayloadKeys::VAULT_EDIT_STATE;
-        $processKey = PayloadKeys::VAULT_EDIT_PROCESS_ID;
-
         try {
-            $processId = $this->sharedService->getProcessId($request, $payloadKey);
+            $response = $this->vaultEditStateService->handle($request);
 
-            if(!$processId) {
-                return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+            if ($response === null) {
+                return $this->missingProcessResponse();
             }
-
-            //$response = $accessRegistryRegistrationService->getState($processId, $processKey);
-            //$response = $this->sharedService->getChacheByProcessId($processId);
-            $response = $this->sharedService->pollTheRedisDefault($processId);
-
 
             return $this->responseHelper->createSuccessResponse($response ?? []);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
-    } 
+    }
+
+    private function missingProcessResponse(): JsonResponse
+    {
+        return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+    }
 }

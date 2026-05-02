@@ -1,176 +1,136 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\EventListener;
 
 use App\Attribute\DesktopHmac;
+use App\Http\ApiErrorResponseFactory;
 use App\Repository\AuthBridgeRepository;
+use App\Repository\CorporateIdentityRepository;
+use App\Service\Crypters\CrypterDatabaseService;
+use App\Service\Crypters\CrypterService;
+use App\Service\Hmac\DesktopHmacPolicy;
+use App\Service\Hmac\ListenerPayloadResolver;
+use App\Service\Payload\JsonPayloadDecoder;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
-use Symfony\Component\HttpKernel\Event\ControllerEvent;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use App\Service\Crypters\CrypterService;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use App\Repository\CorporateIdentityRepository;
-use App\Service\Crypters\CrypterDatabaseService;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
 
 class HmacDesktopValidationListener
 {
+    private const INVALID_JSON_ERROR = 'Invalid JSON body';
+    private const MISSING_FIELDS_ERROR = 'Missing required fields';
+    private const INVALID_DECRYPTED_PAYLOAD_ERROR = 'Invalid decrypted payload';
+    private const INVALID_INNER_PAYLOAD_ERROR = 'Invalid inner payload';
+    private const MISSING_PAYLOAD_KEY_ERROR = 'payloadKey missing or null';
+    private const MISSING_HMAC_FIELDS_ERROR = 'Missing required HMAC fields';
+    private const INVALID_SIGNATURE_ERROR = 'Invalid HMAC signature';
+    private const INVALID_TIMESTAMP_ERROR = 'Timestamp is outside the allowed window';
+
     public function __construct(
         private readonly CrypterService $crypterService,
-        private LoggerInterface $logger,
-        private AuthBridgeRepository $authBridgeRepository,
-        private EntityManagerInterface $entityManager,
-        private ParameterBagInterface $params,
-        private CorporateIdentityRepository $corporateIdentityRepository,
-        private CrypterDatabaseService $crypterDatabaseService
+        private readonly LoggerInterface $logger,
+        private readonly AuthBridgeRepository $authBridgeRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly ParameterBagInterface $params,
+        private readonly CorporateIdentityRepository $corporateIdentityRepository,
+        private readonly CrypterDatabaseService $crypterDatabaseService,
+        private readonly ApiErrorResponseFactory $apiErrorResponseFactory,
+        private readonly JsonPayloadDecoder $jsonPayloadDecoder,
+        private readonly DesktopHmacPolicy $desktopHmacPolicy,
+        private readonly ListenerPayloadResolver $listenerPayloadResolver,
     ) {}
 
     public function onKernelController(ControllerEvent $event): void
     {
-        // Controll validator use of the Listener
-        $request = $event->getRequest();
-        $controllerString = $request->attributes->get('_controller');
-
-        if (!is_string($controllerString) || !str_contains($controllerString, '::')) {
-            $this->logger->critical('Invalid _controller format');
+        $controllerDefinition = $event->getController();
+        if (!is_array($controllerDefinition) || count($controllerDefinition) !== 2) {
             return;
         }
 
-        [$controllerClass, $method] = explode('::', $controllerString, 2);
-
-        $reflection = new \ReflectionMethod($controllerClass, $method);
-        $hasHmacCheck = !empty(
-            $reflection->getAttributes(\App\Attribute\DesktopHmac::class)
-        );
+        [$controller, $method] = $controllerDefinition;
+        $reflection = new ReflectionMethod($controller, $method);
+        $hasHmacCheck = !empty($reflection->getAttributes(DesktopHmac::class));
 
         if (!$hasHmacCheck) {
             return;
         }
 
-        // Controll route name to use as payload key
-        try{
-            $request = $event->getRequest();
-            $authHeader = $request->headers->get('X-Extension-Auth');
-            $payloadKey = $request->attributes->get('_route'); // Use route name as payload key
+        $request = $event->getRequest();
+        $payload = $this->listenerPayloadResolver->decodeRequestPayload($request->getContent());
+        $payloadKey = (string) $request->attributes->get('_route', '');
 
-            $payload = json_decode($request->getContent(), true);
-        } catch (\Throwable $e) {
-            $this->logger->critical('Exception during request processing: ' . $e->getMessage());
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Exception during request processing',
-            ], 400));
-            $event->stopPropagation();;
+        if (!is_array($payload)) {
+            $this->denyRequest($event, self::INVALID_JSON_ERROR, 400);
+
             return;
         }
 
-        // Controll payload structure
-        if (!is_array($payload)) {
-            $this->logger->critical('Invalid JSON body');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Invalid JSON body',
-            ], 400));
-            $event->stopPropagation();;return;
+        if (!$this->listenerPayloadResolver->hasEncryptedEnvelope($payload)) {
+            $this->denyRequest($event, self::MISSING_FIELDS_ERROR, 400);
+
+            return;
         }
 
-        // Controll required fields as the request sent by the HUB
-        if (!isset($payload['iv'], $payload['zeroIntrusionProyApi'])) {
-            $this->logger->critical('Missing required fields');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Missing required fields',
-            ], 400));
-            $event->stopPropagation();;return;
-        }
-
-        // Decrypt the payload data: basic level decryption between HUB - API
-        $this->crypterService->setData($payload['zeroIntrusionProyApi']);
-
-        $decrypted = $this->crypterService->decryptData();
-        $data = json_decode($decrypted, true);
+        $data = $this->listenerPayloadResolver->decodeEncryptedPayload($payload);
 
         if (!is_array($data)) {
             $this->logger->critical('Decryption failed or returned invalid JSON.');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Invalid decrypted payload',
-            ], 400));
-            $event->stopPropagation();;return;
-        }
-        // Access to the inner payload by shared payloadKey, which is the route name
-        $innerJson = $data[$payloadKey] ?? null;
+            $this->denyRequest($event, self::INVALID_DECRYPTED_PAYLOAD_ERROR, 400);
 
-        if ($innerJson) {
-            $payloadDecoded = is_string($innerJson) ? json_decode($innerJson, true) : $innerJson;
-
-            if (!is_array($payloadDecoded)) {
-                $this->logger->critical('Decoded innerJson is not array.');
-                $event->setController(fn() => new JsonResponse([
-                    'success' => false,
-                    'error' => 'Invalid inner payload',
-                ], 400));
-                $event->stopPropagation();
-                return;
-            }
-        } else {
-            $this->logger->critical('payloadKey missing or null');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'payloadKey missing or null',
-            ], 400));
-            $event->stopPropagation();
             return;
         }
 
-        // Get the HMAC signature from headers created by the Desktop Application
-        $recvSignature = strtolower($request->headers->get('x-extension-auth'));
+        $payloadDecoded = $this->listenerPayloadResolver->resolveDecryptedRoutePayload($data, $payloadKey);
+        if ($payloadDecoded->invalidInnerPayload) {
+            $this->denyRequest($event, self::INVALID_INNER_PAYLOAD_ERROR, 400);
 
-        // Extract fields from the payload
-        $corporateId = $payloadDecoded['publicId'] ?? null;
-        $timestamp = $payloadDecoded['timestamp'] ?? null;
-
-        if (!$corporateId || !$timestamp || !$recvSignature) {
-            $this->logger->critical('Missing required HMAC fields');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Missing required HMAC fields',
-            ], 400));
-            $event->stopPropagation();;return;
+            return;
         }
-        // Get corporate data from database to controll HMAC signature
+
+        if ($payloadDecoded->missingPayloadKey || $payloadDecoded->payload === null) {
+            $this->denyRequest($event, self::MISSING_PAYLOAD_KEY_ERROR, 400);
+
+            return;
+        }
+
+        $recvSignature = strtolower((string) $request->headers->get('x-extension-auth', ''));
+
+        $corporateId = $payloadDecoded->payload['publicId'] ?? null;
+        $timestamp = $payloadDecoded->payload['timestamp'] ?? null;
+
+        if (!is_string($corporateId) || $corporateId === '' || !is_numeric((string) $timestamp) || $recvSignature === '') {
+            $this->denyRequest($event, self::MISSING_HMAC_FIELDS_ERROR, 400);
+
+            return;
+        }
+
         $corporateDbEncrypted = $this->corporateIdentityRepository->findOneBy(['corporateId' => $corporateId]);
+        if ($corporateDbEncrypted === null) {
+            $this->denyRequest($event, self::INVALID_SIGNATURE_ERROR, 400);
+
+            return;
+        }
+
         $corporate = $this->crypterDatabaseService->decryptFromDatabase($corporateDbEncrypted);
 
-        $expectedSecret = $corporate->getCorporateIdSecret();
-        $expectedCorporateIdKey = $corporate->getCorporateIdKey();
-
-        // Recreate HMAC signature
-        $controllMessage = $expectedCorporateIdKey . '|' . $timestamp;
-
-        $expectedSignature = hash_hmac('sha256', $controllMessage, $expectedSecret);
-
-        // Controll HMAC signature
-        if (!hash_equals($expectedSignature, $recvSignature)) {
-            $this->logger->critical('Invalid HMAC signature');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Invalid HMAC signature',
-            ], 400));
-            $event->stopPropagation();;return;
+        if (!$this->desktopHmacPolicy->validateSignature($recvSignature, $corporateId, (int) $timestamp, $corporate)) {
+            $this->denyRequest($event, self::INVALID_SIGNATURE_ERROR, 400);
+            return;
         }
-        // Timestamp controll to avoid replay attacks (5 minutes window)
-        $currentTime = time();
-        if (abs($currentTime - $timestamp) > 300) {
-            $this->logger->critical('Timestamp is outside the allowed window');
-            $event->setController(fn() => new JsonResponse([
-                'success' => false,
-                'error' => 'Timestamp is outside the allowed window',
-            ], 400));
-            $event->stopPropagation();;return;
+
+        if (!$this->desktopHmacPolicy->isTimestampWithinWindow((int) $timestamp)) {
+            $this->denyRequest($event, self::INVALID_TIMESTAMP_ERROR, 400);
+            return;
         }
-    
-        $this->logger->critical('Stop HmacExtensionValidationListener');
+    }
+    private function denyRequest(ControllerEvent $event, string $message, int $statusCode): void
+    {
+        $this->logger->critical($message);
+        $event->setController(fn() => $this->apiErrorResponseFactory->create($message, $statusCode));
+        $event->stopPropagation();
     }
 }

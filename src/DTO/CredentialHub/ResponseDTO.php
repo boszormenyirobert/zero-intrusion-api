@@ -1,9 +1,10 @@
 <?php
 namespace App\DTO\CredentialHub;
 
+use App\DTO\Response\ResponseDataInterface;
 use App\Entity\AuthBridge;
 
-class ResponseDTO
+class ResponseDTO implements ResponseDataInterface
 {
     private bool $process = false;
     private bool|string $validation = false;
@@ -128,6 +129,11 @@ class ResponseDTO
             'description' => $this->getDescription(),
             'publicId' => $this->getUserPublicId()
         ];
+    }
+
+    public function toResponseArray(): array
+    {
+        return $this->toDomainStateArray();
     }
 
     public function toStateArray(){

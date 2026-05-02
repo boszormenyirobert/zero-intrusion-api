@@ -1,63 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Corporate;
 
-use App\Service\Crypters\CrypterService;
-use App\Helper\AuthorizationHelper;
-use App\Repository\CorporateIdentityRepository;
-use Psr\Log\LoggerInterface;
-use App\Service\Corporate\CorporateRegistrationDatabaseService;
-use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use App\Entity\CorporateIdentity;
 use App\Exception\CorporateRegistrationException;
 use App\Repository\BusinessServicesRepository;
+use App\Repository\CorporateIdentityRepository;
 use App\Service\Shared\RequestService;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 class CorporateRegistrationService
 {
+    /** @var array<string, string> */
+    private const BUSINESS_SUBSCRIPTION_MAP = [
+        'pro' => 'businessPro',
+        'plus' => 'businessPlus',
+        'basic' => 'businessBasic',
+        'biometric' => 'biometric',
+        'passwordManager' => 'passwordManager',
+    ];
+
     public function __construct(
         private readonly ContainerBagInterface $params,
         private readonly CorporateRegistrationDatabaseService $corporateRegistrationDatabaseService,
         private readonly IdentityService $identityService,
         private readonly CorporateIdentityRepository $corporateIdentityRepository,
-        private readonly CrypterService $crypterService,
+        private readonly \App\Service\Crypters\CrypterService $crypterService,
         private readonly LoggerInterface $logger,
-        private RequestService $requestService,
-        private BusinessServicesRepository $businessServicesRepository        
-    ) {}
+        private readonly RequestService $requestService,
+        private readonly BusinessServicesRepository $businessServicesRepository,
+        private readonly CorporateAuthorizedResponseFactory $corporateAuthorizedResponseFactory,
+    ) {
+    }
 
 
-    public function getBusinessRegistration($data){
-        $businessModel = $data['businessModel'];        
-        $publicId = $data['publicId'];
-        // Scope is under refactoring
-        $scope = $data['scope'];
-
-
-        $businessSubscription = $this->corporateRegistrationDatabaseService->generateBusinessService($businessModel);
-        $this->corporateRegistrationDatabaseService->updateUserIdentity($publicId, $businessSubscription);
-
-        // Encrypt data to send to the ProxyApi
-        $crypterInit = new CrypterService($this->params);
-        $crypterInit->setData((array)$businessSubscription);  
-
-        $encryptedData = $crypterInit->encryptData();
-
-        // Build authorization headers and response
-        $authHelperInit = new AuthorizationHelper(
-            $this->params->get('SERVICE_API_KEY'),
-            $this->params->get('SERVICE_API_SECRET'),
-            $this->logger
-        );
-
-        $header = $authHelperInit->getAuthHeader($encryptedData);
-        $iv64 = $authHelperInit->getIvBase64();
-
-        return $authHelperInit->buildResponse(
-            $header,
-            $encryptedData,
-            $iv64
-        );
+    public function getBusinessRegistration(array $data): array
+    {
+        return $this->businessRegistrationHandler()->handle($data);
     }
 
     /**
@@ -68,117 +50,97 @@ class CorporateRegistrationService
      */
     public function getSubscriptionData(array $data): array
     {
-        $publicId = $data['publicId'];
-        $scope = $data['scope'];     
-        $businessModel = $data['businessModel'];
-
-        // Prepare data content, save in the database. Encrypted only to save in database except the corporateId,
-        // The return value is "not encrypted" 
-
-        // corporateIdentity with/without business registration
-        $this->identityService->initializeIdentity($businessModel, $publicId, $scope);
-        $identity = $this->identityService->getIdentity();
-
-        // Relation between user and corporations
-        $this->corporateRegistrationDatabaseService->createUserCorporateRelation($publicId, $identity['corporate_id']);
-
-        // Encrypt data to send to the ProxyApi
-        $crypterInit = new CrypterService($this->params);
-        $crypterInit->setData($identity);   
-
-        $encryptedData = $crypterInit->encryptData();
-
-        // Build authorization headers and response
-        $authHelperInit = new AuthorizationHelper(
-            $this->params->get('SERVICE_API_KEY'),
-            $this->params->get('SERVICE_API_SECRET'),
-            $this->logger
-        );
-
-        $header = $authHelperInit->getAuthHeader($encryptedData);
-        $iv64 = $authHelperInit->getIvBase64();
-
-        return $authHelperInit->buildResponse(
-            $header,
-            $encryptedData,
-            $iv64
-        );
+        return $this->subscriptionInitializationHandler()->handle($data);
     }
 
-    public function updateSubscriptionData($corporateFollowUpData): CorporateIdentity|Array
+    public function updateSubscriptionData(array $corporateFollowUpData): CorporateIdentity|array
     {
-        try {      
+        try {
+            return $this->updateSubscriptionDataOrFail($corporateFollowUpData);
+        } catch (CorporateRegistrationException $exception) {
+            $errorPayload = [
+                'error' => true,
+                'message' => $exception->getMessage(),
+            ];
 
-            if (
-                !isset($corporateFollowUpData['updateIdentity']['corporateId']) ||
-                empty($corporateFollowUpData['updateIdentity']['corporateId'])
-            ) {            
-                return [
-                    'error' => true,
-                    'message' => 'CorporateId missing in the follow-up data'
-                ]; 
+            if ($exception->getErrorData() !== []) {
+                $errorPayload['data'] = $exception->getErrorData();
             }
 
-            $corporate = $this->corporateIdentityRepository->findOneBy([
-                'corporateId' => $corporateFollowUpData['updateIdentity']['corporateId']
-            ]);
-
-            if (!$corporate) {
-                return [
-                    'error' => true,
-                    'message' => 'CorporateId is not registrated in the database'
-                ];           
-            }
-
-            return $this->corporateRegistrationDatabaseService->addFollowUpData($corporate, $corporateFollowUpData);
-        } catch (CorporateRegistrationException $e) {
-            return [
-                'error' => true,
-                'message' => $e->getMessage(),
-                'data' => $e->getErrorData()
-            ];
-        } catch (\Throwable $e) {
-            return [
-                'error' => true,
-                'message' => $e->getMessage()
-            ];
+            return $errorPayload;
         }
     }
 
-    public function getSelectedSubscription($businessSubscriptionId){   
-      $this->logger->info('CorporateRegistrationService getSelectedSubscription started.', [
-            'business_subscription_id' => $businessSubscriptionId,
+    public function updateSubscriptionDataOrFail(array $corporateFollowUpData): CorporateIdentity
+    {
+        return $this->followUpUpdater()->handle($corporateFollowUpData);
+    }
+
+    public function getSelectedSubscription(mixed $businessSubscription): ?string
+    {
+        $this->logger->info('CorporateRegistrationService getSelectedSubscription started.', [
+            'business_subscription_id' => is_object($businessSubscription) && method_exists($businessSubscription, 'getId')
+                ? $businessSubscription->getId()
+                : $businessSubscription,
         ]);
 
-      $business = $this->businessServicesRepository->findOneBy(['id' => $businessSubscriptionId]);
+        $business = $this->resolveBusinessSubscription($businessSubscription);
 
-        foreach((array)$business as $key => $value){
-            if($value === true){                
+        if ($business === null) {
+            $this->logger->warning('CorporateRegistrationService getSelectedSubscription could not resolve business model.', [
+                'business_subscription_id' => is_scalar($businessSubscription) ? $businessSubscription : null,
+            ]);
+
+            return null;
+        }
+
+        foreach (self::BUSINESS_SUBSCRIPTION_MAP as $property => $businessModel) {
+            $getter = 'is' . ucfirst($property);
+
+            if ($property === 'passwordManager') {
+                $getter = 'isPasswordManager';
+            }
+
+            if ($business->$getter() === true) {
                 $this->logger->info('CorporateRegistrationService getSelectedSubscription resolved business model.', [
-                    'business_subscription_id' => $businessSubscriptionId,
-                    'business_model' => $key,
+                    'business_subscription_id' => $business->getId(),
+                    'business_model' => $businessModel,
                 ]);
 
-                return $key;
+                return $businessModel;
             }
         }
 
         $this->logger->warning('CorporateRegistrationService getSelectedSubscription could not resolve business model.', [
-            'business_subscription_id' => $businessSubscriptionId,
+            'business_subscription_id' => $business->getId(),
         ]);
+
+        return null;
     }
 
-    public function accessDataByKey($payload, $key)
-    {   
+    public function accessDataByKey(array $payload, string $key): array
+    {
         $this->logger->info('CorporateRegistrationService accessDataByKey started.', [
             'key' => $key,
-            'payload_keys' => is_array($payload) ? array_keys($payload) : [],
+            'payload_keys' => array_keys($payload),
         ]);
 
         $validatedPayload = $this->requestService->validPayload($payload);
         $dataJson = $validatedPayload[$key];
 
-        $resolvedData = json_decode($dataJson, true);
+        if (!is_string($dataJson) || $dataJson === '') {
+            throw new \InvalidArgumentException(sprintf('Payload segment "%s" must be a non-empty JSON string.', $key));
+        }
+
+        try {
+            $resolvedData = json_decode($dataJson, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $exception) {
+            throw new \InvalidArgumentException(sprintf('Payload segment "%s" must contain valid JSON.', $key), 0, $exception);
+        }
+
+        if (!is_array($resolvedData)) {
+            throw new \InvalidArgumentException(sprintf('Payload segment "%s" must decode to an array.', $key));
+        }
 
         $this->logger->info('CorporateRegistrationService accessDataByKey resolved payload segment.', [
             'key' => $key,
@@ -188,5 +150,50 @@ class CorporateRegistrationService
         ]);
 
         return $resolvedData;
-    }    
+    }
+
+    private function encryptAndBuildResponse(array $payload): array
+    {
+        return $this->corporateAuthorizedResponseFactory->create($payload);
+    }
+
+    private function businessRegistrationHandler(): CorporateBusinessRegistrationHandler
+    {
+        return new CorporateBusinessRegistrationHandler(
+            $this->corporateRegistrationDatabaseService,
+            $this->corporateAuthorizedResponseFactory,
+        );
+    }
+
+    private function subscriptionInitializationHandler(): CorporateSubscriptionInitializationHandler
+    {
+        return new CorporateSubscriptionInitializationHandler(
+            $this->identityService,
+            $this->corporateRegistrationDatabaseService,
+            $this->corporateAuthorizedResponseFactory,
+        );
+    }
+
+    private function followUpUpdater(): CorporateFollowUpUpdater
+    {
+        return new CorporateFollowUpUpdater(
+            $this->corporateIdentityRepository,
+            $this->corporateRegistrationDatabaseService,
+        );
+    }
+
+    private function resolveBusinessSubscription(mixed $businessSubscription): ?object
+    {
+        if ($businessSubscription instanceof \App\Entity\BusinessServices) {
+            return $businessSubscription;
+        }
+
+        if (is_int($businessSubscription)) {
+            $resolved = $this->businessServicesRepository->findOneBy(['id' => $businessSubscription]);
+
+            return $resolved instanceof \App\Entity\BusinessServices ? $resolved : null;
+        }
+
+        return null;
+    }
 }

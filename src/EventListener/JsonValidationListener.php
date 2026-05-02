@@ -1,21 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\EventListener;
 
-use Symfony\Component\HttpKernel\Event\ControllerEvent;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
+use App\Attribute\RequireJson;
 use App\Helper\UtilityHelper;
-use ReflectionMethod;
+use App\Http\ApiErrorResponseFactory;
 use Psr\Log\LoggerInterface;
+use ReflectionMethod;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 class JsonValidationListener
 {
-    private LoggerInterface $logger;
+    private const INVALID_CONTENT_TYPE_ERROR = 'Invalid Content-Type, expected application/json';
 
-    public function __construct(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly ApiErrorResponseFactory $apiErrorResponseFactory,
+    ) {
     }
 
     public function onKernelController(ControllerEvent $event): void
@@ -30,44 +34,43 @@ class JsonValidationListener
         }
 
         [$controllerObject, $methodName] = $controller;
-        $refMethod = new \ReflectionMethod($controllerObject, $methodName);
+        $refMethod = new ReflectionMethod($controllerObject, $methodName);
 
-        $attributes = $refMethod->getAttributes(\App\Attribute\RequireJson::class);
+        $attributes = $refMethod->getAttributes(RequireJson::class);
         if (empty($attributes)) {
             return;
         }
 
         $request = $event->getRequest();
-
-
-      //  $result = UtilityHelper::validateJsonFormat($request);        
-
         $contentType = $request->headers->get('Content-Type', '');
 
         if (!str_contains($contentType, 'application/json')) {
-            $event->setController(fn() => new JsonResponse([
-                'error' => 'Invalid Content-Type, expected application/json',
-            ], 415)); // 415 Unsupported Media Type
+            $this->setErrorController($event, self::INVALID_CONTENT_TYPE_ERROR, 415);
+
             return;
         }
 
         try {
-            $result = UtilityHelper::validateJsonFormat($request);           
-        } catch (\Throwable $e) {
-            $event->setController(fn() => new JsonResponse([
-                'error' => 'JSON validation failed: ' . $e->getMessage()
-            ], 400));
+            $result = UtilityHelper::validateJsonFormat($request);
+        } catch (\Throwable $exception) {
+            $this->logger->critical('JSON validation failed.', ['exception' => $exception::class]);
+            $this->setErrorController($event, 'Invalid JSON payload', 400);
+
             return;
         }
 
         if (isset($result['error'])) {
-            $this->logger->critical(json_encode("Something went wrong"));
-            $event->setController(fn() => new JsonResponse([
-                'error' => 'Json validation error: 400 Bad Request : ' . $result['error']
-            ], 400));
+            $this->logger->critical('JSON validation failed.', ['error' => $result['error']]);
+            $this->setErrorController($event, 'Invalid JSON payload', 400);
+
             return;
         }
 
         $request->attributes->set('json_payload', $result);
+    }
+
+    private function setErrorController(ControllerEvent $event, string $message, int $statusCode): void
+    {
+        $event->setController(fn() => $this->apiErrorResponseFactory->create($message, $statusCode));
     }
 }

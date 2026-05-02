@@ -3,24 +3,20 @@
 namespace App\Controller\CredentialHub\Vault\Delete;
 
 use App\Service\AccessRegistry\CredentialHubHandler\DeleteApplication;
-use App\Service\AuthBridge\AuthBridgeService;
-use App\Service\QrService\QrService;
-use App\Controller\CredentialHub\SharedService;
+use App\Service\CredentialHub\SharedPayloadService;
 
 
 class VaultDeleteService
 {
-        public function __construct(
-            private DeleteApplication $deleteApplicationHandler,
-            private AuthBridgeService $authBridgeService,
-            private QrService $qrService,
-            private SharedService $sharedService
+    public function __construct(
+        private DeleteApplication $deleteApplicationHandler,
+        private SharedPayloadService $sharedPayloadService,
     ) {}
 
     public function deleteApplication($process):array
-    {        
-        $deleteApplicationDto = $this->sharedService->getApplicationDto($process);
+    {
+        $deleteApplicationDto = $this->sharedPayloadService->getApplicationDto($process);
 
         return $this->deleteApplicationHandler->deleteApplication($deleteApplicationDto);
-    }    
+    }
 }

@@ -1,32 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\AccessRegistry;
 
-use Doctrine\ORM\EntityManagerInterface;
 use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
-use Psr\Log\LoggerInterface;
 use App\Service\AccessRegistry\CredentialHubResolver\ResolverService;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\Cache\ProcessStateCacheService;
+use Doctrine\ORM\EntityManagerInterface;
+use JsonException;
+use Psr\Log\LoggerInterface;
 
 class AccessRegistryVaultService
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,
-        private LoggerInterface $logger,
-        private ProcessStateCacheService $processStateCacheService,
-        private ResolverService $resolverService,
-        private AuthBridgeService $authBridgeService
+        private readonly EntityManagerInterface $entityManager,
+        private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,
+        private readonly LoggerInterface $logger,
+        private readonly ProcessStateCacheService $processStateCacheService,
+        private readonly ResolverService $resolverService,
+        private readonly AuthBridgeService $authBridgeService
     ) {}
 
-    public function editApplicationAccessRegistry(array $userData)
+    public function editApplicationAccessRegistry(array $userData): void
     {
-        $processKey = 'registrationProcessId';
         $processId = $userData['registrationProcessId'];
 
         $this->resolverService->getDelete()->deleteAccessRegistry($userData['targetId']);
-       // $this->authBridgeService->updateProcessState($processKey, $processId);
+       // $this->authBridgeService->updateProcessState('registrationProcessId', $processId);
 
         // Create new
         $userData['registrationState'] = true;
@@ -44,12 +46,21 @@ class AccessRegistryVaultService
         ]);
     }    
 
-    
-    private function writeLoginEntryInRedis(string $processId, array $status) {       
+    private function writeLoginEntryInRedis(string $processId, array $status): void
+    {
         $this->processStateCacheService->set(
             $processId,
-            json_encode($status, JSON_UNESCAPED_UNICODE),
+            $this->encodeJson($status, JSON_UNESCAPED_UNICODE),
             300
         );
+    }
+
+    private function encodeJson(array $payload, int $flags = 0): string
+    {
+        try {
+            return json_encode($payload, JSON_THROW_ON_ERROR | $flags);
+        } catch (JsonException $exception) {
+            throw new \RuntimeException('JSON encoding failed.', 0, $exception);
+        }
     }
 }

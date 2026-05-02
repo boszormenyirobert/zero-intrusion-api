@@ -67,14 +67,23 @@ class RestoreService
      */
     private function initialization()
     {
-        $apiKey = $this->params->get('VONAGE_API_KEY');
-        $apiSecret = $this->params->get('VONAGE_API_SECRET');
-
-        $basic  = new \Vonage\Client\Credentials\Basic($apiKey, $apiSecret);
-        $this->vonageClient = new \Vonage\Client($basic);
-
         $this->pin = $this->utilityHelper->generatePin();
         $this->restoreHash = $this->utilityHelper->getRestoreHash();
+    }
+
+    private function getVonageClient(): \Vonage\Client
+    {
+        if ($this->vonageClient instanceof \Vonage\Client) {
+            return $this->vonageClient;
+        }
+
+        $apiKey = $this->params->get('VONAGE_API_KEY');
+        $apiSecret = $this->params->get('VONAGE_API_SECRET');
+        $basic = new \Vonage\Client\Credentials\Basic($apiKey, $apiSecret);
+
+        $this->vonageClient = new \Vonage\Client($basic);
+
+        return $this->vonageClient;
     }
 
     /**
@@ -100,7 +109,7 @@ class RestoreService
         $text = "Your Pin: " . $this->pin;
 
         try {
-            $response = $this->vonageClient->sms()->send(
+            $response = $this->getVonageClient()->sms()->send(
                 new \Vonage\SMS\Message\SMS($phone, "EasyLogin", $text)
             );
 

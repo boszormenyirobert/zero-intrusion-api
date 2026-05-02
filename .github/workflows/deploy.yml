@@ -2,11 +2,32 @@ name: Deploy via SSH with password
 
 on:
   push:
-    branches: [ main-deactivated ]
+    branches: [ main ]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run test suite
+        run: php bin/phpunit
+
   deploy:
     runs-on: ubuntu-latest
+    needs: test
 
     steps:
       - name: Install sshpass

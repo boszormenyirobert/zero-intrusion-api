@@ -4,13 +4,13 @@ namespace App\Controller\CredentialHub\Domain\Read;
 
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Controller\PayloadValidator\PayloadValidator;
-use Symfony\Component\HttpFoundation\Request;
 use App\DTO\QR\DomainReadQrContentDTO;
 use App\Repository\CorporateIdentityRepository;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Repository\AccessRegistryRepository;
 use Psr\Log\LoggerInterface;
 use App\Service\Notifier\NotifierService;
+use App\DTO\QR\CredentialHubIdentityDTO;
 
 class DomainReadService
 {
@@ -24,15 +24,13 @@ class DomainReadService
         private NotifierService $notifierService
     ) {}
 
-    public function getQrContent($domain, $mobilXExtensionAuth, $identity): DomainReadQrContentDTO
+    public function getQrContent(string $domain, CredentialHubIdentityDTO $identity): DomainReadQrContentDTO
     {
         return new DomainReadQrContentDTO(
             $domain,
-            $identity->getDomainProcessId(),
-            $mobilXExtensionAuth,
+            $identity,
             'domain-login',
-            'extension',
-             $identity->getIv()
+            'extension'
         );
     }
 
@@ -44,6 +42,7 @@ class DomainReadService
         ) {
             return false;
         }
+                 $this->logger->critical("processCredentialRead: " . json_encode($user));
 
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {

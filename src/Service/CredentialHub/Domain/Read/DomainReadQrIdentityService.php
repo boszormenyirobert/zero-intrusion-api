@@ -11,6 +11,13 @@ use App\Service\CredentialHub\SharedNotificationService;
 use App\Service\QrService\QrService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Service\Cache\ProcessStateCacheService;
+use App\Repository\AccessRegistryRepository;
+use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
+use App\Service\AuthBridge\AuthBridgeHandler\Domain\Encryptor;
+use App\DTO\QR\StoreDTO;
+use App\DTO\QR\CredentialHubIdentityDTO;
+use App\DTO\QR\DomainReadQrContentDTO;
 
 class DomainReadQrIdentityService
 {
@@ -20,13 +27,20 @@ class DomainReadQrIdentityService
         private readonly DomainReadService $domainReadService,
         private readonly SharedNotificationService $sharedNotificationService,
         private readonly LoggerInterface $logger,
+        private readonly ProcessStateCacheService $processStateCacheService,
+        private readonly AccessRegistryRepository $accessRegistryRepository,
+        private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseUserService,
+        private readonly Encryptor $encryptor
+
     ) {
     }
 
     public function handle(DomainReadQrIdentityRequestDTO $request, ValidatorInterface $validator): array
     {
         $identity = $this->authBridgeService->generateRequestIdentity('domainProcessId');
-        $qrContent = $this->domainReadService->getQrContent($request->domain, $identity->getXExtensionAuthOne(), $identity);
+        $identity->setPublicKey($request->publicKey);
+
+        $qrContent = $this->domainReadService->getQrContent($request->domain, $identity);
         $errors = $validator->validate($qrContent);
 
         if (count($errors) > 0) {
@@ -35,12 +49,41 @@ class DomainReadQrIdentityService
             }
         }
 
-        $identity->setQrCode($this->qrService->getQrCode($qrContent));
+        $this->setCacheKey($identity->getQrCacheKey(), $qrContent);
 
-        if ($request->userPublicId !== null && $request->userPublicId !== '') {
-            $this->sharedNotificationService->sendFcmNotification('domainRead', $request->userPublicId, $qrContent);
-        }
+        $identity->setQrCode($this->qrService->getQrCode(['qrCacheKey' => $identity->getQrCacheKey(),'type' => 'domain-login']));                           
+
+        // Auto notify if userPublicId is provided
+        $this->handleNotification($request, $identity, $qrContent);      
 
         return $identity->toProcessArray('domainProcessId');
+    }
+
+    public function handleNotification(
+        DomainReadQrIdentityRequestDTO $identityRequestDTO, 
+        CredentialHubIdentityDTO $identity, 
+        DomainReadQrContentDTO $qrContent): void
+        {
+        if ($identityRequestDTO->userPublicId !== null && $identityRequestDTO->userPublicId !== '') {
+
+
+
+            $storeDTO = new StoreDTO($identityRequestDTO->domain, $identityRequestDTO->userPublicId);
+            $credentialCacheKey = 'credentialCacheKey_' . $identity->getQrCacheKey();
+            $credentials = $this->encryptor->preapredCredentials($storeDTO);
+
+            $this->setCacheKey($credentialCacheKey, $credentials);
+           
+            $qrContent->setCredentialCacheKey($credentialCacheKey);
+
+            $santizedQrContent = $qrContent->toNotification();
+
+            $this->sharedNotificationService->sendFcmNotification('domainRead', $identityRequestDTO->userPublicId, $qrContent);
+        }        
+    }
+
+    private function setCacheKey(string $key, DomainReadQrContentDTO|array $value)
+    {
+        $this->processStateCacheService->set($key, $value, 30);
     }
 }

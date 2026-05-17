@@ -27,6 +27,31 @@ class DomainReadStateService
             return null;
         }
 
-        return $this->sharedProcessPoller->pollTheRedis($processId, $this->authBridgeService, 'domain');
+        $fullResponse = $this->sharedProcessPoller->pollTheRedisDefault($processId);
+        
+        
+        return $this->sanitizeResponse($fullResponse['cache'] ?? []);
+        // return $fullResponse['cache'] ?? [];
+    }
+
+    private function sanitizeResponse(array $payload): array
+    {   
+        unset($payload['process']);
+        unset($payload['validation']);
+        unset($payload['process_check']);
+        unset($payload['success']);
+        unset($payload['domain']);
+        unset($payload['domainProcessId']);
+        unset($payload['source']);
+        unset($payload['publicKey']);
+        unset($payload['qrCacheKey']);
+        unset($payload['publicId']);
+        unset($payload['privateId']);
+        unset($payload['update']);
+        unset($payload['type']);
+        unset($payload['email']);
+
+
+        return $payload;    
     }
 }

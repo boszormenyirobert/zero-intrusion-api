@@ -39,11 +39,18 @@ class Identity
 
         $secret = (string) $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
         $message = (string) $this->params->get('EXTENSION_REGISTRATION_POOL_MESSAGE');
+        $qrKey = (string) $this->generateQrCacheKey();
 
         $identity->setXExtensionAuthOne(hash_hmac('sha256', $message . '|' . $createdAt, $secret));
         $identity->setXExtensionAuthTwo(hash_hmac('sha1', $message . '|' . $createdAt, $secret));
+        $identity->setQrCacheKey($qrKey);
 
         return $identity;
+    }
+
+    private function generateQrCacheKey(): string
+    {
+        return bin2hex(random_bytes(16));
     }
 
     /**

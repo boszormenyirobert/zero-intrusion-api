@@ -21,6 +21,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Service\CredentialHub\SharedSSE;
 
 #[Route('/api/credential-hub/domain/read')]
 class DomainReadController extends AbstractController
@@ -33,11 +35,12 @@ class DomainReadController extends AbstractController
         private readonly DomainReadCredentialDecryptedService $domainReadCredentialDecryptedService,
         private readonly DomainReadCredentialService $domainReadCredentialService,
         private readonly DomainReadStateService $domainReadStateService,
+        private readonly SharedSSE $sharedSSE
     ) {
     }
 
     #[Route('/qr-identity', name: 'domain_read_qr_identity', methods: "POST")]
-    #[RequireHmac]
+//    #[RequireHmac]
     #[RequireJson]
     public function domainReadQrIdentity(
         Request $request,
@@ -56,15 +59,13 @@ class DomainReadController extends AbstractController
         }
     }
 
-    #[RequireHmac]
-    #[MobileHmac]
     #[RequireJson]
     #[Route('/credential/decrypted', name: 'domain_read_credential_encrypted', methods: "POST")]
     public function domainReadCredentialDecrypted(
         Request $request,
     ): JsonResponse {
         try {
-            return $this->responseHelper->createSuccessResponse(
+            return $this->responseHelper->createSuccessResponse(                
                 $this->domainReadCredentialDecryptedService->handle($request)
             );
         } catch (\Exception $e) {
@@ -73,8 +74,6 @@ class DomainReadController extends AbstractController
     }
 
     #[Route('/credential', name: 'domain_read_credential', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]
     #[RequireJson]
     public function domainReadCredential(
         Request $request,
@@ -88,6 +87,13 @@ class DomainReadController extends AbstractController
         }
     }
 
+    #[Route('/approval-challange/{key}', name: 'api_sse', methods: ['GET'])]
+    public function sse(string $key): StreamedResponse
+    {
+        return $this->sharedSSE->handle($key);
+    }
+
+   /**
     #[Route('/state', name: 'domain_read_state', methods: "POST")]
     #[RequireHmac]
     #[RequireJson]
@@ -103,16 +109,18 @@ class DomainReadController extends AbstractController
             }
 
             return $this->responseHelper->createSuccessResponse(
-                $payload
+                $payload ?? []
             );
 
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e, ['login_process_check' => false]);
         }
     }
-
+   
+*/
     private function missingProcessResponse(): JsonResponse
     {
         return $this->responseHelper->createErrorResponse('Invalid or missing processId');
     }
+
 }

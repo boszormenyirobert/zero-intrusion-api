@@ -23,7 +23,7 @@ class HmacMobileValidationListener
     private const INVALID_JSON_ERROR = 'Invalid JSON body';
     private const MISSING_FIELDS_ERROR = 'Missing required fields';
     private const INVALID_DECRYPTED_PAYLOAD_ERROR = 'Decryption failed or invalid structure';
-    private const MISSING_PAYLOAD_KEY_ERROR = 'payloadKey missing or null';
+    private const MISSING_PAYLOAD_KEY_ERROR = 'PayloadKey missing or null';
     private const INVALID_HMAC_ERROR = 'Invalid or expired HMAC from the extension';
 
     public function __construct(

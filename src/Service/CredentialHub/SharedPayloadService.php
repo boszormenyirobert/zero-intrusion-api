@@ -51,7 +51,7 @@ class SharedPayloadService
     public function getPayload(Request $request, string $payloadKey): array
     {
         $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
-
+        
         return $this->decodePayloadValue($validatedPayload[$payloadKey] ?? null, $payloadKey);
     }
 
@@ -72,6 +72,24 @@ class SharedPayloadService
         }
 
         if ($payload === [] || empty($payload['processId'])) {
+            return false;
+        }
+
+        return $payload['processId'];
+    }
+    public function getProcessIdRefact(Request $request, string $payloadKey, bool $fullPayload = false): array|string|false
+    {
+        $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
+                $this->logger->info('validatedPayload', [
+            'payload_keys' => array_keys($validatedPayload),
+        ]);
+        $payload = $this->decodePayloadValue($validatedPayload[$payloadKey] ?? null, $payloadKey);
+        
+        if ($fullPayload) {
+            return $payload;
+        }
+
+        if ($payload === [] || empty($payload['domainProcessId'])) {
             return false;
         }
 

@@ -9,6 +9,7 @@ final readonly class DomainReadQrIdentityRequestDTO
     public function __construct(
         public ?string $domain,
         public ?string $userPublicId,
+        public ?string $publicKey,
     ) {
     }
 
@@ -17,6 +18,7 @@ final readonly class DomainReadQrIdentityRequestDTO
         return new self(
             $payload['domain'] ?? null,
             $payload['userPublicId'] ?? null,
+            $payload['publicKey'] ?? null,
         );
     }
 }

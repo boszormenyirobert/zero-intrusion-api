@@ -28,7 +28,8 @@ class SharedProcessPoller
             return [];
         }
 
-        return $this->jsonPayloadDecoder->decodeArray($cachedValue) ?? [];
+        $data = json_decode($cachedValue, true);
+        return $data;
     }
 
     public function getChacheByProcessId(string $processId): array
@@ -70,12 +71,12 @@ class SharedProcessPoller
     {
         $startTime = microtime(true);
         $maxWait = 8;
-        $response = null;
+        $response = [];
 
         do {
-            $response = $this->getCacheByProcessId($processId);
-
-            if (($response['process_check'] ?? false) === true) {
+            $value = $this->getCacheByProcessId($processId);
+            if (is_array($value) && !empty($value)) {
+                $response['cache'] = $value;
                 break;
             }
 
@@ -86,7 +87,9 @@ class SharedProcessPoller
             usleep(250000);
         } while (true);
 
-        return $response ?? [];
+        $this->logger->debug('-------------------------- 4 Polling result: ' . json_encode($response));
+
+        return $response;
     }
 
     public function pollTheRedisOneTouch(string $processId, string $processType): array

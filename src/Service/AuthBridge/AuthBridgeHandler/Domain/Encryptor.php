@@ -17,6 +17,7 @@ use App\Service\Crypters\SodiumService;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use App\Service\Firebase\FirebaseService;
+use App\DTO\QR\StoreDTO;
 
 class Encryptor
 {
@@ -36,13 +37,16 @@ class Encryptor
     // Set decrypted values for domain login
     public function setDecryptedValuesForDomain(array $user): bool
     {
-        $credentialsCollection = $this->formatCredentials($user, 'decrypted');
+       // $this->logger->info(json_encode($user));
+       //  $credentialsCollection = $this->formatCredentials($user, 'decrypted');
 
-        if (!$credentialsCollection) {
+       // $credentialsCollection = $user['credentials'];
+
+        if (!$user) {
             return false;
         }
         
-        return $this->updateLoginEntry($user, $credentialsCollection);
+        return $this->updateLoginEntry($user);
     }
 
     public function setDecryptedUserIdentity(array $user): bool
@@ -73,6 +77,13 @@ class Encryptor
         );
     }
 
+    public function preapredCredentials(StoreDTO $storeDTO): array{
+        $pages = $this->accessRegistryRepository->findBy(['publicId' =>  $storeDTO->userPublicId]);                               
+
+        $apps = $this->extractCredentialsForDomain($pages, $storeDTO->domain);
+        $credentials = $this->formatCredentials(['credentials' => $apps], 'credential'); 
+        return $credentials;
+    }
 
     // Extract the credentials, description and targetId from the database by publicId and domain
     // Decrypt by database key    
@@ -122,8 +133,10 @@ class Encryptor
     // Update the login entry with the by user secret decrypted credentials
     // Write the encrypted credentials in Redis cache => key is the processId. 
     // To the encryption use the iv saved in the AuthBridge entry and the general database secret
-    private function updateLoginEntry(array $user, array $credentialsCollection): bool
+    private function updateLoginEntry(array $user): bool
     {
+         $this->logger->critical("updateLoginEntry: " . $user['domainProcessId']);
+
         $authBridge = $this->authBridgeRepository->findOneBy(['domainProcessId' => $user['domainProcessId']]);
 
         if (!$authBridge) {
@@ -131,6 +144,7 @@ class Encryptor
             return false;
         }
 
+        /**
         $iv = base64_decode($authBridge->getIv());
         $dbEncryptedCredentials = [];
         foreach ($credentialsCollection as $credentialData) {
@@ -143,11 +157,16 @@ class Encryptor
 
 
         $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($dbEncryptedCredentials, $iv);
+         */
         $authBridge->setProcessState(true);
-        $authBridge->setApplications($databaseEncryptedCredentialsList);
+        //$authBridge->setApplications($databaseEncryptedCredentialsList);
 
-        //$this->loginDatabaseService->addUserLogin($authBridge); 
-        $this->writeLoginEntryInRedis($user['domainProcessId'], $authBridge);
+        $this->loginDatabaseService->addUserLogin($authBridge); 
+
+       // $this->writeLoginEntryInRedis($user['domainProcessId'], $credentialsCollection);
+            $this->processStateCacheService->set(
+            $user['domainProcessId'], json_encode($user)
+        );
 
         return true;
     }

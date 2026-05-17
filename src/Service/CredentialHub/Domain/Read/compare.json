@@ -1,0 +1,28 @@
+[
+    2026-05-13T00: 25: 33.447093+02: 00
+] app.INFO: Stored qr data key: {
+    "domain": "hub.local:8082",
+    "domainProcessId": "NM8afB7gXVbeOheZT9RR4Q",
+    "xExtensionAuthOne": "5da607211afe49a7def9515064663fd67ad4b47685c2bfec837a4950c73813a1",
+    "type": "domain-login",
+    "source": "extension",
+    "iv": "mP3hPnvHjY3Vf7mkqDNKlQ==",
+    "publicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuwGtdchSZwpGlXhz30CBpnIZmHEP4z7G85MJRfL6hHyNJmke9s96rUyCsyiv72NCjUXIYhd7Za1x1fpJG96C7sNOA2uyAmTzuU3xC8A9rhVU1tx8LWKSo4kDUcsdf7hZ55HQ1igSatqvYatxmMt8FFkSQMz2Q9MfUfg8lkN8bPaNBEA1j+qwKidqa1NmUyfxIWzkDN92aksGpgpxPU0I\/kxQgUoApI6ijkhTg3rsgwBvuvu42oqxBwhgtmJUa9DjJqlZ0Ilp6EuaM6RC+q0wiskuSc5PCPyjs8MxkMxF2R28vpaRxPkGWButObha1PXMCUhfiCeo6F7WNY1FKmoiowIDAQAB",
+    "qrCacheKey": "dba0ea05a3e7aeb94f9c5e08a16bda92"
+} [] []
+[
+    2026-05-13T00: 25: 33.447217+02: 00
+] app.INFO: Old qr data by process: {
+    "domain": "hub.local:8082",
+    "domainProcessId": "NM8afB7gXVbeOheZT9RR4Q",
+    "type": "domain-login",
+    "source": "extension",
+    "iv": "mP3hPnvHjY3Vf7mkqDNKlQ==",
+    "publicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuwGtdchSZwpGlXhz30CBpnIZmHEP4z7G85MJRfL6hHyNJmke9s96rUyCsyiv72NCjUXIYhd7Za1x1fpJG96C7sNOA2uyAmTzuU3xC8A9rhVU1tx8LWKSo4kDUcsdf7hZ55HQ1igSatqvYatxmMt8FFkSQMz2Q9MfUfg8lkN8bPaNBEA1j+qwKidqa1NmUyfxIWzkDN92aksGpgpxPU0I\/kxQgUoApI6ijkhTg3rsgwBvuvu42oqxBwhgtmJUa9DjJqlZ0Ilp6EuaM6RC+q0wiskuSc5PCPyjs8MxkMxF2R28vpaRxPkGWButObha1PXMCUhfiCeo6F7WNY1FKmoiowIDAQAB",
+    "qrCacheKey": "dba0ea05a3e7aeb94f9c5e08a16bda92",
+    "publicId": "9U84HLAKeIsRZIB4ymGEqpNjDWGVspGjHmjcqF7IGTOOY",
+    "privateId": "Ba7FM9TBdso\/B2ngUyOx\/27NVauFt2bBdhMX6j8qnv1Q9FvRlrrgUyV2bg+fhW41Leyw+O5VSSANRA1frq7QiqE7ScupaiOcnqXby83dqQ155LU=",
+    "email": "boszormenyirobert@yahoo.com",
+    "update": false,
+    "credentials": []
+} [] []

@@ -11,6 +11,8 @@ class CredentialHubIdentityDTO
     public ?string $createdAt;
     public ?string $xExtensionAuthOne;
     public ?string $xExtensionAuthTwo;
+    public ?string $publicKey = null;
+    public ?string $qrCacheKey = null;
 
     public ?string $secret;
     public ?string $iv;
@@ -167,7 +169,7 @@ class CredentialHubIdentityDTO
     {
         return match ($processKey) {
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
-            'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
+            'domainProcessId' => $this->buildReadProcessArray('domainProcessId', $this->domainProcessId),
             'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
             'applicationProcessId' => $this->buildProcessArray('applicationProcessId', $this->applicationProcessId),
             'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
@@ -208,9 +210,26 @@ class CredentialHubIdentityDTO
             'secret' => $this->secret,
             'iv' => $this->iv,
             $processKey => $processId,
-            'qrCode' => $this->qrCode
+            'qrCode' => $this->qrCode,
+            'publicKey' => $this->publicKey,
+            'qrCacheKey' => $this->qrCacheKey,
         ];
     }
+    private function buildReadProcessArray(string $processKey, ?string $processId): array
+    {
+        return [
+        //    'validCommunication' => $this->validCommunication,
+        //    'createdAt' => $this->createdAt,
+        //    'xExtensionAuthOne' => $this->xExtensionAuthOne,
+        //    'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
+        //    'secret' => $this->secret,
+        //    'iv' => $this->iv,       
+        //    'qrCode' => $this->qrCode,            
+        //    'publicKey' => $this->publicKey,
+               $processKey => $processId,   // the session-flow identifier for the domain login process
+              'qrCacheKey' => $this->qrCacheKey, // the key to find the QR content in cache, used by the extension to pull the QR content for the domain login process
+        ];
+    }    
 
     /**
      * Get the value of qrCode
@@ -261,5 +280,25 @@ class CredentialHubIdentityDTO
         $this->oneTouchProcessId = $oneTouchProcessId;
 
         return $this;
+    }
+
+    public function setPublicKey(?string $publicKey): void
+    {
+        $this->publicKey = $publicKey;
+    }
+
+    public function getPublicKey(): ?string
+    {
+        return $this->publicKey;
+    }
+
+    public function setQrCacheKey(?string $qrCacheKey): void
+    {
+        $this->qrCacheKey = $qrCacheKey;
+    }
+
+    public function getQrCacheKey(): ?string
+    {
+        return $this->qrCacheKey;
     }
 }

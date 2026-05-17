@@ -11,13 +11,13 @@ class QrService
     /**
      * Generate a base64-encoded PNG QR code from input data.
      *
-     * @param array $data Associative array to encode into the QR code
+     * @param QrInterface $data Data object implementing QrInterface to encode into the QR code
      * @return string Base64-encoded PNG QR image
      */
-    public function getQrCode(QrInterface $data): string
+    public function getQrCode(QrInterface|array $data): string
     {
         // JSON encode with unescaped slashes for cleaner URLs
-        $jsonData = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $jsonData = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
         // Instantiate the QR code with JSON content
         $qrCode = new QrCode($jsonData);

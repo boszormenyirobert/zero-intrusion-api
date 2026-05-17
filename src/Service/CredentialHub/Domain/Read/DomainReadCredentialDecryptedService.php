@@ -9,6 +9,7 @@ use App\Controller\CredentialHub\PayloadKeys;
 use App\Service\CredentialHub\SharedPayloadService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use App\Service\Cache\ProcessStateCacheService;
 
 class DomainReadCredentialDecryptedService
 {
@@ -16,18 +17,41 @@ class DomainReadCredentialDecryptedService
         private readonly SharedPayloadService $sharedPayloadService,
         private readonly DomainReadService $domainReadService,
         private readonly LoggerInterface $logger,
+        private readonly ProcessStateCacheService $processStateCacheService
     ) {
     }
 
     public function handle(Request $request): array
     {
         $user = $this->sharedPayloadService->getPayload($request, PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED);
-        $processId = $user['domainProcessId'] ?? 'missing';
 
-        $this->logger->info(sprintf('domainReadCredentialDecrypted started for processId: %s', $processId));
-        $response = $this->domainReadService->getDecryptedCredentials($user);
-        $this->logger->info(sprintf('domainReadCredentialDecrypted finished for processId: %s', $processId));
+        $result = $this->returnFromCache($user) ?  $this->returnFromCache($user) : $this->returnFromDatabase($user);                
+        return $result;
+    }
 
-        return ['credentials' => $response];
+    private function returnFromCache(array $user): array|false
+    {   
+
+        if (array_key_exists('credentialCacheKey', $user) && array_key_exists('qrCacheKey', $user) && ($user['credentialCacheKey'] !== $user['qrCacheKey'])) {
+
+            $response = $this->processStateCacheService->get($user['credentialCacheKey'] ?? 'missing') ?? ['credentials' => []];
+
+            return ['credentials' => $response, 'validation' => true];
+        }  
+        return false;      
+    }
+
+    private function returnFromDatabase($user): array{
+        $storedQrData = (array)$this->processStateCacheService->get($user['qrCacheKey'] ?? 'missing');
+        $storedQrData = array_merge($storedQrData, $user);
+
+        $decoded = (array)$storedQrData;
+
+        $decoded['publicId'] = $user['publicId'] ?? 'missing publicId';
+    //    $decoded['privateId'] = $user['privateId'] ?? 'missing privateId';
+       
+        $response = $this->domainReadService->getDecryptedCredentials($decoded);
+
+        return ['credentials' => $response, 'domainProcessId' => $storedQrData['domainProcessId'], 'publicKey' => $storedQrData['publicKey'] ];
     }
 }

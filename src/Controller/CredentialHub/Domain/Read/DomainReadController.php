@@ -40,7 +40,6 @@ class DomainReadController extends AbstractController
     }
 
     #[Route('/qr-identity', name: 'domain_read_qr_identity', methods: "POST")]
-//    #[RequireHmac]
     #[RequireJson]
     public function domainReadQrIdentity(
         Request $request,
@@ -93,34 +92,34 @@ class DomainReadController extends AbstractController
         return $this->sharedSSE->handle($key);
     }
 
-   /**
-    #[Route('/state', name: 'domain_read_state', methods: "POST")]
-    #[RequireHmac]
-    #[RequireJson]
-    #[ExtensionHmac]
-    public function domainReadState(
-        Request $request,
-    ): JsonResponse {
-        try {
-            $payload = $this->domainReadStateService->handle($request);
-
-            if ($payload === null) {
-                return $this->missingProcessResponse();
-            }
-
-            return $this->responseHelper->createSuccessResponse(
-                $payload ?? []
-            );
-
-        } catch (\Exception $e) {
-            return $this->responseHelper->handleException($e, ['login_process_check' => false]);
-        }
-    }
-   
-*/
     private function missingProcessResponse(): JsonResponse
     {
         return $this->responseHelper->createErrorResponse('Invalid or missing processId');
     }
 
+    /**
+        #[Route('/state', name: 'domain_read_state', methods: "POST")]
+        #[RequireHmac]
+        #[RequireJson]
+        #[ExtensionHmac]
+        public function domainReadState(
+            Request $request,
+        ): JsonResponse {
+            try {
+                $payload = $this->domainReadStateService->handle($request);
+
+                if ($payload === null) {
+                    return $this->missingProcessResponse();
+                }
+
+                return $this->responseHelper->createSuccessResponse(
+                    $payload ?? []
+                );
+
+            } catch (\Exception $e) {
+                return $this->responseHelper->handleException($e, ['login_process_check' => false]);
+            }
+        }
+    
+    */
 }

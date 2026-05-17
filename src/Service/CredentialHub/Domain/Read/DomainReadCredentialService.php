@@ -22,11 +22,7 @@ class DomainReadCredentialService
     public function handle(Request $request): array
     {
         $user = $this->sharedPayloadService->getPayload($request, PayloadKeys::DOMAIN_READ_CREDENTIAL);
-        $processId = $user['domainProcessId'] ?? 'missing';
-
-        $this->logger->info(sprintf('domainReadCredential started for processId: %s', $processId));
         $response = $this->domainReadService->processCredentialRead($user);
-        $this->logger->info(sprintf('domainReadCredential finished for processId: %s', $processId));
 
         return ['credentials' => $response];
     }

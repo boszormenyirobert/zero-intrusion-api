@@ -25,9 +25,6 @@ class ResponseHelper
         }
 
         $responseData = [
-         //   'process' => false,
-         //   'validation' => false,
-         //   'process_check' => false,
             'success' => true,
         ];
 

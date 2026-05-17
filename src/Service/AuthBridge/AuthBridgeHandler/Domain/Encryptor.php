@@ -37,16 +37,17 @@ class Encryptor
     // Set decrypted values for domain login
     public function setDecryptedValuesForDomain(array $user): bool
     {
-       // $this->logger->info(json_encode($user));
-       //  $credentialsCollection = $this->formatCredentials($user, 'decrypted');
-
-       // $credentialsCollection = $user['credentials'];
-
-        if (!$user) {
+        if (!$user || !($processId = $user['domainProcessId'] ?? null)) {
             return false;
         }
         
-        return $this->updateLoginEntry($user);
+        $jsonUser = json_encode($user, JSON_THROW_ON_ERROR);
+
+        $this->processStateCacheService->set(
+            $processId, $jsonUser
+        );
+
+        return true;
     }
 
     public function setDecryptedUserIdentity(array $user): bool
@@ -129,47 +130,6 @@ class Encryptor
         $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
         return ['decrypted' => $decrypted];
     }    
-
-    // Update the login entry with the by user secret decrypted credentials
-    // Write the encrypted credentials in Redis cache => key is the processId. 
-    // To the encryption use the iv saved in the AuthBridge entry and the general database secret
-    private function updateLoginEntry(array $user): bool
-    {
-         $this->logger->critical("updateLoginEntry: " . $user['domainProcessId']);
-
-        $authBridge = $this->authBridgeRepository->findOneBy(['domainProcessId' => $user['domainProcessId']]);
-
-        if (!$authBridge) {
-            $this->logger->critical("No user login found for domainProcessId: " . $user['domainProcessId']);
-            return false;
-        }
-
-        /**
-        $iv = base64_decode($authBridge->getIv());
-        $dbEncryptedCredentials = [];
-        foreach ($credentialsCollection as $credentialData) {
-            $encryptedCredential = new AccessRegistry();
-            $encryptedCredential->setUserCredential($credentialData['decrypted']);
-            $encryptedCredential->setDescription($credentialData['description']);
-            $encryptedCredential->setTargetId($credentialData['targetId']);
-            $dbEncryptedCredentials[] = $encryptedCredential; 
-        } 
-
-
-        $databaseEncryptedCredentialsList = $this->applicationEncryptor->encrypt($dbEncryptedCredentials, $iv);
-         */
-        $authBridge->setProcessState(true);
-        //$authBridge->setApplications($databaseEncryptedCredentialsList);
-
-        $this->loginDatabaseService->addUserLogin($authBridge); 
-
-       // $this->writeLoginEntryInRedis($user['domainProcessId'], $credentialsCollection);
-            $this->processStateCacheService->set(
-            $user['domainProcessId'], json_encode($user)
-        );
-
-        return true;
-    }
 
     // Return with all matching credentials for the domain by publicId
     private function extractCredentialsForDomain(array $getPages, string $targetDomain): array

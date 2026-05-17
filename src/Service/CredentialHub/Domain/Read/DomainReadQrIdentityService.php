@@ -37,6 +37,18 @@ class DomainReadQrIdentityService
 
     public function handle(DomainReadQrIdentityRequestDTO $request, ValidatorInterface $validator): array
     {
+        // Create identity
+        $identity = $this->getIdentity($request, $validator);         
+        // Get QR content from cache to include in notification if needed
+        $qrContent = $this->processStateCacheService->get($identity->getQrCacheKey());                 
+
+        // Auto notify if userPublicId is provided
+        $this->handleNotification($request, $identity, $qrContent);      
+
+        return $identity->toProcessArray('domainProcessId');
+    }
+
+    private function getIdentity(DomainReadQrIdentityRequestDTO $request, ValidatorInterface $validator): CredentialHubIdentityDTO{
         $identity = $this->authBridgeService->generateRequestIdentity('domainProcessId');
         $identity->setPublicKey($request->publicKey);
 
@@ -48,25 +60,20 @@ class DomainReadQrIdentityService
                 $this->logger->critical('domainReadQrIdentity: ' . $error->getMessage());
             }
         }
-
+        // Store QR content in cache for later retrieval in notification
         $this->setCacheKey($identity->getQrCacheKey(), $qrContent);
 
-        $identity->setQrCode($this->qrService->getQrCode(['qrCacheKey' => $identity->getQrCacheKey(),'type' => 'domain-login']));                           
+        $identity->setQrCode($this->qrService->getQrCode(['qrCacheKey' => $identity->getQrCacheKey(),'type' => 'domain-login'])); 
 
-        // Auto notify if userPublicId is provided
-        $this->handleNotification($request, $identity, $qrContent);      
-
-        return $identity->toProcessArray('domainProcessId');
+        return $identity;
     }
 
-    public function handleNotification(
+    private function handleNotification(
         DomainReadQrIdentityRequestDTO $identityRequestDTO, 
         CredentialHubIdentityDTO $identity, 
         DomainReadQrContentDTO $qrContent): void
         {
         if ($identityRequestDTO->userPublicId !== null && $identityRequestDTO->userPublicId !== '') {
-
-
 
             $storeDTO = new StoreDTO($identityRequestDTO->domain, $identityRequestDTO->userPublicId);
             $credentialCacheKey = 'credentialCacheKey_' . $identity->getQrCacheKey();
@@ -78,7 +85,7 @@ class DomainReadQrIdentityService
 
             $santizedQrContent = $qrContent->toNotification();
 
-            $this->sharedNotificationService->sendFcmNotification('domainRead', $identityRequestDTO->userPublicId, $qrContent);
+            $this->sharedNotificationService->sendFcmNotification('domainRead', $identityRequestDTO->userPublicId, $santizedQrContent);
         }        
     }
 

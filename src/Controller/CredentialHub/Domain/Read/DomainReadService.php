@@ -42,7 +42,6 @@ class DomainReadService
         ) {
             return false;
         }
-                 $this->logger->critical("processCredentialRead: " . json_encode($user));
 
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {

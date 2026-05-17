@@ -48,7 +48,6 @@ class DomainReadCredentialDecryptedService
         $decoded = (array)$storedQrData;
 
         $decoded['publicId'] = $user['publicId'] ?? 'missing publicId';
-    //    $decoded['privateId'] = $user['privateId'] ?? 'missing privateId';
        
         $response = $this->domainReadService->getDecryptedCredentials($decoded);
 

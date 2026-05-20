@@ -9,19 +9,21 @@ use App\DTO\CredentialHub\Vault\Read\VaultReadCredentialResultDTO;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\CredentialHub\SharedPayloadService;
 use Symfony\Component\HttpFoundation\Request;
+use Psr\Log\LoggerInterface;
+
 
 class VaultReadCredentialService
 {
     public function __construct(
         private readonly SharedPayloadService $sharedPayloadService,
         private readonly AuthBridgeService $authBridgeService,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function handle(Request $request): ?VaultReadCredentialResultDTO
     {
         $process = $this->sharedPayloadService->getProcessId($request, PayloadKeys::VAULT_READ_CREDENTIAL, true);
-
         if (!$process) {
             return null;
         }

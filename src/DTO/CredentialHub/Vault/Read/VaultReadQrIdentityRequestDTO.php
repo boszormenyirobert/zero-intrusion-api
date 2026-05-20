@@ -11,6 +11,7 @@ final readonly class VaultReadQrIdentityRequestDTO
         public ?string $type,
         public ?string $userPublicId,
         public array $payload,
+        public ?string $publicKey,
     ) {
     }
 
@@ -21,6 +22,7 @@ final readonly class VaultReadQrIdentityRequestDTO
             $payload['type'] ?? null,
             $payload['userPublicId'] ?? null,
             $payload,
+            $payload['publicKey'] ?? null,
         );
     }
 }

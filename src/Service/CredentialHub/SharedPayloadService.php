@@ -64,6 +64,10 @@ class SharedPayloadService
 
     public function getProcessId(Request $request, string $payloadKey, bool $fullPayload = false): array|string|false
     {
+        $this->logger->info('Getting process ID from payload.', [
+            'payload_key' => $payloadKey,
+        ]);
+        
         $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
         $payload = $this->decodePayloadValue($validatedPayload[$payloadKey] ?? null, $payloadKey);
 

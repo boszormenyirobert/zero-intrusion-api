@@ -8,19 +8,85 @@ use App\Controller\CredentialHub\PayloadKeys;
 use App\Controller\CredentialHub\Vault\Read\VaultReadService;
 use App\Service\CredentialHub\SharedPayloadService;
 use Symfony\Component\HttpFoundation\Request;
+use App\Service\Cache\ProcessStateCacheService;
+use App\Repository\AccessRegistryRepository;
+use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
+use Psr\Log\LoggerInterface;
 
 class VaultReadCredentialDecryptedService
 {
     public function __construct(
         private readonly SharedPayloadService $sharedPayloadService,
         private readonly VaultReadService $vaultReadService,
+        private readonly ProcessStateCacheService $processStateCacheService,
+        private readonly AccessRegistryRepository $accessRegistryRepository,
+        private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
     public function handle(Request $request): array
     {
         $user = $this->sharedPayloadService->getPayload($request, PayloadKeys::VAULT_READ_CREDENTIAL_ENCRYPTED);
+        $result = $this->returnFromCache($user) ?  $this->returnFromCache($user) : $this->returnFromDatabase($user);  
 
-        return ['credentials' => $this->vaultReadService->getDecryptedCredentials($user['publicId'])];
+        return $result;
+    }
+
+    private function returnFromCache(array $user): array|false
+    {   
+
+        if (array_key_exists('credentialCacheKey', $user) && array_key_exists('qrCacheKey', $user) && ($user['credentialCacheKey'] !== $user['qrCacheKey'])) {
+
+            $response = $this->processStateCacheService->get($user['credentialCacheKey'] ?? 'missing') ?? ['credentials' => []];
+            $this->logger->info(json_encode($response));
+            return ['credentials' => $response, 'validation' => true];
+        }  
+        return false;      
+    }
+
+
+    public function returnFromDatabase($user): array{
+        
+        $rawQrData = $this->processStateCacheService->get($user['qrCacheKey']);
+
+        $storedQrData = $this->objectToArrayRecursive($rawQrData);
+
+        $storedQrData = array_merge($storedQrData, (array)$user);
+        $decoded = [];
+        $decoded['publicId'] = $user['publicId'] ?? null;
+
+        $this->logger->info("Step 3");
+        $this->logger->info(json_encode($storedQrData));
+
+        $applicationList = [];
+        $getPages = $this->accessRegistryRepository->findBy(['publicId' => $decoded['publicId']]);
+        foreach ($getPages as $userPage) {
+            if ($userPage->getApplication() !== null) {
+                $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabaseOrFail($userPage, "application");
+
+                $applicationList[] = [
+                    'application' => $decrypted->getApplication(),
+                    'credential' => $decrypted->getUserCredential(), 
+                    'description' => $decrypted->getDescription(),
+                    'targetId' => $decrypted->getTargetId()                                      
+                ];
+            }
+        }
+
+        return ['credentials' => $applicationList,'publicKey' => $storedQrData['publicKey'] ?? 'missing', 'validation' => true,'processId' => $storedQrData['applicationProcessId'] ?? 'missing' ];
+    }
+
+    private function objectToArrayRecursive($data)
+    {
+        if (is_object($data)) {
+            $data = (array)$data;
+        }
+
+        if (is_array($data)) {
+            return array_map([$this, 'objectToArrayRecursive'], $data);
+        }
+
+        return $data;
     }
 }

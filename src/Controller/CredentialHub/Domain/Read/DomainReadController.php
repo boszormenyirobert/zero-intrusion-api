@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller\CredentialHub\Domain\Read;
 
-use App\Attribute\RequireHmac;
-use App\Attribute\ExtensionHmac;
-use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Controller\PayloadValidator\PayloadValidator;
@@ -86,40 +83,9 @@ class DomainReadController extends AbstractController
         }
     }
 
-    #[Route('/approval-challange/{key}', name: 'api_sse', methods: ['GET'])]
+    #[Route('/approval-challange/{key}', name: 'api_sse_domain', methods: ['GET'])]
     public function sse(string $key): StreamedResponse
     {
         return $this->sharedSSE->handle($key);
     }
-
-    private function missingProcessResponse(): JsonResponse
-    {
-        return $this->responseHelper->createErrorResponse('Invalid or missing processId');
-    }
-
-    /**
-        #[Route('/state', name: 'domain_read_state', methods: "POST")]
-        #[RequireHmac]
-        #[RequireJson]
-        #[ExtensionHmac]
-        public function domainReadState(
-            Request $request,
-        ): JsonResponse {
-            try {
-                $payload = $this->domainReadStateService->handle($request);
-
-                if ($payload === null) {
-                    return $this->missingProcessResponse();
-                }
-
-                return $this->responseHelper->createSuccessResponse(
-                    $payload ?? []
-                );
-
-            } catch (\Exception $e) {
-                return $this->responseHelper->handleException($e, ['login_process_check' => false]);
-            }
-        }
-    
-    */
 }

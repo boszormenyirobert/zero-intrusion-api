@@ -39,7 +39,8 @@ class AuthBridgeHandler
         return match ($user['type'] ?? null) {
             'domain-login' => $this->encryptor->setDecryptedValuesForDomain($user),
             'secure' => $this->encryptor->setDecryptedUserIdentity($user),
-            default => $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret()),
+            'applications' => $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret()),   
+            default => false,
         };
     }
 

@@ -13,6 +13,8 @@ class CredentialHubIdentityDTO
     public ?string $xExtensionAuthTwo;
     public ?string $publicKey = null;
     public ?string $qrCacheKey = null;
+    public ?string $type = null;
+    public ?string $source = null; // e.g. 'extension' or 'corporate'
 
     public ?string $secret;
     public ?string $iv;
@@ -213,6 +215,7 @@ class CredentialHubIdentityDTO
             'qrCode' => $this->qrCode,
             'publicKey' => $this->publicKey,
             'qrCacheKey' => $this->qrCacheKey,
+            'type' => $this->type
         ];
     }
     private function buildReadProcessArray(string $processKey, ?string $processId): array
@@ -228,6 +231,7 @@ class CredentialHubIdentityDTO
         //    'publicKey' => $this->publicKey,
                $processKey => $processId,   // the session-flow identifier for the domain login process
               'qrCacheKey' => $this->qrCacheKey, // the key to find the QR content in cache, used by the extension to pull the QR content for the domain login process
+              'type' => $this->type
         ];
     }    
 
@@ -300,5 +304,25 @@ class CredentialHubIdentityDTO
     public function getQrCacheKey(): ?string
     {
         return $this->qrCacheKey;
+    }
+
+    public function setType(?string $type): void
+    {
+        $this->type = $type;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setSource(?string $source): void
+    {
+        $this->source = $source;
+    }
+
+    public function getSource(): ?string
+    {
+        return $this->source;
     }
 }

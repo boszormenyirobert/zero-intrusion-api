@@ -36,12 +36,10 @@ class DomainReadService
 
     public function processCredentialRead(array $user): bool
     {
-        if (
-            !isset($user['type'], $user['source']) ||
-            !in_array($user['type'], ['domain-login', 'system_hub_login'], true)
-        ) {
-            return false;
-        }
+        $this->logger->info('Processing credential read request.', [
+            'user' => json_encode(array_keys($user)),
+        ]);
+
 
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {
@@ -53,12 +51,11 @@ class DomainReadService
 
     public function getDecryptedCredentials(array $user): array
     {
-        if (
-            !isset($user['type'], $user['source']) ||
-            !in_array($user['type'], ['domain-login', 'system_hub_login'], true)
-        ) {
-            return false;
-        }
+        $this->logger->info('Attempting to retrieve decrypted credentials.', [
+            'user' => $user,
+        ]);
+        $this->logger->info('User keys: ' . json_encode(array_keys($user)));
+
 
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {

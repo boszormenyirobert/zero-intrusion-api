@@ -23,25 +23,17 @@ class Credential
 
     public function setDecryptedValuesForApplication(array $user): bool
     {
-        $authBridge = $this->authBridgeRepository->findOneBy([
-            'applicationProcessId' => $user['applicationProcessId']
-        ]);
-
-        if (!$authBridge instanceof AuthBridge) {
+        $this->logger->info(json_encode($user));
+        $processId = $user['applicationProcessId'] ?? $user['processId'] ?? null;
+        if (!$user || !($processId)) {
             return false;
         }
+        
+        $jsonUser = json_encode($user, JSON_THROW_ON_ERROR);
 
-        $encrypted = $this->encryptor->encrypt(
-            $this->getDecryptedCredentials($user['credentials']),
-            base64_decode((string) $authBridge->getIv())
+        $this->processStateCacheService->set(
+            $processId, $jsonUser
         );
-
-        $authBridge->setApplications($encrypted);
-        $authBridge->setProcessState(true);
-
-        //$this->loginDatabaseService->addUserLogin($process);
-
-        $this->writeLoginEntryInRedis($user['applicationProcessId'], $authBridge);
 
         return true;
     }

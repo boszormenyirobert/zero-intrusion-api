@@ -45,12 +45,20 @@ class DomainReadQrIdentityService
         // Auto notify if userPublicId is provided
         $this->handleNotification($request, $identity, $qrContent);      
 
-        return $identity->toProcessArray('domainProcessId');
+        $qrCode = $identity->toProcessArray('domainProcessId');
+
+        $this->logger->info('Domain read QR identity generated and notification sent.', [
+            'type' => $qrCode['type'],
+        ]);
+
+        return $qrCode;
     }
 
     private function getIdentity(DomainReadQrIdentityRequestDTO $request, ValidatorInterface $validator): CredentialHubIdentityDTO{
         $identity = $this->authBridgeService->generateRequestIdentity('domainProcessId');
         $identity->setPublicKey($request->publicKey);
+        $identity->setType('domain-read');
+        $identity->setSource('extension');
 
         $qrContent = $this->domainReadService->getQrContent($request->domain, $identity);
         $errors = $validator->validate($qrContent);

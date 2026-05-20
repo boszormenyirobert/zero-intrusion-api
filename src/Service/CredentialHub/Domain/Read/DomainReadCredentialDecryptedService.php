@@ -42,7 +42,10 @@ class DomainReadCredentialDecryptedService
     }
 
     private function returnFromDatabase($user): array{
-        $storedQrData = (array)$this->processStateCacheService->get($user['qrCacheKey'] ?? 'missing');
+    $this->logger->info('No cached credentials found, retrieving from database.', [
+            'user' => $user,    
+    ]);
+    $storedQrData = (array)$this->processStateCacheService->get($user['qrCacheKey'] ?? 'missing');
         $storedQrData = array_merge($storedQrData, $user);
 
         $decoded = (array)$storedQrData;

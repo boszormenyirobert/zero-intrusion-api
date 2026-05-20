@@ -20,6 +20,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Service\CredentialHub\SharedSSE;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Route('/api/credential-hub/vault/read')]
 class VaultReadController extends AbstractController
@@ -32,10 +34,10 @@ class VaultReadController extends AbstractController
         private readonly VaultReadCredentialDecryptedService $vaultReadCredentialDecryptedService,
         private readonly VaultReadCredentialService $vaultReadCredentialService,
         private readonly VaultReadStateService $vaultReadStateService,
+        private readonly SharedSSE $sharedSSE
     ) {
     }
     #[Route('/qr-identity', name: 'vault_read_qr_identity', methods: "POST")]
-    #[RequireHmac]
     #[RequireJson]
     public function vaultReadQrIdentity(
         Request $request,
@@ -51,8 +53,7 @@ class VaultReadController extends AbstractController
             return $this->responseHelper->handleException($e);
         }
     }
-    #[RequireHmac]
-    #[MobileHmac]
+
     #[RequireJson]
     #[Route('/credential/decrypted', name: 'vault_read_credential_encrypted', methods: "POST")]
     public function vaultReadCredentialDecrypted(
@@ -67,8 +68,6 @@ class VaultReadController extends AbstractController
         }
     }
     #[Route('/credential', name: 'vault_read_credential', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]    
     #[RequireJson]
     public function vaultReadCredential(
         Request $request,
@@ -111,5 +110,11 @@ class VaultReadController extends AbstractController
     private function missingProcessResponse(): JsonResponse
     {
         return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+    }
+
+    #[Route('/approval-challange/{key}', name: 'api_sse_vault', methods: ['GET'])]
+    public function sse(string $key): StreamedResponse
+    {
+        return $this->sharedSSE->handle($key);
     }
 }

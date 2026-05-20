@@ -15,14 +15,11 @@ class VaultReadService
         private LoggerInterface $logger
     ) {}
 
-    public function getQrContent($type, $source, $mobilXExtensionAuth, $identity): VaultReadQrContentDTO
+    public function getQrContent($request, $identity): VaultReadQrContentDTO
     {
         return new VaultReadQrContentDTO(
-            $identity->getApplicationProcessId(),
-            $type,
-            $source,
-            $mobilXExtensionAuth,
-            $identity->getIv()
+            $identity,
+            $request
         );
     }
 

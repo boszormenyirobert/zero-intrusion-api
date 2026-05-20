@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 
 class CrypterDatabaseService
 {
-    private const CIPHER = 'aes-256-cbc';
+    private const CIPHER = 'aes-256-cbc'; // update to a more secure cipher: aes-256-gcm
     private const IV_LENGTH = 16;
 
     private string $key;

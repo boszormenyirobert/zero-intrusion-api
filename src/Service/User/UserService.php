@@ -26,7 +26,7 @@ class UserService
      */
     public function getQrData(array $payload, string $processKey): array
     {
-        $identity = $this->authBridgeService->generateRequestIdentity($processKey);
+        $identity = $this->authBridgeService->generateRequestIdentity('domain-read');
 
         $qrCodeContent = $this->userQrContentFactory->create($payload, $identity, $processKey);
         $qrCode = $this->qrService->getQrCode($qrCodeContent);

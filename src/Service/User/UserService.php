@@ -24,11 +24,11 @@ class UserService
     /**
      * @return array{defaultResponse: array{headers: array<string, string>, body: string}, mobileResponse: QrInterface}
      */
-    public function getQrData(array $payload, string $processKey): array
+    public function getQrData(array $payload): array
     {
         $identity = $this->authBridgeService->generateRequestIdentity('domain-read');
 
-        $qrCodeContent = $this->userQrContentFactory->create($payload, $identity, $processKey);
+        $qrCodeContent = $this->userQrContentFactory->create($payload, $identity, 'domainProcessId');
         $qrCode = $this->qrService->getQrCode($qrCodeContent);
         $defaultResponse = $this->userAuthorizationResponseFactory->create(
             $this->buildExtendedIdentityPayload($identity, $qrCode)

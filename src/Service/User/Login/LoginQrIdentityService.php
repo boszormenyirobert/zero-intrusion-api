@@ -21,7 +21,7 @@ class LoginQrIdentityService
 
     public function handle(LoginQrIdentityRequestDTO $request): LoginQrIdentityResultDTO
     {
-        $data = $this->userService->getQrData($request->toPayload(), 'domainProcessId');
+        $data = $this->userService->getQrData($request->toPayload());
         $result = LoginQrIdentityResultDTO::fromServiceResult($data);
 
         if (!$request->hasUserPublicId()) {

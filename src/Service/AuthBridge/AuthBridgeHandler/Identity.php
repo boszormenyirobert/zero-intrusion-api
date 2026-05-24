@@ -36,8 +36,12 @@ class Identity
     {
         if($type === 'domain-read'){
             $processType = 'domainProcessId';
-        } else {
+        } else if($type === 'vault-read') {
             $processType = 'applicationProcessId';
+        } else if($type === 'one-touch') {
+            $processType = 'oneTouchProcessId';
+        } else {
+            throw new \InvalidArgumentException('Invalid process type provided');
         }
 
         $identity = $this->getBrowserExtensionIdentity($processType);

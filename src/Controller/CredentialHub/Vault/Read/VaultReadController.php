@@ -44,10 +44,10 @@ class VaultReadController extends AbstractController
     ): JsonResponse {
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::VAULT_READ_QR_IDENTITY);
-            $vaultReadRequest = $this->vaultReadQrIdentityRequestMapper->map($validatedPayload);
+            $readRequest = $this->vaultReadQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->vaultReadQrIdentityService->handle($vaultReadRequest)
+                $this->vaultReadQrIdentityService->handle($readRequest)
             );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);

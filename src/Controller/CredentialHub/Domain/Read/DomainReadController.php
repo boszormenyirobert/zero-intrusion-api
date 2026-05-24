@@ -42,10 +42,10 @@ class DomainReadController extends AbstractController
     ): JsonResponse {
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::DOMAIN_READ_QR_IDENTITY);
-            $domainReadRequest = $this->domainReadQrIdentityRequestMapper->map($validatedPayload);
+            $readRequest = $this->domainReadQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->domainReadQrIdentityService->handle($domainReadRequest)
+                $this->domainReadQrIdentityService->handle($readRequest)
             );
             
         } catch (\Exception $e) {

@@ -40,7 +40,7 @@ class LoginController extends AbstractController
      * The next steps—mobile call and extension/web polling—happen in the CredentialHub.
      */
     #[Route('/login/qr-identity', name: 'user_login_qr_identity', methods: "POST")]
-    #[RequireHmac]
+    //#[RequireHmac]
     #[RequireJson]
     public function loginQrIdentity(
         Request $request,

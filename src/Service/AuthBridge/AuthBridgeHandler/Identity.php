@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\AuthBridge\AuthBridgeHandler;
 
-use App\DTO\QR\CredentialHubIdentityDTO;
+use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 use App\Entity\AuthBridge;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use App\Service\Crypters\CrypterDatabaseLoginService;
@@ -32,7 +32,7 @@ class Identity
      * 4. Both HMACs protect against tampering and replay attacks.
      * 5. Returns the identity enriched with the additional security fields.
      */    
-    public function generateRequestIdentity(string $processType): CredentialHubIdentityDTO
+    public function generateRequestIdentity(string $processType): ExtensionCredentialResponseDTO
     {
         $identity = $this->getBrowserExtensionIdentity($processType);
         $createdAt = $identity->getCreatedAt();
@@ -53,18 +53,7 @@ class Identity
         return bin2hex(random_bytes(16));
     }
 
-    /**
-     * Generates and returns an identity payload for browser-extension workflows.
-     * Steps:
-     * 1. Creates two unique IDs: one for the process and one as the target identifier.
-     * 2. Builds the communication structure containing a secret and the specific process ID
-     *    (e.g. registrationProcessId, removeProcessId, domainProcessId).
-     * 3. Creates and persists a new AuthBridge entity using the generated data.
-     * 4. Maps the stored AuthBridge information into a CredentialHubIdentityDTO,
-     *    dynamically assigning the process ID based on the given processType.
-     * 5. Returns the fully prepared identity object for use by the browser extension.
-     */    
-    public function getBrowserExtensionIdentity(string $processType): CredentialHubIdentityDTO
+    public function getBrowserExtensionIdentity(string $processType): ExtensionCredentialResponseDTO
     {
         $processId = $this->getGeneratedId();
         $targetId = $this->getGeneratedId();
@@ -76,7 +65,7 @@ class Identity
         $authBridge = $this->initializeAuthBridge($validCommunication, $processType, $targetId, $processId);
         $createdAuthBridge = $this->loginDatabaseService->addUserLogin($authBridge);
 
-        $identity = new CredentialHubIdentityDTO();
+        $identity = new ExtensionCredentialResponseDTO();
         $identity->setSecret($validCommunication['secret']);
         $identity->setCreatedAt((string) $createdAuthBridge->getCreatedAt()->getTimestamp());
         $identity->setIv($authBridge->getIv());

@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Service\CredentialHub\Domain\Read;
 
 use App\Controller\CredentialHub\Domain\Read\DomainReadService;
-use App\DTO\CredentialHub\Domain\Read\DomainReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\ExtensionCredentialRequestDTO;
+use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\CredentialHub\SharedNotificationService;
 use App\Service\QrService\QrService;
@@ -16,8 +17,7 @@ use App\Repository\AccessRegistryRepository;
 use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
 use App\Service\AuthBridge\AuthBridgeHandler\Domain\Encryptor;
 use App\DTO\QR\StoreDTO;
-use App\DTO\QR\CredentialHubIdentityDTO;
-use App\DTO\QR\DomainReadQrContentDTO;
+use App\DTO\CredentialHub\QrContentDTO;
 
 class DomainReadQrIdentityService
 {
@@ -30,38 +30,37 @@ class DomainReadQrIdentityService
         private readonly ProcessStateCacheService $processStateCacheService,
         private readonly AccessRegistryRepository $accessRegistryRepository,
         private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseUserService,
-        private readonly Encryptor $encryptor
-
+        private readonly Encryptor $encryptor,
+        private readonly ValidatorInterface $validator
     ) {
     }
 
-    public function handle(DomainReadQrIdentityRequestDTO $request, ValidatorInterface $validator): array
+    public function handle(ExtensionCredentialRequestDTO $request): array
     {
         // Create identity
-        $identity = $this->getIdentity($request, $validator);         
+        $identity = $this->getIdentity($request);         
         // Get QR content from cache to include in notification if needed
-        $qrContent = $this->processStateCacheService->get($identity->getQrCacheKey());                 
-
+        $qrCacheKey = $identity->getQrCacheKey();
+        $qrContent = $this->processStateCacheService->get($qrCacheKey);        
+                 
         // Auto notify if userPublicId is provided
         $this->handleNotification($request, $identity, $qrContent);      
 
-        $qrCode = $identity->toProcessArray('domainProcessId');
-
-        $this->logger->info('Domain read QR identity generated and notification sent.', [
-            'type' => $qrCode['type'],
-        ]);
+        $qrCode = $identity->toProcessArray($identity->getType());
 
         return $qrCode;
     }
 
-    private function getIdentity(DomainReadQrIdentityRequestDTO $request, ValidatorInterface $validator): CredentialHubIdentityDTO{
+    private function getIdentity(ExtensionCredentialRequestDTO $extensionRequest): ExtensionCredentialResponseDTO
+    {
         $identity = $this->authBridgeService->generateRequestIdentity('domainProcessId');
-        $identity->setPublicKey($request->publicKey);
         $identity->setType('domain-read');
+        $identity->setPublicKey($extensionRequest->publicKey);
         $identity->setSource('extension');
+        $identity->setDomain($extensionRequest->domain);
 
-        $qrContent = $this->domainReadService->getQrContent($request->domain, $identity);
-        $errors = $validator->validate($qrContent);
+        $qrContent = $this->domainReadService->getQrContent($identity);
+        $errors = $this->validator->validate($qrContent);
 
         if (count($errors) > 0) {
             foreach ($errors as $error) {
@@ -71,23 +70,24 @@ class DomainReadQrIdentityService
         // Store QR content in cache for later retrieval in notification
         $this->setCacheKey($identity->getQrCacheKey(), $qrContent);
 
-        $identity->setQrCode($this->qrService->getQrCode(['qrCacheKey' => $identity->getQrCacheKey(),'type' => 'domain-login'])); 
+        $identity->setQrCode(
+            $this->qrService->getQrCode([
+                'qrCacheKey' => $identity->getQrCacheKey(),
+                'type' => 'domain-login'
+            ]
+        )); 
 
         return $identity;
     }
 
     private function handleNotification(
-        DomainReadQrIdentityRequestDTO $identityRequestDTO, 
-        CredentialHubIdentityDTO $identity, 
-        DomainReadQrContentDTO $qrContent): void
+        ExtensionCredentialRequestDTO $identityRequestDTO, 
+        ExtensionCredentialResponseDTO $identity, 
+        QrContentDTO $qrContent): void
         {
         if ($identityRequestDTO->userPublicId !== null && $identityRequestDTO->userPublicId !== '') {
 
-            $storeDTO = new StoreDTO($identityRequestDTO->domain, $identityRequestDTO->userPublicId);
-            $credentialCacheKey = 'credentialCacheKey_' . $identity->getQrCacheKey();
-            $credentials = $this->encryptor->preapredCredentials($storeDTO);
-
-            $this->setCacheKey($credentialCacheKey, $credentials);
+            $credentialCacheKey = $this->putCacheCredentialData($identityRequestDTO, $identity);
            
             $qrContent->setCredentialCacheKey($credentialCacheKey);
 
@@ -97,7 +97,20 @@ class DomainReadQrIdentityService
         }        
     }
 
-    private function setCacheKey(string $key, DomainReadQrContentDTO|array $value)
+    private function putCacheCredentialData( 
+        ExtensionCredentialRequestDTO $identityRequestDTO,  
+        ExtensionCredentialResponseDTO $identity): string
+        {
+            $storeDTO = new StoreDTO($identityRequestDTO->domain, $identityRequestDTO->userPublicId);
+            $credentialCacheKey = 'credentialCacheKey_' . $identity->getQrCacheKey();
+            $credentials = $this->encryptor->preapredCredentials($storeDTO);
+
+            $this->setCacheKey($credentialCacheKey, $credentials);
+
+            return $credentialCacheKey;
+    }
+
+    private function setCacheKey(string $key, QrContentDTO|array $value)
     {
         $this->processStateCacheService->set($key, $value, 30);
     }

@@ -74,9 +74,7 @@ class FirebaseTokenProvider
 
             $data = $this->jsonPayloadDecoder->decodeArray($body) ?? [];
 
-            if (!empty($data['access_token'])) {
-                $this->logger->info('Firebase access token successfully received.');
-            } else {
+            if (empty($data['access_token'])) {
                 $this->logger->error('Firebase response did not contain an access_token.', [
                     'responseBody' => $body,
                 ]);

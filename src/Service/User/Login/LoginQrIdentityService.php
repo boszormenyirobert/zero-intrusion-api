@@ -21,22 +21,12 @@ class LoginQrIdentityService
 
     public function handle(LoginQrIdentityRequestDTO $request): LoginQrIdentityResultDTO
     {
-        $result = LoginQrIdentityResultDTO::fromServiceResult(
-            $this->userService->getQrData($request->toPayload(), 'domainProcessId')
-        );
+        $data = $this->userService->getQrData($request->toPayload(), 'domainProcessId');
+        $result = LoginQrIdentityResultDTO::fromServiceResult($data);
 
         if (!$request->hasUserPublicId()) {
             return $result;
         }
-
-        $this->logger->info('User public ID found in payload, preparing to send FCM notification', [
-            'userPublicId' => $request->userPublicId,
-        ]);
-
-        $this->logger->info('Generated QR data for user login', [
-            'processId' => $this->extractProcessId($result->mobileResponse),
-            'userPublicId' => $request->userPublicId,
-        ]);
 
         $this->firebaseService->manageFcm(
             $request->userPublicId,

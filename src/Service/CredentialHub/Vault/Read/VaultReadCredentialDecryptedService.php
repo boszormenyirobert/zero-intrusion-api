@@ -37,16 +37,14 @@ class VaultReadCredentialDecryptedService
     {   
 
         if (array_key_exists('credentialCacheKey', $user) && array_key_exists('qrCacheKey', $user) && ($user['credentialCacheKey'] !== $user['qrCacheKey'])) {
-
             $response = $this->processStateCacheService->get($user['credentialCacheKey'] ?? 'missing') ?? ['credentials' => []];
-            $this->logger->info(json_encode($response));
             return ['credentials' => $response, 'validation' => true];
         }  
         return false;      
     }
 
 
-    public function returnFromDatabase($user): array{
+    public function returnFromDatabase($user): array {
         
         $rawQrData = $this->processStateCacheService->get($user['qrCacheKey']);
 
@@ -56,11 +54,20 @@ class VaultReadCredentialDecryptedService
         $decoded = [];
         $decoded['publicId'] = $user['publicId'] ?? null;
 
-        $this->logger->info("Step 3");
-        $this->logger->info(json_encode($storedQrData));
+        $applicationList = $this->getApplicationCreadentials($decoded['publicId'] ?? '');
+
+        return ['credentials' => $applicationList,'publicKey' => $storedQrData['publicKey'] ?? 'missing', 'validation' => true,'processId' => $storedQrData['applicationProcessId'] ?? 'missing' ];
+    }
+
+    public function getApplicationCreadentials(string $userPublicId): array
+    {
+        if(empty($userPublicId)) {
+            $this->logger->warning('User public ID is empty. Skipping credential retrieval.');
+            return [];
+        }
 
         $applicationList = [];
-        $getPages = $this->accessRegistryRepository->findBy(['publicId' => $decoded['publicId']]);
+        $getPages = $this->accessRegistryRepository->findBy(['publicId' => $userPublicId]);
         foreach ($getPages as $userPage) {
             if ($userPage->getApplication() !== null) {
                 $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabaseOrFail($userPage, "application");
@@ -74,8 +81,8 @@ class VaultReadCredentialDecryptedService
             }
         }
 
-        return ['credentials' => $applicationList,'publicKey' => $storedQrData['publicKey'] ?? 'missing', 'validation' => true,'processId' => $storedQrData['applicationProcessId'] ?? 'missing' ];
-    }
+        return $applicationList;
+    }    
 
     private function objectToArrayRecursive($data)
     {

@@ -3,8 +3,7 @@ namespace App\DTO\QR;
 
 use Symfony\Component\Validator\Constraints as Assert;
 use App\DTO\QR\QrInterface;
-use App\DTO\QR\CredentialHubIdentityDTO;
-use App\DTO\CredentialHub\Vault\Read\VaultReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 
 class VaultReadQrContentDTO implements QrInterface
 {
@@ -32,12 +31,11 @@ class VaultReadQrContentDTO implements QrInterface
     public ?string $credentialCacheKey = "";
 
     public function __construct(
-        ?CredentialHubIdentityDTO $identity,
-        ?VaultReadQrIdentityRequestDTO $request,
+        ?ExtensionCredentialResponseDTO $identity
     ) {
         $this->applicationProcessId = $identity->getApplicationProcessId();
         $this->type = $identity->getType();
-        $this->source = $request->source;
+        $this->source = $identity->getSource();
         $this->xExtensionAuthOne = $identity->getXExtensionAuthOne();
         $this->iv = $identity->getIv();
         $this->publicKey = $identity->getPublicKey();

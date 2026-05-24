@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\AuthBridge;
 
-use App\DTO\QR\CredentialHubIdentityDTO;
+use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 use App\Entity\AuthBridge;
 use App\Service\AuthBridge\AuthBridgeHandler\Application\Fetch;
 use App\Service\AuthBridge\AuthBridgeHandler\AuthBridgeHandler;
@@ -55,7 +55,7 @@ class AuthBridgeService
         return $this->credential->getUserCredentialsByDomainProcessId($domainProcessId);
     }
 
-    public function generateRequestIdentity(string $processType): CredentialHubIdentityDTO
+    public function generateRequestIdentity(string $processType): ExtensionCredentialResponseDTO
     {
         return $this->identity->generateRequestIdentity($processType);
     }

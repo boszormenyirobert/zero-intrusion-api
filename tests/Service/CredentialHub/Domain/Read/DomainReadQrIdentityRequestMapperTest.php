@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\CredentialHub\Domain\Read;
 
 use App\Controller\CredentialHub\PayloadKeys;
-use App\DTO\CredentialHub\Domain\Read\DomainReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\Domain\Read\ExtensionCredentialRequestDTO;
 use App\Service\Payload\JsonPayloadDecoder;
 use App\Service\CredentialHub\Domain\Read\DomainReadQrIdentityRequestMapper;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +28,7 @@ final class DomainReadQrIdentityRequestMapperTest extends TestCase
             PayloadKeys::DOMAIN_READ_QR_IDENTITY => json_encode($payload, JSON_THROW_ON_ERROR),
         ]);
 
-        self::assertInstanceOf(DomainReadQrIdentityRequestDTO::class, $dto);
+        self::assertInstanceOf(ExtensionCredentialRequestDTO::class, $dto);
         self::assertSame('user-1', $dto->userPublicId);
         self::assertSame('process-1', $payload['domainProcessId']);
         self::assertNull($dto->domain);

@@ -4,13 +4,13 @@ namespace App\Controller\CredentialHub\Domain\Read;
 
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Controller\PayloadValidator\PayloadValidator;
-use App\DTO\QR\DomainReadQrContentDTO;
 use App\Repository\CorporateIdentityRepository;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Repository\AccessRegistryRepository;
 use Psr\Log\LoggerInterface;
 use App\Service\Notifier\NotifierService;
-use App\DTO\QR\CredentialHubIdentityDTO;
+use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
+use App\DTO\CredentialHub\QrContentDTO;
 
 class DomainReadService
 {
@@ -24,22 +24,16 @@ class DomainReadService
         private NotifierService $notifierService
     ) {}
 
-    public function getQrContent(string $domain, CredentialHubIdentityDTO $identity): DomainReadQrContentDTO
+    public function getQrContent( ExtensionCredentialResponseDTO $identity): QrContentDTO
     {
-        return new DomainReadQrContentDTO(
-            $domain,
-            $identity,
-            'domain-login',
-            'extension'
+        return new QrContentDTO(
+            $identity
         );
     }
 
-    public function processCredentialRead(array $user): bool
+    public function setByUserSignedCredentialsInCache(array $user): bool
     {
-        $this->logger->info('Processing credential read request.', [
-            'user' => json_encode(array_keys($user)),
-        ]);
-
+        $this->logger->debug('Check for source corporate setByUserSignedCredentialsInCache used by source: ' . $user['source']);
 
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {
@@ -51,12 +45,6 @@ class DomainReadService
 
     public function getDecryptedCredentials(array $user): array
     {
-        $this->logger->info('Attempting to retrieve decrypted credentials.', [
-            'user' => $user,
-        ]);
-        $this->logger->info('User keys: ' . json_encode(array_keys($user)));
-
-
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {
             'corporate' => $decryptedResponse = $this->authBridgeService->persistDecryptedUserDataForWeb($user),

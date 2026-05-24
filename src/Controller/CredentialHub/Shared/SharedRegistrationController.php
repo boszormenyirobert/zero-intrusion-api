@@ -37,7 +37,7 @@ class SharedRegistrationController extends AbstractController
     }
 
     #[Route('/qr-identity', name: 'shared_registration_qr_identity', methods: "POST")]
-    #[RequireHmac]
+//    #[RequireHmac]
     #[RequireJson]
     public function sharedRegistrationQrIdentity(
         Request $request,
@@ -56,8 +56,8 @@ class SharedRegistrationController extends AbstractController
     }
 
     #[Route('/new/to-encrypt', name: 'shared_registration_new_to_encrypt', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]    
+//    #[RequireHmac]
+//    #[MobileHmac]    
     #[RequireJson]
     public function sharedRegistrationNewToEncrypt(
         Request $request,
@@ -70,8 +70,8 @@ class SharedRegistrationController extends AbstractController
     }
 
     #[Route('/new', name: 'shared_registration_new', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]    
+//    #[RequireHmac]
+//    #[MobileHmac]    
     #[RequireJson]
     public function sharedRegistrationNew(
         Request $request,
@@ -84,9 +84,9 @@ class SharedRegistrationController extends AbstractController
     }
 
     #[Route('/state', name: 'shared_registration_state', methods: "POST")]
-    #[RequireHmac]
+//    #[RequireHmac]
     #[RequireJson]
-    #[ExtensionHmac]
+//    #[ExtensionHmac]
     public function sharedRegistrationState(
         Request $request,
     ): JsonResponse {

@@ -1,34 +1,27 @@
 <?php
-namespace App\DTO\QR;
+
+namespace App\DTO\CredentialHub;
 
 use Symfony\Component\Validator\Constraints as Assert;
 use App\DTO\QR\QrInterface;
 use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 
-class DomainReadQrContentDTO implements QrInterface
+class QrContentDTO implements QrInterface
 {
-    #[Assert\NotBlank]
     public ?string $domain;
 
-    #[Assert\NotBlank]
     public ?string $domainProcessId;
 
-    #[Assert\NotBlank]
     public ?string $xExtensionAuthOne;
 
-    #[Assert\NotBlank]
     public ?string $type;
 
-    #[Assert\NotBlank]
     public ?string $source;
 
-    #[Assert\NotBlank]
     public ?string $iv;
 
-    #[Assert\NotBlank]
     public ?string $publicKey;
-
-    #[Assert\NotBlank]
+   
     public ?string $qrCacheKey;
 
     public ?string $credentialCacheKey = "";
@@ -38,10 +31,8 @@ class DomainReadQrContentDTO implements QrInterface
     ) {
         $this->domain = $identity->getDomain();
         $this->domainProcessId =  $identity->getDomainProcessId();
-        $this->xExtensionAuthOne = $identity->getXExtensionAuthOne();
         $this->type = $identity->getType();
         $this->source = $identity->getSource();
-        $this->iv = $identity->getIv();
         $this->publicKey = $identity->getPublicKey();
         $this->qrCacheKey =$identity->getQrCacheKey();
     }
@@ -54,12 +45,12 @@ class DomainReadQrContentDTO implements QrInterface
     public function toNotification(): array
     {
         return [
+            'domain' => $this->domain,
             'qrCacheKey' => $this->qrCacheKey,
             'credentialCacheKey' => $this->credentialCacheKey,
             'domainProcessId' => $this->domainProcessId,
             'type' => $this->type,
             'source' => $this->source,
-            'iv' => $this->iv,
             'publicKey' => $this->publicKey          
         ];
     }

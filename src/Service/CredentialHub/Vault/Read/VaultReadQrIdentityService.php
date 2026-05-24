@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Service\CredentialHub\Vault\Read;
 
 use App\Controller\CredentialHub\Vault\Read\VaultReadService;
-use App\DTO\CredentialHub\Vault\Read\VaultReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\ExtensionCredentialRequestDTO;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\CredentialHub\SharedNotificationService;
 use App\Service\QrService\QrService;
 use App\Service\Cache\ProcessStateCacheService;
 use App\DTO\QR\VaultReadQrContentDTO;
 use Psr\Log\LoggerInterface;
-use App\DTO\QR\CredentialHubIdentityDTO;
+use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 use App\Repository\AccessRegistryRepository;
 use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Service\CredentialHub\Vault\Read\VaultReadCredentialDecryptedService;
 
 class VaultReadQrIdentityService
 {
@@ -27,67 +29,70 @@ class VaultReadQrIdentityService
         private readonly LoggerInterface $logger,
         private readonly AccessRegistryRepository $accessRegistryRepository,
         private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,
-
+        private readonly VaultReadCredentialDecryptedService $vaultReadCredentialDecryptedService,
+        private readonly ValidatorInterface $validator
     ) {
     }
 
-    public function handle(VaultReadQrIdentityRequestDTO $request): array
+    public function handle(ExtensionCredentialRequestDTO $request): array
     {
+        // Create identity
         $identity = $this->getIdentity($request);
+
+        // Get QR content from cache to include in notification if needed
         $qrContent = $this->processStateCacheService->get($identity->getQrCacheKey());
 
         $this->sharedNotificationService->sendFcmNotification('vaultRead', $request->userPublicId, $qrContent);
 
         $qrCode = $identity->toApplicationProcessArray();
-        $this->logger->info('Vault read QR identity generated and notification sent.', [
-            'type' => $qrCode['type'],
-        ]);
 
         return $qrCode;
     }
-
-    public function getIdentity(VaultReadQrIdentityRequestDTO $request): CredentialHubIdentityDTO
+    public function getIdentity(ExtensionCredentialRequestDTO $extensionRequest): ExtensionCredentialResponseDTO
     {
         $identity = $this->authBridgeService->generateRequestIdentity('applicationProcessId');               
         $identity->setType('vault-read');
-
-        $identity->setPublicKey($request->publicKey);
-        $this->logger->info('Generated vault read QR identity.', [
-            'applicationProcessId' => \json_encode($request),
-        ]);
-
-        $qrContent = $this->vaultReadService->getQrContent($request, $identity);
-
-        // Store QR content in cache for later retrieval in notification
+        $identity->setPublicKey($extensionRequest->publicKey);
+        $identity->setSource('extension');
         
+        $qrContent = $this->vaultReadService->getQrContent($identity);
+        $errors = $this->validator->validate($qrContent);
 
-        $credentialCacheKey = 'credentialCacheKey_' . $identity->getQrCacheKey();
-        $qrContent->setCredentialCacheKey($credentialCacheKey);
-
-        $this->setCacheKey($identity->getQrCacheKey(), $qrContent);
-
-        // TODO
-        // Set credentialCacheKey value in redis => Get credentials from DB
-
-        $applicationList = [];
-        $getPages = $this->accessRegistryRepository->findBy(['publicId' => $request->userPublicId]);
-        foreach ($getPages as $userPage) {
-            if ($userPage->getApplication() !== null) {
-                $decrypted = $this->crypterDatabaseAccessRegistryService->decryptFromDatabaseOrFail($userPage, "application");
-
-                $applicationList[] = [
-                    'application' => $decrypted->getApplication(),
-                    'credential' => $decrypted->getUserCredential(), 
-                    'description' => $decrypted->getDescription(),
-                    'targetId' => $decrypted->getTargetId()                                      
-                ];
+        if (count($errors) > 0) {
+            foreach ($errors as $error) {
+                $this->logger->critical('vaultReadQrIdentity: ' . $error->getMessage());
             }
         }
-        // Put in redis: $applicationList
-        $this->setCacheKey($credentialCacheKey, $applicationList);
-        $identity->setQrCode($this->qrService->getQrCode($qrContent));
+
+        // Put credential data in cache if userPublicId is provided and include cache key in QR content
+        $qrContent = $this->putCacheCredentialData($qrContent, $extensionRequest->userPublicId, $identity->getQrCacheKey());
+
+        // Store QR content in cache
+        $this->setCacheKey($identity->getQrCacheKey(), $qrContent);
+
+        $identity->setQrCode(
+            $this->qrService->getQrCode(
+                $qrContent
+            )
+        );
 
         return $identity;
+    }
+
+    private function putCacheCredentialData(VaultReadQrContentDTO $qrContent, string $userPublicId, string $qrCacheKey): VaultReadQrContentDTO {
+        if(empty($userPublicId)) {
+            $this->logger->warning('User public ID is empty. Skipping credential caching.');
+
+            return $qrContent;
+        }
+
+        $credentialCacheKey = 'credentialCacheKey_' . $qrCacheKey;
+        $applicationList = $this->vaultReadCredentialDecryptedService->getApplicationCreadentials($userPublicId);
+        $this->setCacheKey($credentialCacheKey, $applicationList);
+
+        $qrContent->setCredentialCacheKey($credentialCacheKey);
+
+        return $qrContent;
     }
 
     private function setCacheKey(string $key, VaultReadQrContentDTO|array $value)

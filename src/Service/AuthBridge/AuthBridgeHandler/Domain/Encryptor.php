@@ -79,10 +79,10 @@ class Encryptor
     }
 
     public function preapredCredentials(StoreDTO $storeDTO): array{
-        $pages = $this->accessRegistryRepository->findBy(['publicId' =>  $storeDTO->userPublicId]);                               
-
+        $pages = $this->accessRegistryRepository->findBy(['publicId' =>  $storeDTO->userPublicId]);
         $apps = $this->extractCredentialsForDomain($pages, $storeDTO->domain);
         $credentials = $this->formatCredentials(['credentials' => $apps], 'credential'); 
+        
         return $credentials;
     }
 

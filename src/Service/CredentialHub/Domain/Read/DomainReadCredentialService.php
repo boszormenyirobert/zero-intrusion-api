@@ -19,11 +19,11 @@ class DomainReadCredentialService
     ) {
     }
 
-    public function handle(Request $request): array
+    public function handle(Request $request): bool
     {
         $user = $this->sharedPayloadService->getPayload($request, PayloadKeys::DOMAIN_READ_CREDENTIAL);
-        $response = $this->domainReadService->processCredentialRead($user);
-        $this->logger->info('DomainReadCredentialService response: ' . json_encode($response));
-        return ['credentials' => $response];
+        $response = $this->domainReadService->setByUserSignedCredentialsInCache($user);
+
+        return $response;
     }
 }

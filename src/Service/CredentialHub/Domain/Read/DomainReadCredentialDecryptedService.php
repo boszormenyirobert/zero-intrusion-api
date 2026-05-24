@@ -24,16 +24,14 @@ class DomainReadCredentialDecryptedService
     public function handle(Request $request): array
     {
         $user = $this->sharedPayloadService->getPayload($request, PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED);
-
-        $result = $this->returnFromCache($user) ?  $this->returnFromCache($user) : $this->returnFromDatabase($user);                
+        $result = $this->returnFromCache($user) ?  $this->returnFromCache($user) : $this->returnFromDatabase($user);   
+                     
         return $result;
     }
 
     private function returnFromCache(array $user): array|false
     {   
-
         if (array_key_exists('credentialCacheKey', $user) && array_key_exists('qrCacheKey', $user) && ($user['credentialCacheKey'] !== $user['qrCacheKey'])) {
-
             $response = $this->processStateCacheService->get($user['credentialCacheKey'] ?? 'missing') ?? ['credentials' => []];
 
             return ['credentials' => $response, 'validation' => true];
@@ -41,19 +39,18 @@ class DomainReadCredentialDecryptedService
         return false;      
     }
 
-    private function returnFromDatabase($user): array{
-    $this->logger->info('No cached credentials found, retrieving from database.', [
-            'user' => $user,    
-    ]);
-    $storedQrData = (array)$this->processStateCacheService->get($user['qrCacheKey'] ?? 'missing');
-        $storedQrData = array_merge($storedQrData, $user);
-
+    private function returnFromDatabase($user): array
+    {
+        $storedQrDataFromCache = (array)$this->processStateCacheService->get($user['qrCacheKey'] ?? 'missing');
+        $storedQrData = array_merge($storedQrDataFromCache, $user);
         $decoded = (array)$storedQrData;
-
-        $decoded['publicId'] = $user['publicId'] ?? 'missing publicId';
-       
+        $decoded['publicId'] = $user['publicId'] ?? 'missing publicId';       
         $response = $this->domainReadService->getDecryptedCredentials($decoded);
 
-        return ['credentials' => $response, 'domainProcessId' => $storedQrData['domainProcessId'], 'publicKey' => $storedQrData['publicKey'] ];
+        return [
+            'credentials' => $response, 
+            'domainProcessId' => $storedQrData['domainProcessId'], 
+            'publicKey' => $storedQrData['publicKey'] 
+        ];
     }
 }

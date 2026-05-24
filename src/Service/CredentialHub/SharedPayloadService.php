@@ -64,10 +64,6 @@ class SharedPayloadService
 
     public function getProcessId(Request $request, string $payloadKey, bool $fullPayload = false): array|string|false
     {
-        $this->logger->info('Getting process ID from payload.', [
-            'payload_key' => $payloadKey,
-        ]);
-        
         $validatedPayload = $this->payloadValidator->validatePayload($request, $payloadKey);
         $payload = $this->decodePayloadValue($validatedPayload[$payloadKey] ?? null, $payloadKey);
 
@@ -75,11 +71,15 @@ class SharedPayloadService
             return $payload;
         }
 
-        if ($payload === [] || empty($payload['processId'])) {
+        if ($payload === [] || empty($payload['process'])) {
+            $this->logger->error('Getting process ID from payload.', [
+                'payload_key' => $payloadKey,
+                'payload_content' => $payload,
+            ]);
             return false;
         }
 
-        return $payload['processId'];
+        return $payload['process'];
     }
     public function getProcessIdRefact(Request $request, string $payloadKey, bool $fullPayload = false): array|string|false
     {

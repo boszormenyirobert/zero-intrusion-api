@@ -15,11 +15,10 @@ class VaultReadService
         private LoggerInterface $logger
     ) {}
 
-    public function getQrContent($request, $identity): VaultReadQrContentDTO
+    public function getQrContent($identity): VaultReadQrContentDTO
     {
         return new VaultReadQrContentDTO(
-            $identity,
-            $request
+            $identity
         );
     }
 

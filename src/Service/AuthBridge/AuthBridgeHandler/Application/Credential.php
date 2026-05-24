@@ -9,21 +9,18 @@ use App\Repository\AuthBridgeRepository;
 use App\Service\AccessRegistry\Database\LoginDatabaseService;
 use App\Service\Cache\ProcessStateCacheService;
 use JsonException;
-use Psr\Log\LoggerInterface;
 
 class Credential
 {
     public function __construct(
         private readonly AuthBridgeRepository $authBridgeRepository,
         private readonly LoginDatabaseService $loginDatabaseService,
-        private readonly LoggerInterface $logger,
         private readonly Encryptor $encryptor,
         private readonly ProcessStateCacheService $processStateCacheService
     ) {}
 
     public function setDecryptedValuesForApplication(array $user): bool
     {
-        $this->logger->info(json_encode($user));
         $processId = $user['applicationProcessId'] ?? $user['processId'] ?? null;
         if (!$user || !($processId)) {
             return false;

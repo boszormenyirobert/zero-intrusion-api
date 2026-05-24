@@ -21,8 +21,14 @@ class UserQrContentFactory
     ) {
     }
 
-    public function create(array $payload, CredentialHubIdentityDTO $identity, string $processKey): QrInterface
+    public function create(array $payload,  $identity, string $processKey): QrInterface
     {
+        $this->logger->critical('Creating QR content for user with process key: ' . $processKey, [
+            'payload' => json_encode($payload),
+            'identity' => json_encode($identity),
+            'processKey' => $processKey,
+        ]);
+
         return match ($processKey) {
             self::REGISTRATION_PROCESS_ID => $this->createRegistrationContent($payload, $identity),
             self::DOMAIN_PROCESS_ID => $this->createLoginContent($payload, $identity),
@@ -50,9 +56,11 @@ class UserQrContentFactory
         return $newCorporateRegistration;
     }
 
-    private function createLoginContent(array $payload, CredentialHubIdentityDTO $identity): UserLoginDTO
+    private function createLoginContent(array $payload,  $identity): UserLoginDTO
     {
-        return new UserLoginDTO(
+        $this->logger->critical(' DTO start');
+
+        $dto = new UserLoginDTO(
             $payload['domain'] ?? null,
             $identity->getDomainProcessId(),
             $identity->getXExtensionAuthOne(),
@@ -61,6 +69,8 @@ class UserQrContentFactory
             $payload['corporateAuthentication'] ?? null,
             'corporate',
         );
+        $this->logger->debug(' DTO created for user login QR content', ['dto' => $dto]);
+        return $dto;
     }
 
     private function resolveFirstCorporateAuthentication(array $payload): ?string

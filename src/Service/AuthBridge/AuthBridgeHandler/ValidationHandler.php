@@ -40,8 +40,6 @@ class ValidationHandler
         $requestPrivateId = $this->resolvePrivateId((string) $user['privateId'], $userIntegritySecret);
         
         if (\strcmp($requestPrivateId, $dbPrivateId) === 0) {
-            $this->logger->critical(self::VALID_PRIVATE_ID_LOG);
-            
             return new ValidationDTO(true, $userIntegritySecret);
         }
 

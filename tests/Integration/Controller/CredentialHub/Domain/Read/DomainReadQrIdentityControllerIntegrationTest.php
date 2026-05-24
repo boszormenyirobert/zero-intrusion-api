@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Controller\CredentialHub\Domain\Read;
 
 use App\Controller\PayloadValidator\PayloadValidator;
-use App\DTO\CredentialHub\Domain\Read\DomainReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\Domain\Read\ExtensionCredentialRequestDTO;
 use App\EventListener\HmacExtensionValidationListener;
 use App\Kernel;
 use App\Service\CredentialHub\Domain\Read\DomainReadQrIdentityRequestMapper;
@@ -36,7 +36,7 @@ final class DomainReadQrIdentityControllerIntegrationTest extends WebTestCase
         $requestMapper
             ->expects(self::once())
             ->method('map')
-            ->willReturn(new DomainReadQrIdentityRequestDTO('example.test', 'public-1'));
+            ->willReturn(new ExtensionCredentialRequestDTO('example.test', 'public-1'));
         static::getContainer()->set(DomainReadQrIdentityRequestMapper::class, $requestMapper);
 
         $service = $this->createMock(DomainReadQrIdentityService::class);

@@ -17,7 +17,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Service\CredentialHub\SharedSSE;
 
@@ -40,14 +39,13 @@ class DomainReadController extends AbstractController
     #[RequireJson]
     public function domainReadQrIdentity(
         Request $request,
-        ValidatorInterface $validator
     ): JsonResponse {
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::DOMAIN_READ_QR_IDENTITY);
             $domainReadRequest = $this->domainReadQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->domainReadQrIdentityService->handle($domainReadRequest, $validator)
+                $this->domainReadQrIdentityService->handle($domainReadRequest)
             );
             
         } catch (\Exception $e) {

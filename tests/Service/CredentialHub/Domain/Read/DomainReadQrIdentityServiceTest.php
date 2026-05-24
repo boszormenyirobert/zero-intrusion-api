@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Service\CredentialHub\Domain\Read;
 
 use App\Controller\CredentialHub\Domain\Read\DomainReadService;
-use App\DTO\CredentialHub\Domain\Read\DomainReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\Domain\Read\ExtensionCredentialRequestDTO;
 use App\DTO\QR\CredentialHubIdentityDTO;
 use App\DTO\QR\DomainReadQrContentDTO;
 use App\Service\AuthBridge\AuthBridgeService;
@@ -21,7 +21,7 @@ final class DomainReadQrIdentityServiceTest extends TestCase
 {
     public function testHandleUsesNotificationServiceForUserNotification(): void
     {
-        $request = new DomainReadQrIdentityRequestDTO('example.test', 'public-1');
+        $request = new ExtensionCredentialRequestDTO('example.test', 'public-1');
         $identity = new CredentialHubIdentityDTO();
         $identity->setCreatedAt('2026-01-01T00:00:00+00:00');
         $identity->setXExtensionAuthOne('auth-1');
@@ -78,7 +78,7 @@ final class DomainReadQrIdentityServiceTest extends TestCase
 
     public function testHandleSkipsNotificationWhenUserPublicIdIsMissing(): void
     {
-        $request = new DomainReadQrIdentityRequestDTO('example.test', null);
+        $request = new ExtensionCredentialRequestDTO('example.test', null);
         $identity = new CredentialHubIdentityDTO();
         $identity->setCreatedAt('2026-01-01T00:00:00+00:00');
         $identity->setXExtensionAuthOne('auth-1');

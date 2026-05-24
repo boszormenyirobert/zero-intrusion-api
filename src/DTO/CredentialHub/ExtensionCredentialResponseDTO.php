@@ -1,9 +1,9 @@
 <?php
-namespace App\DTO\QR;
+namespace App\DTO\CredentialHub;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-class CredentialHubIdentityDTO
+class ExtensionCredentialResponseDTO
 {
     #[Assert\NotBlank]
     public array $validCommunication = [];
@@ -172,7 +172,8 @@ class CredentialHubIdentityDTO
     {
         return match ($processKey) {
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
-            'domainProcessId' => $this->buildReadExtensionArray('domainProcessId', $this->domainProcessId),
+            'domain-read' => $this->buildReadExtensionArray('domain-read', $this->domainProcessId),
+            'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact
             'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
             'applicationProcessId' => $this->buildReadExtensionArray('applicationProcessId', $this->applicationProcessId),
             'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
@@ -222,11 +223,11 @@ class CredentialHubIdentityDTO
     private function buildReadExtensionArray(string $processKey, ?string $processId): array
     {
         return [
-               $processKey => $processId,   
+              'process' => $processId,   
               'qrCacheKey' => $this->qrCacheKey,
               'type' => $this->type
         ];
-    }       
+    }    
 
     /**
      * Get the value of qrCode

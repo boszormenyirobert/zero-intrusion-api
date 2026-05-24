@@ -34,21 +34,9 @@ class FirebaseService
         $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $publicId]);
         if ($identityEncrypted) {
             $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
-            $this->logger->info('Preparing FCM delivery.', [
-                'publicId' => $publicId,
-                'tokenCount' => count($fcmTokens),
-                'title' => $title,
-            ]);
 
             foreach ($fcmTokens as $index => $token) {
                 $fcmToken = $this->crypterDatabaseIdentityService->decryptData($token, base64_decode($identityEncrypted->getIv()));
-                $this->logger->info('Sending FCM to device token.', [
-                    'publicId' => $publicId,
-                    'title' => $title,
-                    'tokenIndex' => $index + 1,
-                    'tokenCount' => count($fcmTokens),
-                    'maskedToken' => $this->maskToken($fcmToken),
-                ]);
                 $this->sendFcmMessage($fcmToken, $title, $body, $qrData);
             }
         }
@@ -133,11 +121,6 @@ class FirebaseService
                 $this->config()->getCaCertPath(),
             );
 
-            $this->logger->info('FCM request succeeded.', [
-                'projectId' => $project_id,
-                'maskedToken' => $this->maskToken($deviceToken),
-                'responseBody' => $body,
-            ]);
             return $body;
 
         } catch (\GuzzleHttp\Exception\RequestException $e) {

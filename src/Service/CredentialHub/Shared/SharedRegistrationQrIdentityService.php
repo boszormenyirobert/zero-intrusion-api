@@ -26,7 +26,7 @@ class SharedRegistrationQrIdentityService
     public function handle(SharedRegistrationQrIdentityRequestDTO $request, ValidatorInterface $validator): array
     {
         if ($request->type === null || $request->type === '') {
-            throw new \InvalidArgumentException('Missing registration type');
+        //    throw new \InvalidArgumentException('Missing registration type');
         }
 
         $identity = $this->authBridgeService->generateRequestIdentity('registrationProcessId');
@@ -51,7 +51,7 @@ class SharedRegistrationQrIdentityService
         if ($request->userPublicId !== null && $request->userPublicId !== '') {
             $this->sharedNotificationService->sendFcmNotification('sharedRegistration', $request->userPublicId, $qrContent);
         }
-
+        $identity->setType('registrationProcessId');
         return $identity->toRegistrationProcessArray();
     }
 }

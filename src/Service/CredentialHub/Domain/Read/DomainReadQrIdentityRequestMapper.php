@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Service\CredentialHub\Domain\Read;
 
 use App\Controller\CredentialHub\PayloadKeys;
-use App\DTO\CredentialHub\Domain\Read\DomainReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\ExtensionCredentialRequestDTO;
 use App\Service\Payload\JsonPayloadDecoder;
 use Psr\Log\LoggerInterface;
 
@@ -17,7 +17,7 @@ class DomainReadQrIdentityRequestMapper
     ) {
     }
 
-    public function map(array $validatedPayload): DomainReadQrIdentityRequestDTO
+    public function map(array $validatedPayload): ExtensionCredentialRequestDTO
     {
         $payload = $this->jsonPayloadDecoder->decodeArray($validatedPayload[PayloadKeys::DOMAIN_READ_QR_IDENTITY] ?? null);
 
@@ -29,6 +29,6 @@ class DomainReadQrIdentityRequestMapper
             throw new \InvalidArgumentException('Invalid domain read QR identity payload.');
         }
 
-        return DomainReadQrIdentityRequestDTO::fromArray($payload);
+        return ExtensionCredentialRequestDTO::fromArray($payload);
     }
 }

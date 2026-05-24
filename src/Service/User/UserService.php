@@ -8,6 +8,7 @@ use App\DTO\QR\CredentialHubIdentityDTO;
 use App\DTO\QR\QrInterface;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\QrService\QrService;
+use Psr\Log\LoggerInterface;
 
 class UserService
 {
@@ -16,6 +17,7 @@ class UserService
         private readonly AuthBridgeService $authBridgeService,
         private readonly UserQrContentFactory $userQrContentFactory,
         private readonly UserAuthorizationResponseFactory $userAuthorizationResponseFactory,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -41,7 +43,7 @@ class UserService
     /**
      * @return array<string, mixed>
      */
-    private function buildExtendedIdentityPayload(CredentialHubIdentityDTO $identity, string $qrCode): array
+    private function buildExtendedIdentityPayload($identity, string $qrCode): array
     {
         $payload = get_object_vars($identity);
         $payload['qrCode'] = $qrCode;

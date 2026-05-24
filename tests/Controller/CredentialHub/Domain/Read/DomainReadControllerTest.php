@@ -10,7 +10,7 @@ use App\Attribute\RequireHmac;
 use App\Attribute\RequireJson;
 use App\Controller\CredentialHub\Domain\Read\DomainReadController;
 use App\Controller\PayloadValidator\PayloadValidator;
-use App\DTO\CredentialHub\Domain\Read\DomainReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\Domain\Read\ExtensionCredentialRequestDTO;
 use App\Helper\ResponseHelper;
 use App\Service\CredentialHub\Domain\Read\DomainReadCredentialDecryptedService;
 use App\Service\CredentialHub\Domain\Read\DomainReadCredentialService;
@@ -48,7 +48,7 @@ final class DomainReadControllerTest extends TestCase
     {
         $request = Request::create('/api/credential-hub/domain/read/qr-identity', 'POST');
         $validatedPayload = ['domain_read_qr_identity' => ['domain' => 'example.com', 'userPublicId' => 'user-1']];
-        $dto = DomainReadQrIdentityRequestDTO::fromArray($validatedPayload['domain_read_qr_identity']);
+        $dto = ExtensionCredentialRequestDTO::fromArray($validatedPayload['domain_read_qr_identity']);
 
         $payloadValidator = $this->createMock(PayloadValidator::class);
         $payloadValidator->expects(self::once())->method('validatePayload')->with($request, 'domain_read_qr_identity')->willReturn($validatedPayload);

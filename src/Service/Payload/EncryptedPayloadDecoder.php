@@ -30,19 +30,14 @@ class EncryptedPayloadDecoder
      */
     public function decodeOrFail(array $payload): array
     {
-        $this->logger->info('RequestService validPayload decrypting payload.', [
-            'payload_keys' => array_keys($payload),
-        ]);
-
         $validatedPayload = $this->jsonPayloadDecoder->decodeArray(
             $this->crypterService->decrypt((string) $payload['zeroIntrusionProyApi'])
         );
 
-        $this->logger->info('RequestService validPayload decrypted payload.', [
-            'validated_payload_keys' => is_array($validatedPayload) ? array_keys($validatedPayload) : [],
-        ]);
-
         if (!is_array($validatedPayload)) {
+            $this->logger->error('RequestService validPayload decrypted payload.', [
+                'validated_payload_keys' => is_array($validatedPayload) ? array_keys($validatedPayload) : [],
+            ]);
             throw new \UnexpectedValueException('Invalid encrypted payload.');
         }
 

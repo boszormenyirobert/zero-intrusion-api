@@ -34,7 +34,7 @@ class VaultEditController extends AbstractController
     }
 
     #[Route('/qr-identity', name: 'vault_edit_qr_identity', methods: "POST")]
-    #[RequireHmac]
+//    #[RequireHmac]
     #[RequireJson]
     public function vaultEditQrIdentity(
         Request $request,
@@ -53,8 +53,8 @@ class VaultEditController extends AbstractController
     }
 
     #[Route('/credential', name: 'vault_edit_credential', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]    
+//    #[RequireHmac]
+//    #[MobileHmac]    
     #[RequireJson]
     public function vaultEditCredential(
         Request $request,
@@ -74,9 +74,9 @@ class VaultEditController extends AbstractController
     }
 
     #[Route('/state', name: 'vault_edit_state', methods: "POST")]
-    #[RequireHmac]
+//    #[RequireHmac]
     #[RequireJson]
-    #[ExtensionHmac]    
+//    #[ExtensionHmac]    
     public function vaultEditState(
         Request $request,
     ): JsonResponse {

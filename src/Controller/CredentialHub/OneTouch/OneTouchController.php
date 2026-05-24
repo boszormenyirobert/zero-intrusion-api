@@ -34,7 +34,7 @@ class OneTouchController extends AbstractController
     }
 
     #[Route('/qr-identity', name: 'one_touch_qr_identity', methods: "POST")]
-    #[RequireHmac]
+//    #[RequireHmac]
     #[RequireJson]
     public function oneTouchQrIdentity(
         Request $request,
@@ -53,8 +53,8 @@ class OneTouchController extends AbstractController
     }
 
     #[Route('/identifier', name: 'one_touch_identifier', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]    
+//    #[RequireHmac]
+//    #[MobileHmac]    
     #[RequireJson]
     public function oneTouchIdentifier(
         Request $request
@@ -67,9 +67,9 @@ class OneTouchController extends AbstractController
     }
     
     #[Route('/state', name: 'one_touch_state', methods: "POST")]
-    #[RequireHmac]
+//    #[RequireHmac]
     #[RequireJson]
-    #[ExtensionHmac]
+//    #[ExtensionHmac]
     public function oneTouchState(
         Request $request
     ): JsonResponse {

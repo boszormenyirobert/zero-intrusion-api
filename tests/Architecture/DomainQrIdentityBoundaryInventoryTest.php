@@ -6,7 +6,7 @@ namespace App\Tests\Architecture;
 
 use App\Controller\CredentialHub\Domain\Delete\DomainDeleteService;
 use App\DTO\CredentialHub\Domain\Delete\DomainDeleteQrIdentityRequestDTO;
-use App\DTO\CredentialHub\Domain\Read\DomainReadQrIdentityRequestDTO;
+use App\DTO\CredentialHub\Domain\Read\ExtensionCredentialRequestDTO;
 use App\Service\CredentialHub\Domain\Delete\DomainDeleteQrIdentityService;
 use App\Service\CredentialHub\Domain\Read\DomainReadQrIdentityService;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +17,7 @@ final class DomainQrIdentityBoundaryInventoryTest extends TestCase
     {
         self::assertSame(
             ['domain', 'userPublicId'],
-            $this->publicPropertyNames(DomainReadQrIdentityRequestDTO::class),
+            $this->publicPropertyNames(ExtensionCredentialRequestDTO::class),
             'Domain read QR identity DTO should expose only explicit boundary fields.'
         );
 

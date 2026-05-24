@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\DTO\CredentialHub\Domain\Read;
+namespace App\DTO\CredentialHub;
 
-final readonly class DomainReadQrIdentityRequestDTO
+final readonly class ExtensionCredentialRequestDTO
 {
     public function __construct(
         public ?string $domain,

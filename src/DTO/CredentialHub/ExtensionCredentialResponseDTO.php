@@ -5,8 +5,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class ExtensionCredentialResponseDTO
 {
-    #[Assert\NotBlank]
-    public array $validCommunication = [];
+    public ?array $validCommunication = [];
 
     public ?string $createdAt;
     public ?string $xExtensionAuthOne;
@@ -171,11 +170,12 @@ class ExtensionCredentialResponseDTO
     public function toProcessArray(string $processKey): array
     {
         return match ($processKey) {
-            'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
             'domain-read' => $this->buildReadExtensionArray('domain-read', $this->domainProcessId),
+            'applicationProcessId' => $this->buildReadExtensionArray('applicationProcessId', $this->applicationProcessId),
+
+            'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact
             'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
-            'applicationProcessId' => $this->buildReadExtensionArray('applicationProcessId', $this->applicationProcessId),
             'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };

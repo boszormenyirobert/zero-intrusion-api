@@ -17,6 +17,7 @@ use App\Repository\AccessRegistryRepository;
 use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Service\CredentialHub\Vault\Read\VaultReadCredentialDecryptedService;
+use App\Service\CredentialHub\CredentialReadService;
 
 class VaultReadQrIdentityService
 {
@@ -30,14 +31,15 @@ class VaultReadQrIdentityService
         private readonly AccessRegistryRepository $accessRegistryRepository,
         private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,
         private readonly VaultReadCredentialDecryptedService $vaultReadCredentialDecryptedService,
-        private readonly ValidatorInterface $validator
+        private readonly ValidatorInterface $validator,
+        private readonly CredentialReadService $credentialReadService
     ) {
     }
 
     public function handle(ExtensionCredentialRequestDTO $request): array
     {
         // Create identity
-        $identity = $this->getIdentity($request);
+        $identity = $this->getIdentity($request);       
 
         // Get QR content from cache to include in notification if needed
         $qrContent = $this->processStateCacheService->get($identity->getQrCacheKey());
@@ -50,10 +52,7 @@ class VaultReadQrIdentityService
     }
     public function getIdentity(ExtensionCredentialRequestDTO $extensionRequest): ExtensionCredentialResponseDTO
     {
-        $identity = $this->authBridgeService->generateRequestIdentity('applicationProcessId');               
-        $identity->setType('vault-read');
-        $identity->setPublicKey($extensionRequest->publicKey);
-        $identity->setSource('extension');
+        $identity = $this->credentialReadService->getIdentity($extensionRequest, 'vault-read','extension');
         
         $qrContent = $this->vaultReadService->getQrContent($identity);
         $errors = $this->validator->validate($qrContent);

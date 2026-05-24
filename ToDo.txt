@@ -1,0 +1,16 @@
+CredentialHubIdentityDTO
+QrInterface
+
+Domain-Read, Vault-Read:
+Extension: OK
+
+    request: ExtensionCredentialRequestDTO
+        domain 
+        publicKey
+        userPublicID
+    response: ExtensionCredentialResponseDTO
+        success
+        process
+        qrCacheKey
+        type : domain-read || vault-read 
+

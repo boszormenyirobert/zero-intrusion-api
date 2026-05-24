@@ -18,6 +18,7 @@ use App\Service\AccessRegistry\Database\CrypterDatabaseAccessRegistryService;
 use App\Service\AuthBridge\AuthBridgeHandler\Domain\Encryptor;
 use App\DTO\QR\StoreDTO;
 use App\DTO\CredentialHub\QrContentDTO;
+use App\Service\CredentialHub\CredentialReadService;
 
 class DomainReadQrIdentityService
 {
@@ -31,7 +32,8 @@ class DomainReadQrIdentityService
         private readonly AccessRegistryRepository $accessRegistryRepository,
         private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseUserService,
         private readonly Encryptor $encryptor,
-        private readonly ValidatorInterface $validator
+        private readonly ValidatorInterface $validator,
+        private readonly CredentialReadService $credentialReadService
     ) {
     }
 
@@ -53,11 +55,7 @@ class DomainReadQrIdentityService
 
     private function getIdentity(ExtensionCredentialRequestDTO $extensionRequest): ExtensionCredentialResponseDTO
     {
-        $identity = $this->authBridgeService->generateRequestIdentity('domainProcessId');
-        $identity->setType('domain-read');
-        $identity->setPublicKey($extensionRequest->publicKey);
-        $identity->setSource('extension');
-        $identity->setDomain($extensionRequest->domain);
+        $identity = $this->credentialReadService->getIdentity($extensionRequest, 'domain-read','extension');
 
         $qrContent = $this->domainReadService->getQrContent($identity);
         $errors = $this->validator->validate($qrContent);

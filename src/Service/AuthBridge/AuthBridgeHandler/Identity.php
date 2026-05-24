@@ -32,8 +32,14 @@ class Identity
      * 4. Both HMACs protect against tampering and replay attacks.
      * 5. Returns the identity enriched with the additional security fields.
      */    
-    public function generateRequestIdentity(string $processType): ExtensionCredentialResponseDTO
+    public function generateRequestIdentity(string $type): ExtensionCredentialResponseDTO
     {
+        if($type === 'domain-read'){
+            $processType = 'domainProcessId';
+        } else {
+            $processType = 'applicationProcessId';
+        }
+
         $identity = $this->getBrowserExtensionIdentity($processType);
         $createdAt = $identity->getCreatedAt();
 

@@ -11,14 +11,13 @@ use App\Helper\ResponseHelper;
 use App\Service\CredentialHub\Domain\Read\DomainReadCredentialDecryptedService;
 use App\Service\CredentialHub\Domain\Read\DomainReadCredentialService;
 use App\Service\CredentialHub\Domain\Read\DomainReadQrIdentityRequestMapper;
-use App\Service\CredentialHub\Domain\Read\DomainReadQrIdentityService;
-use App\Service\CredentialHub\Domain\Read\DomainReadStateService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Service\CredentialHub\SharedSSE;
+use App\Service\CredentialHub\ReadQrIdentityService;
 
 #[Route('/api/credential-hub/domain/read')]
 class DomainReadController extends AbstractController
@@ -27,10 +26,9 @@ class DomainReadController extends AbstractController
         private readonly PayloadValidator $payloadValidator,
         private readonly ResponseHelper $responseHelper,
         private readonly DomainReadQrIdentityRequestMapper $domainReadQrIdentityRequestMapper,
-        private readonly DomainReadQrIdentityService $domainReadQrIdentityService,
+        private readonly ReadQrIdentityService $readQrIdentityService,
         private readonly DomainReadCredentialDecryptedService $domainReadCredentialDecryptedService,
         private readonly DomainReadCredentialService $domainReadCredentialService,
-        private readonly DomainReadStateService $domainReadStateService,
         private readonly SharedSSE $sharedSSE
     ) {
     }
@@ -45,7 +43,7 @@ class DomainReadController extends AbstractController
             $readRequest = $this->domainReadQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->domainReadQrIdentityService->handle($readRequest)
+                $this->readQrIdentityService->handle($readRequest,'domain-read')
             );
             
         } catch (\Exception $e) {

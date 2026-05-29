@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\CredentialHub\Domain\Read;
 
-use App\Controller\CredentialHub\Domain\Read\DomainReadService;
+use App\Controller\CredentialHub\Domain\Read\DomainService;
 use App\Controller\PayloadValidator\PayloadValidator;
 use App\Entity\CorporateIdentity;
 use App\Repository\AccessRegistryRepository;
@@ -22,7 +22,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ContainerBagInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-final class DomainReadServiceTest extends TestCase
+final class DomainServiceTest extends TestCase
 {
     public function testGetQrContentBuildsExpectedDto(): void
     {
@@ -140,9 +140,9 @@ final class DomainReadServiceTest extends TestCase
         $service->getDecryptedCredentials(['type' => 'unknown', 'source' => 'extension']);
     }
 
-    private function createService(NotifierService $notifierService, ?AuthBridgeService $authBridge = null): DomainReadService
+    private function createService(NotifierService $notifierService, ?AuthBridgeService $authBridge = null): DomainService
     {
-        return new DomainReadService(
+        return new DomainService(
             $this->createMock(PayloadValidator::class),
             $authBridge ?? $this->createMock(AuthBridgeService::class),
             $this->createMock(CorporateIdentityRepository::class),

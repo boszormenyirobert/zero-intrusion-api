@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Domain\Read;
 
-use App\Controller\CredentialHub\Domain\Read\DomainReadService;
+use App\Controller\CredentialHub\Domain\Read\DomainService;
 use App\DTO\CredentialHub\Domain\Read\ExtensionCredentialRequestDTO;
 use App\DTO\QR\CredentialHubIdentityDTO;
 use App\DTO\QR\DomainReadQrContentDTO;
@@ -38,8 +38,8 @@ final class DomainReadQrIdentityServiceTest extends TestCase
             ->with('domainProcessId')
             ->willReturn($identity);
 
-        $domainReadService = $this->createMock(DomainReadService::class);
-        $domainReadService
+        $domainService = $this->createMock(DomainService::class);
+        $domainService
             ->expects(self::once())
             ->method('getQrContent')
             ->with('example.test', 'auth-1', $identity)
@@ -68,7 +68,7 @@ final class DomainReadQrIdentityServiceTest extends TestCase
         $service = new DomainReadQrIdentityService(
             $authBridgeService,
             $qrService,
-            $domainReadService,
+            $domainService,
             $sharedNotificationService,
             $this->createMock(LoggerInterface::class),
         );
@@ -95,8 +95,8 @@ final class DomainReadQrIdentityServiceTest extends TestCase
             ->with('domainProcessId')
             ->willReturn($identity);
 
-        $domainReadService = $this->createMock(DomainReadService::class);
-        $domainReadService
+        $domainService = $this->createMock(DomainService::class);
+        $domainService
             ->expects(self::once())
             ->method('getQrContent')
             ->with('example.test', 'auth-1', $identity)
@@ -122,7 +122,7 @@ final class DomainReadQrIdentityServiceTest extends TestCase
         $service = new DomainReadQrIdentityService(
             $authBridgeService,
             $qrService,
-            $domainReadService,
+            $domainService,
             $sharedNotificationService,
             $this->createMock(LoggerInterface::class),
         );

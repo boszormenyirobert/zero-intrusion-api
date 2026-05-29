@@ -10,9 +10,10 @@ class QrContentDTO implements QrInterface
 {
     public ?string $domain;
 
-    public ?string $domainProcessId;
+    public ?string $domainProcessId = "";
+    public ?string $applicationProcessId = "";
 
-    public ?string $xExtensionAuthOne;
+    // public ?string $xExtensionAuthOne;
 
     public ?string $type;
 
@@ -29,8 +30,10 @@ class QrContentDTO implements QrInterface
     public function __construct(
         ExtensionCredentialResponseDTO $identity        
     ) {
-        $this->domain = $identity->getDomain();
-        $this->domainProcessId =  $identity->getDomainProcessId();
+        $this->domainProcessId =  $identity->getDomainProcessId() ?? null;
+        $this->applicationProcessId = $identity->getApplicationProcessId() ?? null;
+        $this->domain = $identity->getDomain() ?? null;
+
         $this->type = $identity->getType();
         $this->source = $identity->getSource();
         $this->publicKey = $identity->getPublicKey();
@@ -42,7 +45,7 @@ class QrContentDTO implements QrInterface
         $this->credentialCacheKey = $credentialCacheKey;
     }
 
-    public function toNotification(): array
+    public function toNotificationDomain(): array
     {
         return [
             'domain' => $this->domain,
@@ -54,4 +57,16 @@ class QrContentDTO implements QrInterface
             'publicKey' => $this->publicKey          
         ];
     }
+
+    public function toNotificationApplication(): array
+    {
+        return [
+            'applicationProcessId' => $this->applicationProcessId,
+            'qrCacheKey' => $this->qrCacheKey,
+            'credentialCacheKey' => $this->credentialCacheKey,
+            'type' => $this->type,
+            'source' => $this->source,
+            'publicKey' => $this->publicKey          
+        ];
+    }    
 }

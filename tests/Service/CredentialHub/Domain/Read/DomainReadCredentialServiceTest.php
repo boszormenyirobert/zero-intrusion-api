@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Domain\Read;
 
-use App\Controller\CredentialHub\Domain\Read\DomainReadService;
+use App\Controller\CredentialHub\Domain\Read\DomainService;
 use App\Service\CredentialHub\Domain\Read\DomainReadCredentialService;
 use App\Service\CredentialHub\SharedPayloadService;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class DomainReadCredentialServiceTest extends TestCase
 {
-    public function testHandleReturnsCredentialsFromDomainReadService(): void
+    public function testHandleReturnsCredentialsFromDomainService(): void
     {
         $request = Request::create('/api/credential-hub/domain/read/credential', 'POST');
         $user = [
@@ -29,8 +29,8 @@ final class DomainReadCredentialServiceTest extends TestCase
             ->with($request, 'domain_read_credential')
             ->willReturn($user);
 
-        $domainReadService = $this->createMock(DomainReadService::class);
-        $domainReadService
+        $domainService = $this->createMock(DomainService::class);
+        $domainService
             ->expects(self::once())
             ->method('processCredentialRead')
             ->with($user)
@@ -39,7 +39,7 @@ final class DomainReadCredentialServiceTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::exactly(2))->method('info');
 
-        $service = new DomainReadCredentialService($sharedPayloadService, $domainReadService, $logger);
+        $service = new DomainReadCredentialService($sharedPayloadService, $domainService, $logger);
 
         self::assertSame(['credentials' => true], $service->handle($request));
     }

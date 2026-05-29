@@ -38,9 +38,10 @@ class Identity
             $processType = 'domainProcessId';
         } else if($type === 'vault-read') {
             $processType = 'applicationProcessId';
-        } else if($type === 'one-touch') {
+        } else if($type === 'one-touch' || $type === 'oneTouchProcessId') {
             $processType = 'oneTouchProcessId';
         } else {
+            $this->logger->error('Invalid process type provided for identity generation', ['type' => $type]);
             throw new \InvalidArgumentException('Invalid process type provided');
         }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Service\CredentialHub\Domain\Read;
 
-use App\Controller\CredentialHub\Domain\Read\DomainReadService;
+use App\Service\CredentialHub\Domain\Read\DomainService;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Service\CredentialHub\SharedPayloadService;
 use Psr\Log\LoggerInterface;
@@ -15,7 +15,7 @@ class DomainReadCredentialDecryptedService
 {
     public function __construct(
         private readonly SharedPayloadService $sharedPayloadService,
-        private readonly DomainReadService $domainReadService,
+        private readonly DomainService $domainService,
         private readonly LoggerInterface $logger,
         private readonly ProcessStateCacheService $processStateCacheService
     ) {
@@ -45,7 +45,7 @@ class DomainReadCredentialDecryptedService
         $storedQrData = array_merge($storedQrDataFromCache, $user);
         $decoded = (array)$storedQrData;
         $decoded['publicId'] = $user['publicId'] ?? 'missing publicId';       
-        $response = $this->domainReadService->getDecryptedCredentials($decoded);
+        $response = $this->domainService->getDecryptedCredentials($decoded);
 
         return [
             'credentials' => $response, 

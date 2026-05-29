@@ -19,10 +19,10 @@ class ExtensionCredentialResponseDTO
     public ?string $secret;
     public ?string $iv;
 
-    public ?string $registrationProcessId;
-    public ?string $removeProcessId;
-    public ?string $domainProcessId;
-    public ?string $applicationProcessId;
+    public ?string $registrationProcessId = null;
+    public ?string $removeProcessId = null;
+    public ?string $domainProcessId = null;
+    public ?string $applicationProcessId = null;
     public ?string $oneTouchProcessId;
     public ?string $qrCode;
 
@@ -171,7 +171,7 @@ class ExtensionCredentialResponseDTO
     {
         return match ($processKey) {
             'domain-read' => $this->buildReadExtensionArray('domain-read', $this->domainProcessId),
-            'applicationProcessId' => $this->buildReadExtensionArray('applicationProcessId', $this->applicationProcessId),
+            'vault-read' => $this->buildReadExtensionArray('applicationProcessId', $this->applicationProcessId),
 
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact

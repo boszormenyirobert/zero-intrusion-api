@@ -6,7 +6,6 @@ namespace App\Controller\CredentialHub\Vault\Read;
 
 use App\Attribute\RequireHmac;
 use App\Attribute\ExtensionHmac;
-use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
 use App\Controller\CredentialHub\PayloadKeys;
 use App\Controller\PayloadValidator\PayloadValidator;
@@ -14,8 +13,7 @@ use App\Helper\ResponseHelper;
 use App\Service\CredentialHub\Vault\Read\VaultReadCredentialDecryptedService;
 use App\Service\CredentialHub\Vault\Read\VaultReadCredentialService;
 use App\Service\CredentialHub\Vault\Read\VaultReadQrIdentityRequestMapper;
-use App\Service\CredentialHub\Vault\Read\VaultReadQrIdentityService;
-use App\Service\CredentialHub\Vault\Read\VaultReadStateService;
+use App\Service\CredentialHub\ReadQrIdentityService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,10 +28,9 @@ class VaultReadController extends AbstractController
         private readonly PayloadValidator $payloadValidator,
         private readonly ResponseHelper $responseHelper,
         private readonly VaultReadQrIdentityRequestMapper $vaultReadQrIdentityRequestMapper,
-        private readonly VaultReadQrIdentityService $vaultReadQrIdentityService,
+        private readonly ReadQrIdentityService $readQrIdentityService,
         private readonly VaultReadCredentialDecryptedService $vaultReadCredentialDecryptedService,
         private readonly VaultReadCredentialService $vaultReadCredentialService,
-        private readonly VaultReadStateService $vaultReadStateService,
         private readonly SharedSSE $sharedSSE
     ) {
     }
@@ -47,7 +44,7 @@ class VaultReadController extends AbstractController
             $readRequest = $this->vaultReadQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->vaultReadQrIdentityService->handle($readRequest)
+                $this->readQrIdentityService->handle($readRequest, 'vault-read')
             );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
@@ -83,33 +80,6 @@ class VaultReadController extends AbstractController
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
-    }
-    #[Route('/state', name: 'vault_read_state', methods: "POST")]
-    #[RequireHmac]
-    #[RequireJson]
-    #[ExtensionHmac]
-    public function vaultReadState(
-        Request $request,
-    ): JsonResponse {
-        try {
-            $payload = $this->vaultReadStateService->handle($request);
-
-            if ($payload === null) {
-                return $this->missingProcessResponse();
-            }
-
-            return $this->responseHelper->createSuccessResponse(
-                $payload
-            );
-
-        } catch (\Exception $e) {
-            return $this->responseHelper->handleException($e);
-        }
-    }
-
-    private function missingProcessResponse(): JsonResponse
-    {
-        return $this->responseHelper->createErrorResponse('Invalid or missing processId');
     }
 
     #[Route('/approval-challange/{key}', name: 'api_sse_vault', methods: ['GET'])]

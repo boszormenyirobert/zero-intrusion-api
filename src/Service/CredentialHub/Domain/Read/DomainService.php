@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\CredentialHub\Domain\Read;
+namespace App\Service\CredentialHub\Domain\Read;
 
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Controller\PayloadValidator\PayloadValidator;
@@ -12,7 +12,7 @@ use App\Service\Notifier\NotifierService;
 use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 use App\DTO\CredentialHub\QrContentDTO;
 
-class DomainReadService
+class DomainService
 {
     public function __construct(
         private PayloadValidator $payloadValidator,

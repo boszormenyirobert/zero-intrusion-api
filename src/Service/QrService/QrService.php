@@ -5,6 +5,7 @@ namespace App\Service\QrService;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use App\DTO\QR\QrInterface;
+use App\DTO\CredentialHub\QrContentDTO;
 
 class QrService
 {
@@ -29,4 +30,12 @@ class QrService
         // Return as base64-encoded image string
         return base64_encode($result->getString());
     }
+
+    public function getQrContent($identity): QrContentDTO
+    {
+        $data = new QrContentDTO(
+            $identity
+        );
+        return $data;
+    }    
 }

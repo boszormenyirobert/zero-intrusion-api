@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Domain\Read;
 
-use App\Controller\CredentialHub\Domain\Read\DomainReadService;
+use App\Controller\CredentialHub\Domain\Read\DomainService;
 use App\Service\CredentialHub\Domain\Read\DomainReadCredentialDecryptedService;
 use App\Service\CredentialHub\SharedPayloadService;
 use PHPUnit\Framework\TestCase;
@@ -29,8 +29,8 @@ final class DomainReadCredentialDecryptedServiceTest extends TestCase
             ->with($request, 'domain_read_credential_encrypted')
             ->willReturn($user);
 
-        $domainReadService = $this->createMock(DomainReadService::class);
-        $domainReadService
+        $domainService = $this->createMock(DomainService::class);
+        $domainService
             ->expects(self::once())
             ->method('getDecryptedCredentials')
             ->with($user)
@@ -39,7 +39,7 @@ final class DomainReadCredentialDecryptedServiceTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::exactly(2))->method('info');
 
-        $service = new DomainReadCredentialDecryptedService($sharedPayloadService, $domainReadService, $logger);
+        $service = new DomainReadCredentialDecryptedService($sharedPayloadService, $domainService, $logger);
 
         self::assertSame(['credentials' => ['credential' => 'secret']], $service->handle($request));
     }

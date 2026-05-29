@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\E2E\Controller\CredentialHub\Domain\Read;
 
-use App\Controller\CredentialHub\Domain\Read\DomainReadService;
+use App\Controller\CredentialHub\Domain\Read\DomainService;
 use App\DTO\QR\CredentialHubIdentityDTO;
 use App\EventListener\HmacExtensionValidationListener;
 use App\EventListener\HmacMobileValidationListener;
@@ -80,8 +80,8 @@ final class DomainReadControllerE2ETest extends WebTestCase
         $this->mockSuccessfulHmacValidation();
         $this->mockMobileListener();
 
-        $domainReadService = $this->createMock(DomainReadService::class);
-        $domainReadService
+        $domainService = $this->createMock(DomainService::class);
+        $domainService
             ->expects(self::once())
             ->method('getDecryptedCredentials')
             ->with([
@@ -92,7 +92,7 @@ final class DomainReadControllerE2ETest extends WebTestCase
             ->willReturn([
                 ['credential' => 'alice@example.com', 'domain' => 'example.com'],
             ]);
-        static::getContainer()->set(DomainReadService::class, $domainReadService);
+        static::getContainer()->set(DomainService::class, $domainService);
 
         $this->requestJson($client, 'POST', '/api/credential-hub/domain/read/credential/decrypted', [
             'domain_read_credential_encrypted' => [
@@ -122,8 +122,8 @@ final class DomainReadControllerE2ETest extends WebTestCase
         $this->mockSuccessfulHmacValidation();
         $this->mockMobileListener();
 
-        $domainReadService = $this->createMock(DomainReadService::class);
-        $domainReadService
+        $domainService = $this->createMock(DomainService::class);
+        $domainService
             ->expects(self::once())
             ->method('processCredentialRead')
             ->with([
@@ -132,7 +132,7 @@ final class DomainReadControllerE2ETest extends WebTestCase
                 'source' => 'extension',
             ])
             ->willReturn(true);
-        static::getContainer()->set(DomainReadService::class, $domainReadService);
+        static::getContainer()->set(DomainService::class, $domainService);
 
         $this->requestJson($client, 'POST', '/api/credential-hub/domain/read/credential', [
             'domain_read_credential' => [

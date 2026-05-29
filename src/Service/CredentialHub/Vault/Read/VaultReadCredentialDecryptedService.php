@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Service\CredentialHub\Vault\Read;
 
 use App\Controller\CredentialHub\PayloadKeys;
-use App\Controller\CredentialHub\Vault\Read\VaultReadService;
 use App\Service\CredentialHub\SharedPayloadService;
 use Symfony\Component\HttpFoundation\Request;
 use App\Service\Cache\ProcessStateCacheService;
@@ -17,7 +16,6 @@ class VaultReadCredentialDecryptedService
 {
     public function __construct(
         private readonly SharedPayloadService $sharedPayloadService,
-        private readonly VaultReadService $vaultReadService,
         private readonly ProcessStateCacheService $processStateCacheService,
         private readonly AccessRegistryRepository $accessRegistryRepository,
         private readonly CrypterDatabaseAccessRegistryService $crypterDatabaseAccessRegistryService,

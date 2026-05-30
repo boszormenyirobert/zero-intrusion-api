@@ -6,6 +6,7 @@ use App\DTO\QR\SharedRegistrationQrDTO;
 use App\DTO\QR\OneTouchDTO;
 use Psr\Log\LoggerInterface;
 use App\Service\AuthBridge\AuthBridgeService;
+
 class SharedRegistrationService
 {
     public function __construct(

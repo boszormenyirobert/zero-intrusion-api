@@ -174,7 +174,6 @@ class ExtensionCredentialResponseDTO
 
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact
-            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
             
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
@@ -206,17 +205,18 @@ class ExtensionCredentialResponseDTO
     private function buildProcessArray(string $processKey, ?string $processId): array
     {
         return [
-            'validCommunication' => $this->validCommunication,
-            'createdAt' => $this->createdAt,
-         //   'xExtensionAuthOne' => $this->xExtensionAuthOne,
             'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'secret' => $this->secret,
             'iv' => $this->iv,
             $processKey => $processId,
             'qrCode' => $this->qrCode,
-            'publicKey' => $this->publicKey,
             'qrCacheKey' => $this->qrCacheKey,
-            'type' => $this->type
+
+        //    'validCommunication' => $this->validCommunication,
+        //    'createdAt' => $this->createdAt,
+        //    'xExtensionAuthOne' => $this->xExtensionAuthOne,            
+        //    'secret' => $this->secret,            
+        //    'publicKey' => $this->publicKey,            
+        //    'type' => $this->type
         ];
     }
     private function buildReadExtensionArray(string $processKey, ?string $processId): array

@@ -178,6 +178,24 @@ class ExtensionCredentialResponseDTO
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
     }
+    private function buildProcessArray(string $processKey, ?string $processId): array
+    {
+        return [
+            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
+            'iv' => $this->iv,
+            $processKey => $processId, //  $processKey => sessionId
+            'qrCode' => $this->qrCode,
+            'qrCacheKey' => $this->qrCacheKey,
+        ];
+    }
+    private function buildReadExtensionArray(string $processKey, ?string $processId): array
+    {
+        return [
+              'sessionId' => $processId,   
+              'qrCacheKey' => $this->qrCacheKey,
+              'type' => $this->type
+        ];
+    }       
 
     public function toRegistrationProcessArray(): array
     {
@@ -201,32 +219,6 @@ class ExtensionCredentialResponseDTO
     {
         return $this->toProcessArray('sessionId');
     }
-
-    private function buildProcessArray(string $processKey, ?string $processId): array
-    {
-        return [
-            'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
-            'iv' => $this->iv,
-            $processKey => $processId,
-            'qrCode' => $this->qrCode,
-            'qrCacheKey' => $this->qrCacheKey,
-
-        //    'validCommunication' => $this->validCommunication,
-        //    'createdAt' => $this->createdAt,
-        //    'xExtensionAuthOne' => $this->xExtensionAuthOne,            
-        //    'secret' => $this->secret,            
-        //    'publicKey' => $this->publicKey,            
-        //    'type' => $this->type
-        ];
-    }
-    private function buildReadExtensionArray(string $processKey, ?string $processId): array
-    {
-        return [
-              'process' => $processId,   
-              'qrCacheKey' => $this->qrCacheKey,
-              'type' => $this->type
-        ];
-    }    
 
     /**
      * Get the value of qrCode

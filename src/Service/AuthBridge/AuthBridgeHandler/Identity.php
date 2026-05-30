@@ -34,19 +34,7 @@ class Identity
      */    
     public function generateRequestIdentity(string $type): ExtensionCredentialResponseDTO
     {
-        if($type === 'vault-read' || $type === 'one-touch') {
-            $sessionKey = 'sessionId';} 
-            
-        else if($type === 'domain-read'){
-            $sessionKey = 'domainProcessId';        
-        } else if($type === 'sessionId') {
-            $sessionKey = 'sessionId';
-        } else if($type === 'registrationProcessId') {
-            $sessionKey = 'registrationProcessId';
-        } else {
-            $this->logger->error('Invalid process type provided for identity generation', ['type' => $type]);
-            throw new \InvalidArgumentException('Invalid sessionKey type provided');
-        }
+        $sessionKey = $this->handleSessionKey($type);
 
         $identity = $this->getBrowserExtensionIdentity($sessionKey);
         $createdAt = $identity->getCreatedAt();
@@ -60,6 +48,22 @@ class Identity
         $identity->setQrCacheKey($qrKey);
 
         return $identity;
+    }
+
+    private function handleSessionKey($type): string
+    {
+        if($type === 'vault-read' || $type === 'one-touch' || $type === 'sessionId') {
+            return 'sessionId';} 
+            
+        else if($type === 'domain-read'){
+            return 'domainProcessId';        
+        } else if($type === 'registrationProcessId') {
+            return 'registrationProcessId';
+        } else {
+            $this->logger->error('Invalid process type provided for identity generation', ['type' => $type]);
+            throw new \InvalidArgumentException('Invalid sessionKey type provided');
+        }
+
     }
 
     private function generateQrCacheKey(): string

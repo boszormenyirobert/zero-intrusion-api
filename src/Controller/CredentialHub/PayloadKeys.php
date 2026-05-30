@@ -21,7 +21,7 @@ final class PayloadKeys
     public const DOMAIN_READ_STATE = 'domain_read_state';
 
     public const VAULT_READ_QR_IDENTITY = 'vault_read_qr_identity';
-    public const VAULT_PROCESS_ID = 'applicationProcessId';
+    public const VAULT_PROCESS_ID = 'sessionId';
     public const VAULT_READ_CREDENTIAL = 'vault_read_credential';
     public const VAULT_READ_CREDENTIAL_ENCRYPTED = 'vault_read_credential_encrypted';
     public const VAULT_READ_STATE = 'vault_read_state';

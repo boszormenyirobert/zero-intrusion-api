@@ -37,7 +37,7 @@ class Identity
         if($type === 'domain-read'){
             $processType = 'domainProcessId';
         } else if($type === 'vault-read') {
-            $processType = 'applicationProcessId';
+            $processType = 'sessionId';
         } else if($type === 'one-touch' || $type === 'oneTouchProcessId') {
             $processType = 'oneTouchProcessId';
         } else {

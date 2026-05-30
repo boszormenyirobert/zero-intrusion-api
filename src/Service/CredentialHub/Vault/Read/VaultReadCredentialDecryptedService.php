@@ -54,7 +54,7 @@ class VaultReadCredentialDecryptedService
 
         $applicationList = $this->getApplicationCreadentials($decoded['publicId'] ?? '');
 
-        return ['credentials' => $applicationList,'publicKey' => $storedQrData['publicKey'] ?? 'missing', 'validation' => true,'processId' => $storedQrData['applicationProcessId'] ?? 'missing' ];
+        return ['credentials' => $applicationList,'publicKey' => $storedQrData['publicKey'] ?? 'missing', 'validation' => true,'processId' => $storedQrData['sessionId'] ?? 'missing' ];
     }
 
     public function getApplicationCreadentials(string $userPublicId): array

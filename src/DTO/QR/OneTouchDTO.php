@@ -24,7 +24,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     public ?string $registrationProcessId;
     public ?string $removeProcessId;
     public ?string $domainProcessId;
-    public ?string $applicationProcessId;
+    public ?string $sessionId;
     public ?string $oneTouchProcessId;
     public ?string $qrCode;
 
@@ -190,7 +190,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
             'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
             'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
-            'applicationProcessId' => $this->buildProcessArray('applicationProcessId', $this->applicationProcessId),
+            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
             'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
@@ -211,7 +211,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     
     public function toApplicationProcessArray(): array
     {
-        return $this->toProcessArray('applicationProcessId');
+        return $this->toProcessArray('sessionId');
     }
 
     public function toOneTouchProcessArray(): array
@@ -259,21 +259,21 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     }
 
     /**
-     * Get the value of applicationProcessId
+     * Get the value of sessionId
      */ 
-    public function getApplicationProcessId()
+    public function getsessionId()
     {
-        return $this->applicationProcessId;
+        return $this->sessionId;
     }
 
     /**
-     * Set the value of applicationProcessId
+     * Set the value of sessionId
      *
      * @return  self
      */ 
-    public function setApplicationProcessId($applicationProcessId)
+    public function setsessionId($sessionId)
     {
-        $this->applicationProcessId = $applicationProcessId;
+        $this->sessionId = $sessionId;
 
         return $this;
     }

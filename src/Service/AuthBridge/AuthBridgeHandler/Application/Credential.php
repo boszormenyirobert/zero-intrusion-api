@@ -21,7 +21,7 @@ class Credential
 
     public function setDecryptedValuesForApplication(array $user): bool
     {
-        $processId = $user['applicationProcessId'] ?? $user['processId'] ?? null;
+        $processId = $user['sessionId'] ?? $user['processId'] ?? null;
         if (!$user || !($processId)) {
             return false;
         }

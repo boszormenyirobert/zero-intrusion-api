@@ -70,15 +70,19 @@ class SharedPayloadService
         if ($fullPayload) {
             return $payload;
         }
+            
+            $this->logger->debug('Getting process ID from payload 1.', [
+                'payload_key' => $payloadKey,
+                'payload_keys' => array_keys($payload),
+            ]);
 
         if ($payload === [] || empty($payload['process'])) {
-            $this->logger->error('Getting process ID from payload.', [
+            $this->logger->error('Getting process ID from payload 2.', [
                 'payload_key' => $payloadKey,
                 'payload_content' => $payload,
             ]);
             return false;
         }
-
         return $payload['process'];
     }
     public function getProcessIdRefact(Request $request, string $payloadKey, bool $fullPayload = false): array|string|false

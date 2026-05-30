@@ -161,8 +161,8 @@ class CrypterDatabaseLoginService
         $encryptedSecret = new AuthBridge();
         if ($type === 'domainProcessId') {
             $encryptedSecret->setDomainProcessId($secretData['domainProcessId']); //Read
-        } elseif ($type === 'applicationProcessId') {
-            $encryptedSecret->setApplicationProcessId($secretData['applicationProcessId']); //Read
+        } elseif ($type === 'sessionId') {
+            $encryptedSecret->setsessionId($secretData['sessionId']); //Read
         } elseif ($type === 'registrationProcessId') {
             $encryptedSecret->setRegistrationProcessId($secretData['registrationProcessId']); //Write -domain and vault
         } elseif ($type === 'removeProcessId') {

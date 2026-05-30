@@ -39,14 +39,14 @@ class Fetch
         return is_array($cachedPayload) ? AuthBridge::fromCacheArray($cachedPayload) : false;
     }
 
-    public function fetchFromAccessTable(string $applicationProcessId, string $processType): array
+    public function fetchFromAccessTable(string $sessionId, string $processType): array
     {
-        return $this->fetchFromAccessTableOrFail($applicationProcessId, $processType)->toArray();
+        return $this->fetchFromAccessTableOrFail($sessionId, $processType)->toArray();
     }
 
-    public function fetchFromAccessTableOrFail(string $applicationProcessId, string $processType): FetchFromAccessTableResultDTO
+    public function fetchFromAccessTableOrFail(string $sessionId, string $processType): FetchFromAccessTableResultDTO
     {
-        $cachedValue = $this->processStateCacheService->get($applicationProcessId);
+        $cachedValue = $this->processStateCacheService->get($sessionId);
         $encryptedUser = null;
 
         if (is_string($cachedValue) && $cachedValue !== '') {
@@ -59,7 +59,7 @@ class Fetch
 
         if (!$encryptedUser instanceof AuthBridge) {
             $this->logger->info('Process state cache not ready yet.', [
-                'processId' => $applicationProcessId,
+                'processId' => $sessionId,
                 'processType' => $processType,
             ]);
             $process = new ResponseDTO(false, false, false);

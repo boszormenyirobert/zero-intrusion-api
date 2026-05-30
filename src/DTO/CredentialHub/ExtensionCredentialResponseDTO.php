@@ -22,7 +22,7 @@ class ExtensionCredentialResponseDTO
     public ?string $registrationProcessId = null;
     public ?string $removeProcessId = null;
     public ?string $domainProcessId = null;
-    public ?string $applicationProcessId = null;
+    public ?string $sessionId = null;
     public ?string $oneTouchProcessId;
     public ?string $qrCode;
 
@@ -171,7 +171,7 @@ class ExtensionCredentialResponseDTO
     {
         return match ($processKey) {
             'domain-read' => $this->buildReadExtensionArray('domain-read', $this->domainProcessId),
-            'vault-read' => $this->buildReadExtensionArray('applicationProcessId', $this->applicationProcessId),
+            'vault-read' => $this->buildReadExtensionArray('sessionId', $this->sessionId),
 
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact
@@ -196,7 +196,7 @@ class ExtensionCredentialResponseDTO
     
     public function toApplicationProcessArray(): array
     {
-        return $this->toProcessArray('applicationProcessId');
+        return $this->toProcessArray('sessionId');
     } 
     
     public function toOneTouchProcessArray(): array
@@ -250,21 +250,21 @@ class ExtensionCredentialResponseDTO
     }
 
     /**
-     * Get the value of applicationProcessId
+     * Get the value of sessionId
      */ 
-    public function getApplicationProcessId()
+    public function getsessionId()
     {
-        return $this->applicationProcessId;
+        return $this->sessionId;
     }
 
     /**
-     * Set the value of applicationProcessId
+     * Set the value of sessionId
      *
      * @return  self
      */ 
-    public function setApplicationProcessId($applicationProcessId)
+    public function setsessionId($sessionId)
     {
-        $this->applicationProcessId = $applicationProcessId;
+        $this->sessionId = $sessionId;
 
         return $this;
     }

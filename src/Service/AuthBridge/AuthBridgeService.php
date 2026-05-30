@@ -23,7 +23,7 @@ class AuthBridgeService
 
     // Copy user from AccessRegistry into AuthBridge table
     // domainProcessId is already in the table. Added by the browser-extension-identity creation
-    // This function will update the authBridge table with the user credential|application by the domainProcessId/applicationProcessId
+    // This function will update the authBridge table with the user credential|application by the domainProcessId/sessionId
     public function persistDecryptedUserData(array $user): bool
     {
         return $this->authBridgeHandler->persistDecryptedUserData($user);
@@ -60,9 +60,9 @@ class AuthBridgeService
         return $this->identity->generateRequestIdentity($processType);
     }
 
-    public function fetchFromAccessTable(string $applicationProcessId, string $processType): array
+    public function fetchFromAccessTable(string $sessionId, string $processType): array
     {
-        return $this->fetch->fetchFromAccessTable($applicationProcessId, $processType);
+        return $this->fetch->fetchFromAccessTable($sessionId, $processType);
     }
 
     public function fetchForOneTouch(string $oneTouchProcessId, string $processType): AuthBridge|false

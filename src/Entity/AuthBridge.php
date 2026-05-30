@@ -20,7 +20,7 @@ class AuthBridge
     private ?string $domainProcessId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $applicationProcessId = null;
+    private ?string $sessionId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $registrationProcessId = null;    
@@ -116,14 +116,14 @@ class AuthBridge
         return $this;
     }
 
-    public function getApplicationProcessId(): ?string
+    public function getsessionId(): ?string
     {
-        return $this->applicationProcessId;
+        return $this->sessionId;
     }
 
-    public function setApplicationProcessId(?string $applicationProcessId): static
+    public function setsessionId(?string $sessionId): static
     {
-        $this->applicationProcessId = $applicationProcessId;
+        $this->sessionId = $sessionId;
 
         return $this;
     }
@@ -264,7 +264,7 @@ class AuthBridge
         return [
             'id' => $this->getId(),
             'domainProcessId' => $this->getDomainProcessId(),
-            'applicationProcessId' => $this->getApplicationProcessId(),
+            'sessionId' => $this->getsessionId(),
             'registrationProcessId' => $this->getRegistrationProcessId(),
             'removeProcessId' => $this->getRemoveProcessId(),
             'oneTouchProcessId' => $this->getOneTouchProcessId(),
@@ -287,8 +287,8 @@ class AuthBridge
             $authBridge->setDomainProcessId($data['domainProcessId']);
         }
 
-        if (!empty($data['applicationProcessId'])) {
-            $authBridge->setApplicationProcessId($data['applicationProcessId']);
+        if (!empty($data['sessionId'])) {
+            $authBridge->setsessionId($data['sessionId']);
         }
 
         if (!empty($data['registrationProcessId'])) {

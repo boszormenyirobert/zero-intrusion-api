@@ -12,12 +12,12 @@ class DomainDeleteService
     ) {}
 
     public function getQrContent(
+        string $mobilXExtensionAuth,
         ?string $domain,
         ?string $type,
         ?string $source,
         ?string $targetId,
-        string $mobilXExtensionAuth,
-        string $processId
+        ?string $processId
     ): DomainDeleteQrContentDTO
     {
         return new DomainDeleteQrContentDTO(

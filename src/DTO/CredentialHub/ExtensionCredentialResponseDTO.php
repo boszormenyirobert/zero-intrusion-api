@@ -171,11 +171,12 @@ class ExtensionCredentialResponseDTO
         return match ($processKey) {
             'domain-read' => $this->buildReadExtensionArray('domain-read', $this->domainProcessId),
             'vault-read' => $this->buildReadExtensionArray('sessionId', $this->sessionId),
+            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
 
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact
             'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
-            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
+            
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
     }

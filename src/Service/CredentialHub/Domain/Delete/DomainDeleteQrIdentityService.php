@@ -26,13 +26,13 @@ class DomainDeleteQrIdentityService
 
     public function handle(DomainDeleteQrIdentityRequestDTO $request): array
     {
-        $identity = $this->authBridgeService->generateRequestIdentity('removeProcessId');
+        $identity = $this->authBridgeService->generateRequestIdentity('removeProcessId');   
         $qrContent = $this->domainDeleteService->getQrContent(
-            $request->domain,
-            $request->type,
-            $request->source,
-            $request->targetId,
-            $identity->getXExtensionAuthOne(),
+            $identity->getXExtensionAuthOne(),    
+            $request->getDomain(),
+            $request->getType(),
+            $request->getSource(),
+            $request->getTargetId(),            
             $identity->getRemoveProcessId(),
         );
         $errors = $this->validator->validate($qrContent);
@@ -45,8 +45,8 @@ class DomainDeleteQrIdentityService
 
         $identity->setQrCode($this->qrService->getQrCode($qrContent));
 
-        if ($request->userPublicId !== null && $request->userPublicId !== '') {
-            $this->sharedNotificationService->sendFcmNotification('domainDelete', $request->userPublicId, $qrContent);
+        if ($request->getUserPublicId() !== null && $request->getUserPublicId() !== '') {
+            $this->sharedNotificationService->sendFcmNotification('domainDelete', $request->getUserPublicId(), $qrContent);
         }
 
         return $identity->toRemoveProcessArray();

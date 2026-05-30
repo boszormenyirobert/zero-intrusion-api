@@ -15,6 +15,31 @@ final readonly class DomainDeleteQrIdentityRequestDTO
     ) {
     }
 
+    public function getDomain(): ?string
+    {
+        return $this->domain;
+    }
+    
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function getSource(): ?string
+    {
+        return $this->source;
+    }
+
+    public function getTargetId(): ?string
+    {
+        return $this->targetId;
+    }
+
+    public function getUserPublicId(): ?string
+    {
+        return $this->userPublicId;
+    }
+
     public static function fromArray(array $payload): self
     {
         return new self(

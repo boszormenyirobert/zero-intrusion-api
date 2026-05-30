@@ -34,7 +34,6 @@ class DomainDeleteController extends AbstractController
     }
 
     #[Route('/qr-identity', name: 'domain_delete_qr_identity', methods: "POST")]
-    #[RequireHmac]
     #[RequireJson]
     public function domainDeleteQrIdentity(
         Request $request,
@@ -54,8 +53,6 @@ class DomainDeleteController extends AbstractController
     }
 
     #[Route('/credential', name: 'domain_delete_credential', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]
     #[RequireJson]
     public function domainDeleteCredential(
         Request $request,
@@ -76,9 +73,7 @@ class DomainDeleteController extends AbstractController
     }
 
     #[Route('/state', name: 'domain_delete_state', methods: "POST")]
-    #[RequireHmac]
     #[RequireJson]
-    #[ExtensionHmac]
     public function domainDeleteState(
         Request $request,
     ): JsonResponse {

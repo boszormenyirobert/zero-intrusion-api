@@ -87,7 +87,7 @@ class SharedProcessPoller
             usleep(250000);
         } while (true);
 
-        $this->logger->debug('-------------------------- 4 Polling result: ' . json_encode($response));
+        $this->logger->debug('-------------------------- 4 Polling result: ' . json_encode($processId));
 
         return $response;
     }

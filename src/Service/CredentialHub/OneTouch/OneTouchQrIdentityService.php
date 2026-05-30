@@ -27,7 +27,7 @@ class OneTouchQrIdentityService
             throw new \InvalidArgumentException('Missing registration type');
         }
 
-        $identity = $this->authBridgeService->generateRequestIdentity('sessionId');
+        $identity = $this->authBridgeService->generateRequestIdentity('one-touch');
         $authToken = $identity->getXExtensionAuthOne();
         $processId = $identity->getSessionId();
         $qrContent = $this->sharedRegistrationService->getOneTouchQrContent($request->toObject(), $authToken, $processId);

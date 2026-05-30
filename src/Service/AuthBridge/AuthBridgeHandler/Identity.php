@@ -34,10 +34,11 @@ class Identity
      */    
     public function generateRequestIdentity(string $type): ExtensionCredentialResponseDTO
     {
-        if($type === 'domain-read'){
-            $processType = 'domainProcessId';
-        } else if($type === 'vault-read' || $type === 'one-touch') {
-            $processType = 'sessionId';
+        if($type === 'vault-read' || $type === 'one-touch') {
+            $processType = 'sessionId';} 
+            
+        else if($type === 'domain-read'){
+            $processType = 'domainProcessId';        
         } else if($type === 'removeProcessId') {
             $processType = 'removeProcessId';
         } else if($type === 'registrationProcessId') {

@@ -27,7 +27,6 @@ class SharedProcessPoller
         if (!is_string($cachedValue) || $cachedValue === '') {
             return [];
         }
-
         $data = json_decode($cachedValue, true);
         return $data;
     }
@@ -87,9 +86,7 @@ class SharedProcessPoller
             usleep(250000);
         } while (true);
 
-        $this->logger->debug('-------------------------- 4 Polling result: ' . json_encode($processId));
-
-        return $response;
+        return $response['cache'] ?? ['process_check' => false];
     }
 
     public function pollTheRedisOneTouch(string $processId, string $processType): array

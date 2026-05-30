@@ -45,10 +45,8 @@ class DomainDeleteQrIdentityService
 
         $identity->setQrCode($this->qrService->getQrCode($qrContent));
 
-        if ($request->getUserPublicId() !== null && $request->getUserPublicId() !== '') {
-            $this->sharedNotificationService->sendFcmNotification('domainDelete', $request->getUserPublicId(), $qrContent);
-        }
-
+        $this->sharedNotificationService->sendFcmNotification('domainDelete', $request->getUserPublicId(), $qrContent);
+        
         return $identity->toRemoveProcessArray();
     }
 }

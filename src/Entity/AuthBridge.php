@@ -25,9 +25,7 @@ class AuthBridge
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $registrationProcessId = null;    
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $removeProcessId = null;         
-    
+   
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $userIdentity = null; 
 
@@ -149,18 +147,6 @@ class AuthBridge
         return $this;
     }
 
-    public function getRemoveProcessId(): ?string
-    {
-        return $this->removeProcessId;
-    }
-
-    public function setRemoveProcessId(string $removeProcessId): static
-    {
-        $this->removeProcessId = $removeProcessId;
-
-        return $this;
-    }    
-
     public function getApplications(): ?string
     {
         return $this->applications;
@@ -251,7 +237,7 @@ class AuthBridge
             'domainProcessId' => $this->getDomainProcessId(),
             'sessionId' => $this->getsessionId(),
             'registrationProcessId' => $this->getRegistrationProcessId(),
-            'removeProcessId' => $this->getRemoveProcessId(),
+            'sessionId' => $this->getSessionId(),
             'sessionId' => $this->getSessionId(),
             'iv' => $this->getIv(),
             'userIdentity' => $this->getUserIdentity() ? json_decode($this->getUserIdentity(), true) : null,
@@ -280,8 +266,8 @@ class AuthBridge
             $authBridge->setRegistrationProcessId($data['registrationProcessId']);
         }
 
-        if (!empty($data['removeProcessId'])) {
-            $authBridge->setRemoveProcessId($data['removeProcessId']);
+        if (!empty($data['sessionId'])) {
+            $authBridge->setSessionId($data['sessionId']);
         }
 
         if (!empty($data['sessionId'])) {

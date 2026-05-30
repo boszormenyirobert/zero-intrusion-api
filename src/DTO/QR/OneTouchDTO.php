@@ -22,9 +22,8 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     public ?string $iv;
 
     public ?string $registrationProcessId;
-    public ?string $removeProcessId;
-    public ?string $domainProcessId;
     public ?string $sessionId;
+    public ?string $domainProcessId;
     public ?string $qrCode;
 
     public function __construct(
@@ -144,21 +143,21 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     }
 
     /**
-     * Get the value of removeProcessId
+     * Get the value of sessionId
      */ 
-    public function getRemoveProcessId()
+    public function getSessionId()
     {
-        return $this->removeProcessId;
+        return $this->sessionId;
     }
 
     /**
-     * Set the value of removeProcessId
+     * Set the value of sessionId
      *
      * @return  self
      */ 
-    public function setRemoveProcessId($removeProcessId)
+    public function setSessionId($sessionId)
     {
-        $this->removeProcessId = $removeProcessId;
+        $this->sessionId = $sessionId;
 
         return $this;
     }
@@ -188,7 +187,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
         return match ($processKey) {
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
             'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
-            'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
+            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
             'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
@@ -204,7 +203,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     } 
     public function toRemoveProcessArray(): array
     {
-        return $this->toProcessArray('removeProcessId');
+        return $this->toProcessArray('sessionId');
     }      
     
     public function toApplicationProcessArray(): array
@@ -252,26 +251,6 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     public function setQrCode($qrCode)
     {
         $this->qrCode = $qrCode;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of sessionId
-     */ 
-    public function getSessionId()
-    {
-        return $this->sessionId;
-    }
-
-    /**
-     * Set the value of sessionId
-     *
-     * @return  self
-     */ 
-    public function setSessionId($sessionId)
-    {
-        $this->sessionId = $sessionId;
 
         return $this;
     }

@@ -43,7 +43,7 @@ class SharedPayloadService
     public function getApplicationDto(array $user): DeleteApplicationDto
     {
         return new DeleteApplicationDto(
-            removeProcessId: $user['removeProcessId'],
+            sessionId: $user['sessionId'],
             targetId: $user['targetId'],
         );
     }
@@ -71,11 +71,6 @@ class SharedPayloadService
             return $payload;
         }
             
-            $this->logger->debug('Getting process ID from payload 1.', [
-                'payload_key' => $payloadKey,
-                'payload_keys' => array_keys($payload),
-            ]);
-
         if ($payload === [] || empty($payload['process'])) {
             $this->logger->error('Getting process ID from payload 2.', [
                 'payload_key' => $payloadKey,

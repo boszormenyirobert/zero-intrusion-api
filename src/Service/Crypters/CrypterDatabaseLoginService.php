@@ -165,8 +165,8 @@ class CrypterDatabaseLoginService
             $encryptedSecret->setsessionId($secretData['sessionId']); //Read
         } elseif ($type === 'registrationProcessId') {
             $encryptedSecret->setRegistrationProcessId($secretData['registrationProcessId']); //Write -domain and vault
-        } elseif ($type === 'removeProcessId') {
-        //    $encryptedSecret->setRemoveProcessId($secretData['removeProcessId']); //Delete -domain 
+        } elseif ($type === 'sessionId') {
+        //    $encryptedSecret->setSessionId($secretData['sessionId']); //Delete -domain 
         }
         $encryptedSecret->setIv(base64_encode($iv));
 

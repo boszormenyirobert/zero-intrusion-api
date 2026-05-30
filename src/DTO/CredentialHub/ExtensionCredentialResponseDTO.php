@@ -20,9 +20,8 @@ class ExtensionCredentialResponseDTO
     public ?string $iv;
 
     public ?string $registrationProcessId = null;
-    public ?string $removeProcessId = null;
-    public ?string $domainProcessId = null;
     public ?string $sessionId = null;
+    public ?string $domainProcessId = null;
     public ?string $qrCode;
 
     
@@ -127,21 +126,21 @@ class ExtensionCredentialResponseDTO
     }
 
     /**
-     * Get the value of removeProcessId
+     * Get the value of sessionId
      */ 
-    public function getRemoveProcessId()
+    public function getSessionId()
     {
-        return $this->removeProcessId;
+        return $this->sessionId;
     }
 
     /**
-     * Set the value of removeProcessId
+     * Set the value of sessionId
      *
      * @return  self
      */ 
-    public function setRemoveProcessId($removeProcessId)
+    public function setSessionId($sessionId)
     {
-        $this->removeProcessId = $removeProcessId;
+        $this->sessionId = $sessionId;
 
         return $this;
     }
@@ -175,7 +174,7 @@ class ExtensionCredentialResponseDTO
 
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact
-            'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
+            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
             
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
@@ -191,7 +190,7 @@ class ExtensionCredentialResponseDTO
     } 
     public function toRemoveProcessArray(): array
     {
-        return $this->toProcessArray('removeProcessId');
+        return $this->toProcessArray('sessionId');
     }      
     
     public function toApplicationProcessArray(): array
@@ -209,7 +208,7 @@ class ExtensionCredentialResponseDTO
         return [
             'validCommunication' => $this->validCommunication,
             'createdAt' => $this->createdAt,
-            'xExtensionAuthOne' => $this->xExtensionAuthOne,
+         //   'xExtensionAuthOne' => $this->xExtensionAuthOne,
             'xExtensionAuthTwo' => $this->xExtensionAuthTwo,
             'secret' => $this->secret,
             'iv' => $this->iv,
@@ -248,27 +247,6 @@ class ExtensionCredentialResponseDTO
 
         return $this;
     }
-
-    /**
-     * Get the value of sessionId
-     */ 
-    public function getSessionId()
-    {
-        return $this->sessionId;
-    }
-
-    /**
-     * Set the value of sessionId
-     *
-     * @return  self
-     */ 
-    public function setsessionId($sessionId)
-    {
-        $this->sessionId = $sessionId;
-
-        return $this;
-    }
-
     public function setPublicKey(?string $publicKey): void
     {
         $this->publicKey = $publicKey;

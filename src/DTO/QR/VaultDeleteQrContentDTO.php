@@ -19,19 +19,19 @@ class VaultDeleteQrContentDTO implements QrInterface
     public ?string $xExtensionAuthOne;
 
     #[Assert\NotBlank]
-    public ?string $removeProcessId;
+    public ?string $sessionId;
 
     public function __construct(
         ?string $source,
         ?string $targetId,
         ?string $type,
         ?string $xExtensionAuthOne,
-        ?string $removeProcessId
+        ?string $sessionId
     ) {
         $this->source = $source;
         $this->targetId = $targetId;
         $this->type = $type;
         $this->xExtensionAuthOne = $xExtensionAuthOne;
-        $this->removeProcessId = $removeProcessId;
+        $this->sessionId = $sessionId;
     }
 }

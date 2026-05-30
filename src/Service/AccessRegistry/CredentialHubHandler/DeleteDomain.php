@@ -19,10 +19,10 @@ final class DeleteDomain
 
     public function handleDomainDeletion(array $process): ?bool
     {
-        $processId = $process['removeProcessId'];
+        $processId = $process['sessionId'];
 
         $response = $this->accessRegistryDomainService->deleteDomainRegistraions($process);
-        //$this->authBridgeService->updateProcessState('removeProcessId', $processId);
+        //$this->authBridgeService->updateProcessState('sessionId', $processId);
         $this->writeLoginEntryInRedis($processId, [
             'process' => true,
             'validation' => true,

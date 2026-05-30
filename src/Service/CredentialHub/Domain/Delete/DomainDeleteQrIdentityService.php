@@ -26,14 +26,14 @@ class DomainDeleteQrIdentityService
 
     public function handle(DomainDeleteQrIdentityRequestDTO $request): array
     {
-        $identity = $this->authBridgeService->generateRequestIdentity('removeProcessId');   
+        $identity = $this->authBridgeService->generateRequestIdentity('sessionId');   
         $qrContent = $this->domainDeleteService->getQrContent(
             $identity->getXExtensionAuthOne(),    
             $request->getDomain(),
             $request->getType(),
             $request->getSource(),
             $request->getTargetId(),            
-            $identity->getRemoveProcessId(),
+            $identity->getSessionId(),
         );
         $errors = $this->validator->validate($qrContent);
 

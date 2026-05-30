@@ -35,20 +35,20 @@ class Identity
     public function generateRequestIdentity(string $type): ExtensionCredentialResponseDTO
     {
         if($type === 'vault-read' || $type === 'one-touch') {
-            $processType = 'sessionId';} 
+            $sessionKey = 'sessionId';} 
             
         else if($type === 'domain-read'){
-            $processType = 'domainProcessId';        
-        } else if($type === 'removeProcessId') {
-            $processType = 'removeProcessId';
+            $sessionKey = 'domainProcessId';        
+        } else if($type === 'sessionId') {
+            $sessionKey = 'sessionId';
         } else if($type === 'registrationProcessId') {
-            $processType = 'registrationProcessId';
+            $sessionKey = 'registrationProcessId';
         } else {
             $this->logger->error('Invalid process type provided for identity generation', ['type' => $type]);
-            throw new \InvalidArgumentException('Invalid process type provided');
+            throw new \InvalidArgumentException('Invalid sessionKey type provided');
         }
 
-        $identity = $this->getBrowserExtensionIdentity($processType);
+        $identity = $this->getBrowserExtensionIdentity($sessionKey);
         $createdAt = $identity->getCreatedAt();
 
         $secret = (string) $this->params->get('EXTENSION_REGISTRATION_POOL_SECRET');
@@ -95,7 +95,7 @@ class Identity
      * 1. Encrypts the extension communication data using crypterDatabaseLoginService.
      * 2. Sets the target identifier and initializes the process state as false.
      * 3. Assigns the process ID to the appropriate property based on the processType:
-     *      - removeProcessId → setRemoveProcessId()
+     *      - sessionId → setSessionId()
      *      - registrationProcessId → setRegistrationProcessId()
      * 4. Returns the prepared AuthBridge entity ready for persistence.
      */    
@@ -105,8 +105,8 @@ class Identity
         $authBridge->setTargetId($targetId);
         $authBridge->setProcessState(false);
 
-        if ($processType === 'removeProcessId') {
-            $authBridge->setRemoveProcessId($processId);
+        if ($processType === 'sessionId') {
+            $authBridge->setSessionId($processId);
         } elseif ($processType === 'registrationProcessId') {
             $authBridge->setRegistrationProcessId($processId);
         } elseif ($processType === 'sessionId') {

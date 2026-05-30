@@ -22,12 +22,12 @@ final class DeleteApplication
 
     public function deleteApplication(DeleteApplicationDto $dto): array
     {
-        $processKey = 'removeProcessId';
+        $processKey = 'sessionId';
 
         $deletedFromRegistry = $this->resolverService->getDelete()->deleteAccessRegistry($dto->targetId);
-        $processState = $this->authBridgeService->updateProcessState($processKey, $dto->removeProcessId);
+        $processState = $this->authBridgeService->updateProcessState($processKey, $dto->sessionId);
         
-        $this->writeLoginEntryInRedis($dto->removeProcessId, [
+        $this->writeLoginEntryInRedis($dto->sessionId, [
             'process' => true,
             'validation' => true,
             'process_check' => true,

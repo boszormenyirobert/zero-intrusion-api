@@ -41,6 +41,6 @@ class OneTouchQrIdentityService
 
         $identity->setQrCode($this->qrService->getQrCode($qrContent));
 
-        return $identity->toOneTouchProcessArray();
+        return $identity->toProcessArray('one-touch');
     }
 }

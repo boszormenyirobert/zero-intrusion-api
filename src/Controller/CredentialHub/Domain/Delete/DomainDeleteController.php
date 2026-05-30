@@ -81,7 +81,7 @@ class DomainDeleteController extends AbstractController
             $response = $this->domainDeleteStateService->handle($request);
 
             if ($response === null) {
-                return $this->missingProcessResponse();
+                return $this->missingSessionResponse();
             }
 
             return $this->responseHelper->createSuccessResponse($response ?? []);
@@ -90,8 +90,8 @@ class DomainDeleteController extends AbstractController
         }
     }
 
-    private function missingProcessResponse(): JsonResponse
+    private function missingSessionResponse(): JsonResponse
     {
-        return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+        return $this->responseHelper->createErrorResponse('Invalid or missing sessionId');
     }
 }

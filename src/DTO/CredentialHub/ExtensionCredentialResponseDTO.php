@@ -168,9 +168,9 @@ class ExtensionCredentialResponseDTO
     public function toProcessArray(string $processKey): array
     {
         return match ($processKey) {
-            'domain-read' => $this->buildReadExtensionArray('domain-read', $this->domainProcessId),
-            'vault-read' => $this->buildReadExtensionArray('sessionId', $this->sessionId),
-            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
+            'domain-read' => $this->buildReadExtensionArray($this->domainProcessId),
+            'vault-read' => $this->buildReadExtensionArray($this->sessionId),
+            'one-touch' => $this->buildProcessArray('sessionId', $this->sessionId),
 
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact
@@ -188,7 +188,7 @@ class ExtensionCredentialResponseDTO
             'qrCacheKey' => $this->qrCacheKey,
         ];
     }
-    private function buildReadExtensionArray(string $processKey, ?string $processId): array
+    private function buildReadExtensionArray(string $processId): array
     {
         return [
               'sessionId' => $processId,   

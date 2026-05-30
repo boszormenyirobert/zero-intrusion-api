@@ -188,7 +188,6 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
             'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
             'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
-            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
     }

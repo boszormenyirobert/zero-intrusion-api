@@ -33,10 +33,6 @@ class CorporateRegistrationController extends AbstractController
     ) {
     }
 
-    /**
-     * Initialize Corporate identity creation under an existing Business service
-     * First step of the Corporate registration process creating the corporate identity
-     */
     #[Route('/identity/create/initialize', name: 'service_registration_corporate_data', methods: ['POST'])]
     #[RequireHmac]
     #[RequireJson]
@@ -57,10 +53,6 @@ class CorporateRegistrationController extends AbstractController
         }
     }
 
-    /**
-     * Finalize Corporate identity creation under an existing Business service
-     * Second step of the Corporate registration process updating the corporate identity with the call-back data and extend data-set
-     */
     #[Route('/identity/create/follow-up', name: 'service_registration_corporate_data_extend', methods: ['POST'])]
     #[RequireHmac]
     #[RequireJson]

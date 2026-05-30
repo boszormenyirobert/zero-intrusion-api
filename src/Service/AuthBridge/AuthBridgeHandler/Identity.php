@@ -50,20 +50,25 @@ class Identity
         return $identity;
     }
 
-    private function handleSessionKey($type): string
+    private function handleSessionKey(string $type): string
     {
-        if($type === 'vault-read' || $type === 'one-touch' || $type === 'sessionId') {
-            return 'sessionId';} 
-            
-        else if($type === 'domain-read'){
-            return 'domainProcessId';        
-        } else if($type === 'registrationProcessId') {
-            return 'registrationProcessId';
-        } else {
-            $this->logger->error('Invalid process type provided for identity generation', ['type' => $type]);
-            throw new \InvalidArgumentException('Invalid sessionKey type provided');
-        }
+        return match ($type) {
+            'vault-read', 'one-touch', 'sessionId' => 'sessionId',
+            'domain-read' => 'domainProcessId',
+            'registrationProcessId' => 'registrationProcessId',
 
+            default => $this->throwInvalidType($type),
+        };
+    }
+
+    private function throwInvalidType(string $type): never
+    {
+        $this->logger->error(
+            'Invalid process type provided for identity generation',
+            ['type' => $type]
+        );
+
+        throw new \InvalidArgumentException('Invalid sessionKey type provided');
     }
 
     private function generateQrCacheKey(): string

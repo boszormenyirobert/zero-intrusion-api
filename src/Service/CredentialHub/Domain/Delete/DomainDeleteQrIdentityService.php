@@ -27,6 +27,7 @@ class DomainDeleteQrIdentityService
     public function handle(DomainDeleteQrIdentityRequestDTO $request): array
     {
         $identity = $this->authBridgeService->generateRequestIdentity('sessionId');   
+        
         $qrContent = $this->domainDeleteService->getQrContent(
             $identity->getXExtensionAuthOne(),    
             $request->getDomain(),

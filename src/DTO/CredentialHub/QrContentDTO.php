@@ -45,28 +45,29 @@ class QrContentDTO implements QrInterface
         $this->credentialCacheKey = $credentialCacheKey;
     }
 
-    public function toNotificationDomain(): array
+    private function baseNotificationPayload(): array
     {
         return [
-            'domain' => $this->domain,
             'qrCacheKey' => $this->qrCacheKey,
             'credentialCacheKey' => $this->credentialCacheKey,
-            'domainProcessId' => $this->domainProcessId,
             'type' => $this->type,
             'source' => $this->source,
-            'publicKey' => $this->publicKey          
+            'publicKey' => $this->publicKey,
         ];
+    }
+
+    public function toNotificationDomain(): array
+    {
+        return array_merge($this->baseNotificationPayload(), [
+            'domain' => $this->domain,
+            'domainProcessId' => $this->domainProcessId
+        ]);
     }
 
     public function toNotificationApplication(): array
     {
-        return [
-            'sessionId' => $this->sessionId,
-            'qrCacheKey' => $this->qrCacheKey,
-            'credentialCacheKey' => $this->credentialCacheKey,
-            'type' => $this->type,
-            'source' => $this->source,
-            'publicKey' => $this->publicKey          
-        ];
+        return array_merge($this->baseNotificationPayload(), [
+            'sessionId' => $this->sessionId
+        ]);
     }    
 }

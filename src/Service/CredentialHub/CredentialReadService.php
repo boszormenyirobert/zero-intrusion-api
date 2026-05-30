@@ -67,17 +67,22 @@ class CredentialReadService
             $credentialCacheKey =  $this->storeCredentialDataInCache($identityRequestDTO, $identity, $identity->getType());
 
             $qrContent->setCredentialCacheKey($credentialCacheKey);
-
-            if($identity->getType() === 'domain-read') {
-                $santizedQrContent = $qrContent->toNotificationDomain();
-            } else if($identity->getType() === 'vault-read') {
-                $santizedQrContent = $qrContent->toNotificationApplication();
-            } else {
-                $santizedQrContent = [];
-            }
+            
+            $santizedQrContent = $this->sanitizeQrContent($qrContent, $identity->getType());
 
             $this->sharedNotificationService->sendFcmNotification('domainRead', $identityRequestDTO->userPublicId, $santizedQrContent);
         }        
+    }
+
+    private function sanitizeQrContent( QrContentDTO $qrContent, $type): array
+    {
+            if($type === 'domain-read') {
+                return $qrContent->toNotificationDomain();
+            } else if($type === 'vault-read') {
+                return $qrContent->toNotificationApplication();
+            } 
+
+        return [];
     }
 
     private function identityConfiguration(

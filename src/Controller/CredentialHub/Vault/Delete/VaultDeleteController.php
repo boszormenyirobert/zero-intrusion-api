@@ -29,7 +29,6 @@ class VaultDeleteController extends AbstractController
     }
 
     #[Route('/qr-identity', name: 'vault_delete_qr_identity', methods: "POST")]
-    #[RequireHmac]
     #[RequireJson]
     public function vaultDeleteQrIdentity(
         Request $request
@@ -48,8 +47,6 @@ class VaultDeleteController extends AbstractController
     }
 
     #[Route('/credential', name: 'vault_delete_credential', methods: "POST")]
-    #[RequireHmac]
-    #[MobileHmac]
     #[RequireJson]
     public function vaultDeleteCredential(
         Request $request,
@@ -69,9 +66,7 @@ class VaultDeleteController extends AbstractController
     }
 
     #[Route('/state', name: 'vault_delete_state', methods: "POST")]
-    #[RequireHmac]
     #[RequireJson]
-    #[ExtensionHmac]
     public function vaultDeleteState(
         Request $request,
     ): JsonResponse {

@@ -28,9 +28,6 @@ class AuthBridge
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $removeProcessId = null;         
     
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $oneTouchProcessId = null;  
-    
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $userIdentity = null; 
 
@@ -224,18 +221,6 @@ class AuthBridge
         return $this;
     } 
 
-    public function getOneTouchProcessId(): ?string
-    {
-        return $this->oneTouchProcessId;
-    }
-    
-    public function setOneTouchProcessId(string $oneTouchProcessId): static
-    {
-        $this->oneTouchProcessId = $oneTouchProcessId;
-
-        return $this;
-    }
-
     public function getUserIdentity(): ?string
     {
         return $this->userIdentity;
@@ -267,7 +252,7 @@ class AuthBridge
             'sessionId' => $this->getsessionId(),
             'registrationProcessId' => $this->getRegistrationProcessId(),
             'removeProcessId' => $this->getRemoveProcessId(),
-            'oneTouchProcessId' => $this->getOneTouchProcessId(),
+            'sessionId' => $this->getSessionId(),
             'iv' => $this->getIv(),
             'userIdentity' => $this->getUserIdentity() ? json_decode($this->getUserIdentity(), true) : null,
             'applications' => $this->getApplications(),
@@ -299,8 +284,8 @@ class AuthBridge
             $authBridge->setRemoveProcessId($data['removeProcessId']);
         }
 
-        if (!empty($data['oneTouchProcessId'])) {
-            $authBridge->setOneTouchProcessId($data['oneTouchProcessId']);
+        if (!empty($data['sessionId'])) {
+            $authBridge->setSessionId($data['sessionId']);
         }
 
         if (!empty($data['iv'])) {

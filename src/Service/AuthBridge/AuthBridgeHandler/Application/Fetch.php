@@ -26,9 +26,9 @@ class Fetch
     ) {
     }
 
-    public function fetchForOneTouch(string $oneTouchProcessId, string $processType): AuthBridge|false
+    public function fetchForOneTouch(string $sessionId, string $processType): AuthBridge|false
     {
-        $cachedValue = $this->processStateCacheService->get($oneTouchProcessId);
+        $cachedValue = $this->processStateCacheService->get($sessionId);
 
         if (!is_string($cachedValue) || $cachedValue === '') {
             return false;

@@ -52,9 +52,9 @@ class Encryptor
 
     public function setDecryptedUserIdentity(array $user): bool
     {
-        $authBridge = $this->authBridgeRepository->findOneBy(['oneTouchProcessId' => $user['oneTouchProcessId']]);
+        $authBridge = $this->authBridgeRepository->findOneBy(['sessionId' => $user['sessionId']]);
         if (!$authBridge) {
-            $this->logger->critical("No user login found for oneTouchProcessId: " . $user['oneTouchProcessId']);
+            $this->logger->critical("No user login found for sessionId: " . $user['sessionId']);
             return false;
         }
 
@@ -64,7 +64,7 @@ class Encryptor
         ];
 
         $authBridge->setUserIdentity($this->encodeJson($identity));
-        $this->writeLoginEntryInRedis($user['oneTouchProcessId'], $authBridge);
+        $this->writeLoginEntryInRedis($user['sessionId'], $authBridge);
 
         return true;
     }

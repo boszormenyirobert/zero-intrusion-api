@@ -65,9 +65,9 @@ class AuthBridgeService
         return $this->fetch->fetchFromAccessTable($sessionId, $processType);
     }
 
-    public function fetchForOneTouch(string $oneTouchProcessId, string $processType): AuthBridge|false
+    public function fetchForOneTouch(string $sessionId, string $processType): AuthBridge|false
     {
-        return $this->fetch->fetchForOneTouch($oneTouchProcessId, $processType);
+        return $this->fetch->fetchForOneTouch($sessionId, $processType);
     }
 
     public function updateProcessState(string $processKey, string $processId): void

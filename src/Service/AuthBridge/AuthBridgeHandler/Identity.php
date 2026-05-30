@@ -38,8 +38,8 @@ class Identity
             $processType = 'domainProcessId';
         } else if($type === 'vault-read') {
             $processType = 'sessionId';
-        } else if($type === 'one-touch' || $type === 'oneTouchProcessId') {
-            $processType = 'oneTouchProcessId';
+        } else if($type === 'one-touch' || $type === 'sessionId') {
+            $processType = 'sessionId';
         } else {
             $this->logger->error('Invalid process type provided for identity generation', ['type' => $type]);
             throw new \InvalidArgumentException('Invalid process type provided');
@@ -106,8 +106,8 @@ class Identity
             $authBridge->setRemoveProcessId($processId);
         } elseif ($processType === 'registrationProcessId') {
             $authBridge->setRegistrationProcessId($processId);
-        } elseif ($processType === 'oneTouchProcessId') {
-            $authBridge->setOneTouchProcessId($processId);
+        } elseif ($processType === 'sessionId') {
+            $authBridge->setSessionId($processId);
         }
 
         return $authBridge;

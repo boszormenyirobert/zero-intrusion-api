@@ -130,7 +130,7 @@ class HmacExtensionValidationListener
             'vault_edit_state' => 'registrationProcessId',
             'domain_read_credential_encrypted' => 'domainProcessId',
             'vault_read_credential_encrypted' => 'sessionId',
-            'one_touch_state' => 'oneTouchProcessId',
+            'one_touch_state' => 'sessionId',
             default => null,
         };
     }

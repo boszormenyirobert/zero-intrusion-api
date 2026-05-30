@@ -25,18 +25,17 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     public ?string $removeProcessId;
     public ?string $domainProcessId;
     public ?string $sessionId;
-    public ?string $oneTouchProcessId;
     public ?string $qrCode;
 
     public function __construct(
-    string $oneTouchProcessId,
+    string $sessionId,
     string $xExtensionAuthOne,
     string $type,
     ?string $source,
     ?string $userPublicId,
     ?string $targetId
 ) {
-    $this->oneTouchProcessId = $oneTouchProcessId;
+    $this->sessionId = $sessionId;
     $this->xExtensionAuthOne = $xExtensionAuthOne;
     $this->type = $type;
     $this->source = $source;
@@ -191,7 +190,6 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
             'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
             'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
             'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
-            'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
     }
@@ -216,7 +214,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
 
     public function toOneTouchProcessArray(): array
     {
-        return $this->toProcessArray('oneTouchProcessId');
+        return $this->toProcessArray('sessionId');
     }
 
     public function toResponseArray(): array
@@ -261,7 +259,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     /**
      * Get the value of sessionId
      */ 
-    public function getsessionId()
+    public function getSessionId()
     {
         return $this->sessionId;
     }
@@ -271,20 +269,9 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
      *
      * @return  self
      */ 
-    public function setsessionId($sessionId)
+    public function setSessionId($sessionId)
     {
         $this->sessionId = $sessionId;
-
-        return $this;
-    }
-
-    public function getOneTouchProcessId()
-    {
-        return $this->oneTouchProcessId;
-    }   
-    public function setOneTouchProcessId($oneTouchProcessId)
-    {
-        $this->oneTouchProcessId = $oneTouchProcessId;
 
         return $this;
     }

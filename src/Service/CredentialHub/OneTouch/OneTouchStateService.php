@@ -25,6 +25,6 @@ class OneTouchStateService
             throw new \InvalidArgumentException('Invalid or missing processId');
         }
 
-        return $this->sharedProcessPoller->pollTheRedisOneTouch($processId, 'oneTouchProcessId');
+        return $this->sharedProcessPoller->pollTheRedisOneTouch($processId, 'sessionId');
     }
 }

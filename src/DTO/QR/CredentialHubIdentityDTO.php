@@ -24,7 +24,6 @@ class CredentialHubIdentityDTO
     public ?string $removeProcessId;
     public ?string $domainProcessId;
     public ?string $sessionId;
-    public ?string $oneTouchProcessId;
     public ?string $qrCode;
 
     
@@ -175,7 +174,7 @@ class CredentialHubIdentityDTO
             'domainProcessId' => $this->buildReadExtensionArray('domainProcessId', $this->domainProcessId),
             'removeProcessId' => $this->buildProcessArray('removeProcessId', $this->removeProcessId),
             'sessionId' => $this->buildReadExtensionArray('sessionId', $this->sessionId),
-            'oneTouchProcessId' => $this->buildProcessArray('oneTouchProcessId', $this->oneTouchProcessId),
+            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
             default => throw new \InvalidArgumentException(sprintf('Unsupported process key: %s', $processKey)),
         };
     }
@@ -200,7 +199,7 @@ class CredentialHubIdentityDTO
     
     public function toOneTouchProcessArray(): array
     {
-        return $this->toProcessArray('oneTouchProcessId');
+        return $this->toProcessArray('sessionId');
     }
 
     private function buildProcessArray(string $processKey, ?string $processId): array
@@ -248,33 +247,13 @@ class CredentialHubIdentityDTO
         return $this;
     }
 
-    /**
-     * Get the value of sessionId
-     */ 
-    public function getsessionId()
+    public function getSessionId()
     {
         return $this->sessionId;
-    }
-
-    /**
-     * Set the value of sessionId
-     *
-     * @return  self
-     */ 
-    public function setsessionId($sessionId)
+    }   
+    public function setSessionId($sessionId)
     {
         $this->sessionId = $sessionId;
-
-        return $this;
-    }
-
-    public function getOneTouchProcessId()
-    {
-        return $this->oneTouchProcessId;
-    }   
-    public function setOneTouchProcessId($oneTouchProcessId)
-    {
-        $this->oneTouchProcessId = $oneTouchProcessId;
 
         return $this;
     }

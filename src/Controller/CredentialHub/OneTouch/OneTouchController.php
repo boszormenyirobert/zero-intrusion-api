@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller\CredentialHub\OneTouch;
 
-use App\Attribute\RequireHmac;
-use App\Attribute\ExtensionHmac;
-use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
 use App\Controller\PayloadValidator\PayloadValidator;
 use App\Helper\ResponseHelper;
@@ -34,7 +31,6 @@ class OneTouchController extends AbstractController
     }
 
     #[Route('/qr-identity', name: 'one_touch_qr_identity', methods: "POST")]
-//    #[RequireHmac]
     #[RequireJson]
     public function oneTouchQrIdentity(
         Request $request,
@@ -53,8 +49,6 @@ class OneTouchController extends AbstractController
     }
 
     #[Route('/identifier', name: 'one_touch_identifier', methods: "POST")]
-//    #[RequireHmac]
-//    #[MobileHmac]    
     #[RequireJson]
     public function oneTouchIdentifier(
         Request $request
@@ -67,9 +61,7 @@ class OneTouchController extends AbstractController
     }
     
     #[Route('/state', name: 'one_touch_state', methods: "POST")]
-//    #[RequireHmac]
     #[RequireJson]
-//    #[ExtensionHmac]
     public function oneTouchState(
         Request $request
     ): JsonResponse {

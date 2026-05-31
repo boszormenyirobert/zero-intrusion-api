@@ -171,6 +171,7 @@ class ExtensionCredentialResponseDTO
             'domain-read' => $this->buildReadExtensionArray($this->domainProcessId),
             'vault-read' => $this->buildReadExtensionArray($this->sessionId),
             'one-touch' => $this->buildProcessArray('sessionId', $this->sessionId),
+            'sessionId' => $this->buildProcessArray('sessionId', $this->sessionId),
 
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),            
             'domainProcessId' => $this->buildProcessArray('domain-read', $this->domainProcessId), // HUB Login before refact

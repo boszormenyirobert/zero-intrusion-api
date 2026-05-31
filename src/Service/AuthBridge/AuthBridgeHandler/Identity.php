@@ -118,10 +118,8 @@ class Identity
             $authBridge->setSessionId($processId);
         } elseif ($processType === 'registrationProcessId') {
             $authBridge->setRegistrationProcessId($processId);
-        } elseif ($processType === 'sessionId') {
-            $authBridge->setSessionId($processId);
-        }
-
+        } 
+        
         return $authBridge;
     }
 

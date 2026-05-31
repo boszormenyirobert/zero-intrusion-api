@@ -33,8 +33,6 @@ class DomainService
 
     public function setByUserSignedCredentialsInCache(array $user): bool
     {
-        $this->logger->debug('Check for source corporate setByUserSignedCredentialsInCache used by source: ' . $user['source']);
-
         // the mobile source is extension, because the initial process is started by the extension
         return match ($user['source']) {
             'corporate' => $this->handleCorporateSource($user),

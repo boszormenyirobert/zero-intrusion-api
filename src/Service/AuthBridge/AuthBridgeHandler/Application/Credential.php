@@ -16,7 +16,7 @@ class Credential
         private readonly AuthBridgeRepository $authBridgeRepository,
         private readonly LoginDatabaseService $loginDatabaseService,
         private readonly Encryptor $encryptor,
-        private readonly ProcessStateCacheService $processStateCacheService
+        private readonly ProcessStateCacheService $processStateCacheService,
     ) {}
 
     public function setDecryptedValuesForApplication(array $user): bool
@@ -25,6 +25,19 @@ class Credential
         if (!$user || !($processId)) {
             return false;
         }
+
+        // TODO: Remove from keys from the Mobile-response                
+        unset($user['qrCacheKey']);
+        unset($user['type']);
+        unset($user['source']);
+        unset($user['publicKey']);
+        unset($user['credentialCacheKey']);
+        unset($user['domain']);        
+        unset($user['publicId']);
+        unset($user['privateId']);
+        unset($user['update']);
+        unset($user['email']);
+        unset($user['sessionId']);
         
         $jsonUser = json_encode($user, JSON_THROW_ON_ERROR);
 

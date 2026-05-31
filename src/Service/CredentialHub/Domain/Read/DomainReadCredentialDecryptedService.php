@@ -24,7 +24,7 @@ class DomainReadCredentialDecryptedService
     public function handle(Request $request): array
     {
         $user = $this->sharedPayloadService->getPayload($request, PayloadKeys::DOMAIN_READ_CREDENTIAL_ENCRYPTED);
-        $result = $this->returnFromCache($user) ?  $this->returnFromCache($user) : $this->returnFromDatabase($user);   
+        $result = $this->returnFromCache($user) ??  $this->returnFromDatabase($user);   
                      
         return $result;
     }
@@ -33,8 +33,11 @@ class DomainReadCredentialDecryptedService
     {   
         if (array_key_exists('credentialCacheKey', $user) && array_key_exists('qrCacheKey', $user) && ($user['credentialCacheKey'] !== $user['qrCacheKey'])) {
             $response = $this->processStateCacheService->get($user['credentialCacheKey'] ?? 'missing') ?? ['credentials' => []];
-
-            return ['credentials' => $response, 'validation' => true];
+            // The publicKey to the encryption is already sent my the notification
+            return [
+                'credentials' => $response, 
+                'validation' => true
+            ];
         }  
         return false;      
     }
@@ -50,7 +53,7 @@ class DomainReadCredentialDecryptedService
         return [
             'credentials' => $response, 
             'domainProcessId' => $storedQrData['domainProcessId'], 
-            'publicKey' => $storedQrData['publicKey'] 
+            'publicKey' => $storedQrData['publicKey']  // Necessary to encrypt the credentials on the mobile side
         ];
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\CredentialHub\Domain\Delete;
+namespace App\Service\CredentialHub\Domain\Delete;
 
 use App\DTO\QR\DomainDeleteQrContentDTO;
 use App\Service\AccessRegistry\CredentialHubHandler\DeleteDomain;

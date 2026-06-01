@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Domain\Delete;
 
-use App\Controller\CredentialHub\Domain\Delete\DomainDeleteService;
+use App\Service\CredentialHub\Domain\Delete\DomainDeleteService;
 use App\DTO\CredentialHub\Domain\Delete\DomainDeleteCredentialResultDTO;
 use App\Service\CredentialHub\Domain\Delete\DomainDeleteCredentialService;
 use App\Service\CredentialHub\SharedPayloadService;

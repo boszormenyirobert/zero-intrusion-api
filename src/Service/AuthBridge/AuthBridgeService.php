@@ -21,9 +21,6 @@ class AuthBridgeService
     ) {}
 
 
-    // Copy user from AccessRegistry into AuthBridge table
-    // domainProcessId is already in the table. Added by the browser-extension-identity creation
-    // This function will update the authBridge table with the user credential|application by the domainProcessId/sessionId
     public function persistDecryptedUserData(array $user): bool
     {
         return $this->authBridgeHandler->persistDecryptedUserData($user);

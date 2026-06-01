@@ -39,6 +39,21 @@ class AccessRegistryRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * @return AccessRegistry[]
+     */
+    public function findUnassignedApplicationsByPublicId(string $publicId): array
+    {
+        return $this->createQueryBuilder('ar')
+            ->andWhere('ar.publicId = :publicId')
+            ->andWhere('ar.application IS NOT NULL')
+            ->andWhere('ar.domain IS NULL OR ar.domain = :emptyDomain')
+            ->setParameter('publicId', $publicId)
+            ->setParameter('emptyDomain', '')
+            ->getQuery()
+            ->getResult();
+    }
+
     //    /**
     //     * @return AccessRegistry[] Returns an array of AccessRegistry objects
     //     */

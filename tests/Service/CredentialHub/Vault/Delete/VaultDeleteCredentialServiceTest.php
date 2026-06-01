@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Vault\Delete;
 
-use App\Controller\CredentialHub\Vault\Delete\VaultDeleteService;
+use App\Service\CredentialHub\Vault\Delete\VaultDeleteService;
 use App\DTO\CredentialHub\Vault\Delete\VaultDeleteCredentialResultDTO;
 use App\Service\CredentialHub\SharedPayloadService;
 use App\Service\CredentialHub\Vault\Delete\VaultDeleteCredentialService;

@@ -29,17 +29,53 @@ class FirebaseService
     // Find the user by publicId, retrieve all stored FCM tokens,
     // decrypt each token using the database's default encryption (IV + key),
     // and send a push notification to every associated device.
-    public function manageFcm($publicId, $title, $body, $qrData): void
+    public function manageFcm($publicId, $title, $body, $qrData): bool
     {
         $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $publicId]);
-        if ($identityEncrypted) {
-            $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
+        if (!$identityEncrypted) {
+            $this->logger->warning('FCM notification skipped because identity was not found.', [
+                'publicId' => $publicId,
+                'title' => $title,
+            ]);
+            return false;
+        }
 
-            foreach ($fcmTokens as $index => $token) {
-                $fcmToken = $this->crypterDatabaseIdentityService->decryptData($token, base64_decode($identityEncrypted->getIv()));
-                $this->sendFcmMessage($fcmToken, $title, $body, $qrData);
+        $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
+
+        if (!is_array($fcmTokens) || count($fcmTokens) === 0) {
+            $this->logger->warning('FCM notification skipped because no device token is registered.', [
+                'publicId' => $publicId,
+                'title' => $title,
+            ]);
+            return false;
+        }
+
+        $this->logger->info('Sending FCM notification to registered devices.', [
+            'publicId' => $publicId,
+            'tokenCount' => count($fcmTokens),
+            'title' => $title,
+        ]);
+
+        $delivered = 0;
+
+        foreach ($fcmTokens as $index => $token) {
+            $fcmToken = $this->crypterDatabaseIdentityService->decryptData($token, base64_decode($identityEncrypted->getIv()));
+            if ($this->sendFcmMessage($fcmToken, $title, $body, $qrData)) {
+                $delivered++;
             }
         }
+
+        if ($delivered === 0) {
+            $this->logger->warning('FCM notification was not delivered to any token.', [
+                'publicId' => $publicId,
+                'tokenCount' => count($fcmTokens),
+                'title' => $title,
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -49,7 +85,7 @@ class FirebaseService
      * 2. Exchanges the JWT for an access token with getAccessToken().
      * 3. Calls sendFCM() to deliver the notification to the given deviceToken with the provided title, body, and QR data.
      */
-    public function sendFcmMessage($deviceToken, $title, $body, $qrData): void
+    public function sendFcmMessage($deviceToken, $title, $body, $qrData): bool
     {
         $accessToken = $this->tokenProvider()->getAccessToken();
         if (!$accessToken) {
@@ -57,10 +93,10 @@ class FirebaseService
                 'maskedToken' => $this->maskToken($deviceToken),
                 'title' => $title,
             ]);
-            return;
+            return false;
         }
 
-        $this->sendFCM($deviceToken, $title, $body, $accessToken, $qrData);
+        return $this->sendFCM($deviceToken, $title, $body, $accessToken, $qrData) !== null;
     }
 
     /**
@@ -120,6 +156,13 @@ class FirebaseService
                 ],
                 $this->config()->getCaCertPath(),
             );
+
+            $decoded = $this->jsonPayloadDecoder->decodeArray($body) ?? [];
+            $this->logger->info('FCM request accepted by Firebase.', [
+                'projectId' => $project_id,
+                'maskedToken' => $this->maskToken($deviceToken),
+                'firebaseMessageName' => $decoded['name'] ?? null,
+            ]);
 
             return $body;
 

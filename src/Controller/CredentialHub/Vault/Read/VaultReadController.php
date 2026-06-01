@@ -14,6 +14,7 @@ use App\Service\CredentialHub\Vault\Read\VaultReadCredentialDecryptedService;
 use App\Service\CredentialHub\Vault\Read\VaultReadCredentialService;
 use App\Service\CredentialHub\Vault\Read\VaultReadQrIdentityRequestMapper;
 use App\Service\CredentialHub\ReadQrIdentityService;
+use App\Service\CredentialHub\IdentityType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -44,7 +45,7 @@ class VaultReadController extends AbstractController
             $readRequest = $this->vaultReadQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->readQrIdentityService->handle($readRequest, 'vault-read')
+                $this->readQrIdentityService->handle($readRequest, IdentityType::VAULT_READ)
             );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
@@ -70,13 +71,9 @@ class VaultReadController extends AbstractController
         Request $request,
     ): JsonResponse {
         try {
-            $response = $this->vaultReadCredentialService->handle($request);
-
-            if ($response === null) {
-                return $this->missingProcessResponse();
-            }
-
-            return new JsonResponse($response->toArray());
+            return $this->responseHelper->createSuccessResponse(
+                $this->vaultReadCredentialService->handle($request)
+            );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }

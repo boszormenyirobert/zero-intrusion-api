@@ -34,14 +34,13 @@ class OneTouchController extends AbstractController
     #[RequireJson]
     public function oneTouchQrIdentity(
         Request $request,
-        ValidatorInterface $validator
     ): JsonResponse {
         try {
             $validatedPayload = $this->payloadValidator->validatePayload($request, 'one_touch_qr_identity');
             $oneTouchRequest = $this->oneTouchQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->oneTouchQrIdentityService->handle($oneTouchRequest, $validator)
+                $this->oneTouchQrIdentityService->handle($oneTouchRequest)
             );
         } catch (\Throwable $e) {
             return $this->responseHelper->handleException($e);

@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Controller\CredentialHub\Vault\Delete;
+namespace App\Service\CredentialHub\Vault\Delete;
 
 use App\Service\AccessRegistry\CredentialHubHandler\DeleteApplication;
 use App\Service\CredentialHub\SharedPayloadService;
-
 
 class VaultDeleteService
 {
@@ -13,7 +12,7 @@ class VaultDeleteService
         private SharedPayloadService $sharedPayloadService,
     ) {}
 
-    public function deleteApplication($process):array
+    public function deleteApplication($process): array
     {
         $deleteApplicationDto = $this->sharedPayloadService->getApplicationDto($process);
 

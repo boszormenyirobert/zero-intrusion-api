@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\CredentialHub;
 
 use App\DTO\CredentialHub\ExtensionCredentialRequestDTO;
+use App\DTO\CredentialHub\QrContentDTO;
 use App\Service\CredentialHub\SharedNotificationService;
 use App\Service\Cache\ProcessStateCacheService;
 use App\Service\CredentialHub\CredentialReadService;
@@ -18,15 +19,19 @@ class ReadQrIdentityService
     ) {
     }
 
-    public function handle(ExtensionCredentialRequestDTO $request, string $type): array
+    public function handle(ExtensionCredentialRequestDTO $request, IdentityType $type): array
     {
         $identity = $this->credentialReadService->getIdentity($request, $type);       
         $qrCacheKey = $identity->getQrCacheKey();
         $qrContent = $this->processStateCacheService->get($qrCacheKey);
 
-        $this->credentialReadService->handleNotification($request, $identity, $qrContent);      
+        if (!$qrContent instanceof QrContentDTO) {
+            throw new \RuntimeException(sprintf('Missing or invalid QR content in cache for key: %s', (string) $qrCacheKey));
+        }
 
-        $qrCode = $identity->toProcessArray($identity->getType());
+        $this->credentialReadService->handleNotification($request, $identity, $type, $qrContent);
+
+        $qrCode = $identity->toProcessArray($type->value);
 
         return $qrCode;
     }

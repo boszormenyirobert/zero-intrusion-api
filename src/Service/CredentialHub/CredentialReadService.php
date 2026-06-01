@@ -10,12 +10,12 @@ use App\Service\QrService\QrService;
 use App\Service\Cache\ProcessStateCacheService;
 use Psr\Log\LoggerInterface;
 use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Service\CredentialHub\Vault\Read\VaultReadCredentialDecryptedService;
 use App\DTO\QR\StoreDTO;
 use App\Service\AuthBridge\AuthBridgeHandler\Domain\Encryptor;
 use App\DTO\CredentialHub\QrContentDTO;
-use App\Service\CredentialHub\SharedNotificationService;
+use App\Service\CredentialHub\Shared\QrContentValidationService;
+use App\Service\CredentialHub\DeferredFcmNotificationQueue;
 
 enum IdentityType: string
 {
@@ -31,24 +31,19 @@ class CredentialReadService
         private readonly ProcessStateCacheService $processStateCacheService,
         private readonly LoggerInterface $logger,
         private readonly VaultReadCredentialDecryptedService $vaultReadCredentialDecryptedService,
-        private readonly ValidatorInterface $validator,
+        private readonly QrContentValidationService $qrContentValidationService,
         private readonly Encryptor $encryptor,
-        private readonly SharedNotificationService $sharedNotificationService
+        private readonly DeferredCredentialCacheQueue $deferredCredentialCacheQueue,
+        private readonly DeferredFcmNotificationQueue $deferredFcmNotificationQueue
     ) {
     }
 
-    public function getIdentity(ExtensionCredentialRequestDTO $extensionRequest, string $type): ExtensionCredentialResponseDTO
+    public function getIdentity(ExtensionCredentialRequestDTO $extensionRequest, IdentityType $type): ExtensionCredentialResponseDTO
     {
         $identity = $this->identityConfiguration($extensionRequest, $type, 'extension');
         
         $qrContent = $this->qrService->getQrContent($identity);
-        $errors = $this->validator->validate($qrContent);
-
-        if (count($errors) > 0) {
-            foreach ($errors as $error) {
-                $this->logger->critical('vaultReadQrIdentity: ' . $error->getMessage());
-            }
-        }
+        $this->qrContentValidationService->validateOrFail($qrContent, $type->value);
 
         $this->setCacheKey($identity->getQrCacheKey(), $qrContent);
 
@@ -60,42 +55,52 @@ class CredentialReadService
     public function handleNotification(
         ExtensionCredentialRequestDTO $identityRequestDTO, 
         ExtensionCredentialResponseDTO $identity, 
+        IdentityType $type,
         QrContentDTO $qrContent): void
         {
         if ($identityRequestDTO->userPublicId !== null && $identityRequestDTO->userPublicId !== '') {
 
-            $credentialCacheKey =  $this->storeCredentialDataInCache($identityRequestDTO, $identity, $identity->getType());
+            $credentialCacheKey = $this->createCredentialCacheKey($identity);
+
+            $this->deferredCredentialCacheQueue->enqueue(
+                $type,
+                $identityRequestDTO->domain,
+                $identityRequestDTO->userPublicId,
+                $credentialCacheKey,
+            );
 
             $qrContent->setCredentialCacheKey($credentialCacheKey);
             
-            $santizedQrContent = $this->sanitizeQrContent($qrContent, $identity->getType());
+            $santizedQrContent = $this->sanitizeQrContent($qrContent, $type);
 
-            $this->sharedNotificationService->sendFcmNotification('domainRead', $identityRequestDTO->userPublicId, $santizedQrContent);
+            $source = match ($type) {
+                IdentityType::VAULT_READ => 'vaultRead',
+                IdentityType::DOMAIN_READ => 'domainRead',
+            };
+
+            $this->deferredFcmNotificationQueue->enqueue($source, $identityRequestDTO->userPublicId, $santizedQrContent);
         }        
     }
 
-    private function sanitizeQrContent( QrContentDTO $qrContent, $type): array
+    private function sanitizeQrContent(QrContentDTO $qrContent, IdentityType $type): array
     {
-            if($type === 'domain-read') {
-                return $qrContent->toNotificationDomain();
-            } else if($type === 'vault-read') {
-                return $qrContent->toNotificationApplication();
-            } 
-
-        return [];
+        return match ($type) {
+            IdentityType::DOMAIN_READ => $qrContent->toNotificationDomain(),
+            IdentityType::VAULT_READ => $qrContent->toNotificationApplication(),
+        };
     }
 
     private function identityConfiguration(
         ExtensionCredentialRequestDTO $extensionRequest, 
-        string $type, 
+        IdentityType $type,
         string $source): ExtensionCredentialResponseDTO
     {
-        $identity = $this->authBridgeService->generateRequestIdentity($type);               
-        $identity->setType($type);
+        $identity = $this->authBridgeService->generateRequestIdentity($type->value);
+        $identity->setType($type->value);
         $identity->setPublicKey($extensionRequest->publicKey);
         $identity->setSource($source);
 
-        if($type === 'domain-read'){
+        if ($type === IdentityType::DOMAIN_READ) {
             $identity->setDomain($extensionRequest->domain);
         }
 
@@ -114,29 +119,24 @@ class CredentialReadService
         return $identity;
     }
 
-    private function storeCredentialDataInCache( 
-        ExtensionCredentialRequestDTO $identityRequestDTO,  
-        ExtensionCredentialResponseDTO $identity, 
-        string $type): string
-        {
-            $credentialCacheKey = 'credentialCacheKey_' . $identity->getQrCacheKey();
-
-            $credentials = $this->getCredentials($identityRequestDTO, $type);
-            
-            $this->setCacheKey($credentialCacheKey, $credentials);
-            
-            return $credentialCacheKey;
+    public function warmCredentialCache(IdentityType $type, ?string $domain, string $userPublicId, string $credentialCacheKey): void
+    {
+        $request = new ExtensionCredentialRequestDTO($domain, $userPublicId, null);
+        $credentials = $this->getCredentials($request, $type);
+        $this->setCacheKey($credentialCacheKey, $credentials);
     }
 
-    private function getCredentials(ExtensionCredentialRequestDTO $identityRequestDTO, string $type): array{
-            if($type === 'domain-read') {
-                return $this->getDomainCredentials($identityRequestDTO);
-            }
+    private function createCredentialCacheKey(ExtensionCredentialResponseDTO $identity): string
+    {
+        return 'credentialCacheKey_' . $identity->getQrCacheKey();
+    }
 
-            if($type === 'vault-read') {
-                 return $this->getApplicationCredentials($identityRequestDTO);
-            }
-            return [];
+    private function getCredentials(ExtensionCredentialRequestDTO $identityRequestDTO, IdentityType $type): array
+    {
+        return match ($type) {
+            IdentityType::DOMAIN_READ => $this->getDomainCredentials($identityRequestDTO),
+            IdentityType::VAULT_READ => $this->getApplicationCredentials($identityRequestDTO),
+        };
     }
 
     private function getDomainCredentials(ExtensionCredentialRequestDTO $identityRequestDTO){

@@ -8,7 +8,7 @@ use App\DTO\QR\CredentialHubIdentityDTO;
 use App\EventListener\HmacExtensionValidationListener;
 use App\EventListener\HmacMobileValidationListener;
 use App\Kernel;
-use App\Controller\CredentialHub\Vault\Delete\VaultDeleteService;
+use App\Service\CredentialHub\Vault\Delete\VaultDeleteService;
 use App\Service\AuthBridge\AuthBridgeService;
 use App\Service\Cache\ProcessStateCacheService;
 use App\Service\CredentialHub\SharedNotificationService;

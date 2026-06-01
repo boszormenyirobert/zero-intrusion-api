@@ -18,6 +18,7 @@ use JsonException;
 use Psr\Log\LoggerInterface;
 use App\Service\Firebase\FirebaseService;
 use App\DTO\QR\StoreDTO;
+use App\Service\Shared\ProcessTypeNormalizer;
 
 class Encryptor
 {
@@ -31,16 +32,20 @@ class Encryptor
         private readonly LoggerInterface $logger,
         private readonly ApplicationEncryptor $applicationEncryptor,
         private readonly FirebaseService $firebaseService,
-        private readonly ProcessStateCacheService $processStateCacheService
+        private readonly ProcessStateCacheService $processStateCacheService,
+        private readonly ProcessTypeNormalizer $processTypeNormalizer,
     ) {}
 
     // Set decrypted values for domain login
     public function setDecryptedValuesForDomain(array $user): bool
     {
-        if (!$user || !($processId = $user['domainProcessId'] ?? null)) {
+        $processId = $this->processTypeNormalizer->resolveProcessIdFromPayload($user);
+
+        if (!$user || !$processId) {
             return false;
         }
-        
+
+        unset($user['sessionId']);
         unset($user['domainProcessId']);
         // TODO: Remove from keys from the Mobile-response
         unset($user['qrCacheKey']);
@@ -82,10 +87,10 @@ class Encryptor
         return true;
     }
     
-    private function writeLoginEntryInRedis(string $processId, AuthBridge $authBridge): void
+    private function writeLoginEntryInRedis(string $sessionId, AuthBridge $authBridge): void
     {
         $this->processStateCacheService->set(
-            $processId,
+            $sessionId,
             $this->encodeJson($authBridge->toCacheArray(), JSON_UNESCAPED_UNICODE),
             300
         );

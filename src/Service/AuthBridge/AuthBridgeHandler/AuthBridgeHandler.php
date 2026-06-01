@@ -15,6 +15,7 @@ use App\Service\AuthBridge\AuthBridgeHandler\Application\Credential as Applicati
 use App\Service\AuthBridge\DTO\ValidationDTO;
 use App\Service\Crypters\CrypterDatabaseService;
 use App\Entity\AuthBridge;
+use App\Service\Shared\ProcessTypeNormalizer;
 
 class AuthBridgeHandler
 {
@@ -26,7 +27,8 @@ class AuthBridgeHandler
         private readonly ValidationHandler $validationHandler,
         private readonly Encryptor $encryptor,
         private readonly ApplicationCredential $applicationCredential,
-        private readonly CrypterDatabaseService $crypterDatabaseService
+        private readonly CrypterDatabaseService $crypterDatabaseService,
+        private readonly ProcessTypeNormalizer $processTypeNormalizer,
     ) {}
 
     public function persistDecryptedUserData(array $user): bool
@@ -36,10 +38,13 @@ class AuthBridgeHandler
             return false;
         }
 
+        if ($this->processTypeNormalizer->isDomainLoginType($user['type'] ?? null)) {
+            return $this->encryptor->setDecryptedValuesForDomain($user);
+        }
+
         return match ($user['type'] ?? null) {
-            'domain-login' => $this->encryptor->setDecryptedValuesForDomain($user),
             'secure' => $this->encryptor->setDecryptedUserIdentity($user),
-            'applications' => $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret()),   
+            'applications' => $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret()),
             default => false,
         };
     }
@@ -52,7 +57,7 @@ class AuthBridgeHandler
             return false;
         }
 
-        return $user['type'] === 'domain-login'
+        return $this->processTypeNormalizer->isDomainLoginType($user['type'] ?? null)
             ? $this->encryptor->setDecryptedValuesForDomain($user)
             : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
     }
@@ -67,7 +72,7 @@ class AuthBridgeHandler
             return false;
         }
 
-        return $user['type'] === 'domain-login'
+        return $this->processTypeNormalizer->isDomainLoginType($user['type'] ?? null)
             ? $this->encryptor->getDecryptedCredentials($user, $validation->getUserSecret())
             : $this->applicationCredential->setDecryptedValuesForApplication($user, $validation->getUserSecret());
     }
@@ -80,7 +85,7 @@ class AuthBridgeHandler
             return [];
         }
 
-        return $user['type'] === 'domain-login'
+        return $this->processTypeNormalizer->isDomainLoginType($user['type'] ?? null)
             ? $this->encryptor->getDecryptedCredentials($user)
             : $this->applicationCredential->setDecryptedValuesForApplication($user);
     }

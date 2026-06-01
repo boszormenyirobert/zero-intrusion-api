@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Shared;
 
-use App\Controller\CredentialHub\Shared\SharedRegistrationService;
+use App\Service\CredentialHub\Shared\SharedRegistrationService;
 use App\Controller\PayloadValidator\PayloadValidator;
 use App\DTO\CredentialHub\Shared\SharedRegistrationNewToEncryptResultDTO;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewToEncryptService;

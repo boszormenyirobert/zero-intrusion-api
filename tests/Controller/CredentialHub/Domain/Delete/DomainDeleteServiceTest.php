@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\CredentialHub\Domain\Delete;
 
-use App\Controller\CredentialHub\Domain\Delete\DomainDeleteService;
+use App\Service\CredentialHub\Domain\Delete\DomainDeleteService;
 use PHPUnit\Framework\TestCase;
 
 final class DomainDeleteServiceTest extends TestCase

@@ -18,6 +18,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Service\CredentialHub\SharedSSE;
 use App\Service\CredentialHub\ReadQrIdentityService;
+use App\Service\CredentialHub\IdentityType;
 
 #[Route('/api/credential-hub/domain/read')]
 class DomainReadController extends AbstractController
@@ -43,7 +44,7 @@ class DomainReadController extends AbstractController
             $readRequest = $this->domainReadQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(
-                $this->readQrIdentityService->handle($readRequest,'domain-read')
+                $this->readQrIdentityService->handle($readRequest, IdentityType::DOMAIN_READ)
             );
             
         } catch (\Exception $e) {

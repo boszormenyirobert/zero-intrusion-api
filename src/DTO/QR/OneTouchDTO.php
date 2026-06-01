@@ -7,13 +7,16 @@ use App\DTO\QR\QrInterface;
 
 class OneTouchDTO  implements QrInterface, ResponseDataInterface
 {
-    #[Assert\NotBlank]
     public array $validCommunication = [];
 
     public ?string $createdAt;
+    #[Assert\NotBlank]
     public ?string $xExtensionAuthOne;
     public ?string $xExtensionAuthTwo;
+    #[Assert\NotBlank]
     public ?string $type;
+
+    #[Assert\NotBlank]
     public ?string $source;
     public ?string $userPublicId;
     public ?string $targetId;
@@ -22,6 +25,7 @@ class OneTouchDTO  implements QrInterface, ResponseDataInterface
     public ?string $iv;
 
     public ?string $registrationProcessId;
+    #[Assert\NotBlank]
     public ?string $sessionId;
     public ?string $domainProcessId;
     public ?string $qrCode;

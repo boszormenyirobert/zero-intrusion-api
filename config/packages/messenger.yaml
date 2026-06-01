@@ -8,12 +8,21 @@ framework:
             async:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
-                    use_notify: true
-                    check_delayed_interval: 60000
+                    use_notify: false
+                    check_delayed_interval: 200
                 retry_strategy:
                     max_retries: 3
                     multiplier: 2
-                    delay: 1000
+                    delay: 250
+            fcm_async:
+                dsn: '%env(MESSENGER_FCM_TRANSPORT_DSN)%'
+                options:
+                    use_notify: false
+                    check_delayed_interval: 200
+                retry_strategy:
+                    max_retries: 5
+                    multiplier: 2
+                    delay: 150
             failed: 'doctrine://default?queue_name=failed'
 
 
@@ -26,6 +35,8 @@ framework:
             #Symfony\Component\Mailer\Messenger\SendEmailMessage: sync
             Symfony\Component\Notifier\Message\ChatMessage: sync
             Symfony\Component\Notifier\Message\SmsMessage: sync
+            App\Message\SendFcmNotificationMessage: fcm_async
+            App\Message\WarmCredentialCacheMessage: fcm_async
 
             # Route your messages to the transports
             # 'App\Message\YourMessage': async

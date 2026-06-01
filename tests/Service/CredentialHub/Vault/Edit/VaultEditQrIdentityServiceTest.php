@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Vault\Edit;
 
-use App\Controller\CredentialHub\Shared\SharedRegistrationService;
-use App\Controller\CredentialHub\Vault\Edit\VaultEditService;
+use App\Service\CredentialHub\Shared\SharedRegistrationService;
+use App\Service\CredentialHub\Vault\Edit\VaultEditService;
 use App\DTO\CredentialHub\Vault\Edit\VaultEditQrIdentityRequestDTO;
 use App\DTO\QR\CredentialHubIdentityDTO;
 use App\DTO\QR\VaultEditQrContentDTO;

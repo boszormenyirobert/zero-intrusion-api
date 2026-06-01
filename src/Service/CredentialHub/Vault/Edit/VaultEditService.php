@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\CredentialHub\Vault\Edit;
+namespace App\Service\CredentialHub\Vault\Edit;
 
 use App\DTO\QR\VaultEditQrContentDTO;
 
@@ -16,5 +16,5 @@ class VaultEditService
             $processId,
             $validatedPayload->application
         );
-    }    
+    }
 }

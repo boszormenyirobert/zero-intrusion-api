@@ -5,32 +5,23 @@ declare(strict_types=1);
 namespace App\Service\CredentialHub\Vault\Read;
 
 use App\Controller\CredentialHub\PayloadKeys;
-use App\DTO\CredentialHub\Vault\Read\VaultReadCredentialResultDTO;
-use App\Service\AuthBridge\AuthBridgeService;
-use App\Service\CredentialHub\SharedPayloadService;
+use App\Service\CredentialHub\Shared\ReadCredentialOrchestrator;
 use Symfony\Component\HttpFoundation\Request;
-use Psr\Log\LoggerInterface;
-
 
 class VaultReadCredentialService
 {
     public function __construct(
-        private readonly SharedPayloadService $sharedPayloadService,
-        private readonly AuthBridgeService $authBridgeService,
-        private readonly LoggerInterface $logger,
+        private readonly ReadCredentialOrchestrator $orchestrator,
+        private readonly VaultReadCredentialStrategy $strategy,
     ) {
     }
 
-    public function handle(Request $request): ?VaultReadCredentialResultDTO
+    public function handle(Request $request): bool
     {
-        $process = $this->sharedPayloadService->getProcessId($request, PayloadKeys::VAULT_READ_CREDENTIAL, true);
-        if (!$process) {
-            return null;
-        }
-
-        return new VaultReadCredentialResultDTO(
-            $this->authBridgeService->persistDecryptedUserData($process),
-            '',
+        return $this->orchestrator->handle(
+            $request,
+            PayloadKeys::VAULT_READ_CREDENTIAL,
+            $this->strategy,
         );
     }
 }

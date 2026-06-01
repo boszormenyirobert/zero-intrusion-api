@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\CredentialHub\Vault\Edit;
 
-use App\Controller\CredentialHub\Vault\Edit\VaultEditService;
+use App\Service\CredentialHub\Vault\Edit\VaultEditService;
 use PHPUnit\Framework\TestCase;
 
 final class VaultEditServiceTest extends TestCase

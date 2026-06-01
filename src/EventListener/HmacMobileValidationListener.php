@@ -108,7 +108,7 @@ class HmacMobileValidationListener
     private function resolveProcessKey(string $payloadKey): ?string
     {
         return match ($payloadKey) {
-            'domain_read_credential' => 'domainProcessId',
+            'domain_read_credential' => 'sessionId',
             'vault_read_credential' => 'sessionId',
             'shared_registration_new_to_encrypt' => 'registrationProcessId',
             'shared_registration_new' => 'registrationProcessId',
@@ -116,7 +116,7 @@ class HmacMobileValidationListener
             'vault_delete_credential' => 'sessionId',       
             'vault_edit_credential' => 'registrationProcessId',
             'user_registration' => 'registrationProcessId',
-            'domain_read_credential_encrypted' => 'domainProcessId',
+            'domain_read_credential_encrypted' => 'sessionId',
             'vault_read_credential_encrypted' => 'sessionId',
             'one_touch_identifier' => 'sessionId',  
             default => null,

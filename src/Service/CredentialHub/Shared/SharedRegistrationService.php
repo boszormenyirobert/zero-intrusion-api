@@ -1,18 +1,19 @@
 <?php
 
-namespace App\Controller\CredentialHub\Shared;
+namespace App\Service\CredentialHub\Shared;
 
-use App\DTO\QR\SharedRegistrationQrDTO;
 use App\DTO\QR\OneTouchDTO;
-use Psr\Log\LoggerInterface;
+use App\DTO\QR\SharedRegistrationQrDTO;
 use App\Service\AuthBridge\AuthBridgeService;
+use Psr\Log\LoggerInterface;
 
 class SharedRegistrationService
 {
     public function __construct(
         private LoggerInterface $logger,
         private AuthBridgeService $authBridgeService
-    ) {}    
+    ) {}
+
     public function getQrContent($validatedPayload, $mobilXExtensionAuth, $processId): SharedRegistrationQrDTO
     {
         return new SharedRegistrationQrDTO(
@@ -35,6 +36,7 @@ class SharedRegistrationService
             $application = $validatedPayload->application;
             $qrContent->setApplication($application);
         }
+
         return $qrContent;
     }
 
@@ -49,17 +51,19 @@ class SharedRegistrationService
             null
         );
     }
-    
-    public function saveUserCredentialInAuthBridge($validatedPayload, $registrationProcessId){
-            $userCredential = [
+
+    public function saveUserCredentialInAuthBridge($validatedPayload, $registrationProcessId)
+    {
+        $userCredential = [
             'userName' => $validatedPayload->userName,
             'userPassword' => $validatedPayload->userPassword,
             'description' => $validatedPayload->description,
         ];
-        $this->authBridgeService->saveUserCredentialInAuthBridge($userCredential, $registrationProcessId);        
+        $this->authBridgeService->saveUserCredentialInAuthBridge($userCredential, $registrationProcessId);
     }
-    
-    public function getUserCredentialFromAuthBridge($processId){
+
+    public function getUserCredentialFromAuthBridge($processId)
+    {
         return $this->authBridgeService->getUserCredentialFromAuthBridge($processId);
     }
 }

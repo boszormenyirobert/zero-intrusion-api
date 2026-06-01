@@ -92,7 +92,7 @@ final class NotifierService
             'signature' => $this->signMessageWithPrivateKey($userIdentity, $corporateIdentity),
             'publicId' => $user['publicId'],
             'email' => $user['email'],
-            'processId' => $user['domainProcessId'],
+            'processId' => $user['sessionId'] ?? ($user['domainProcessId'] ?? null),
         //    'userAuth' =>  $decryptedResponse['decrypted']
         ];
 

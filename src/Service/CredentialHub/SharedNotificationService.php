@@ -49,14 +49,31 @@ class SharedNotificationService
     ) {
     }
 
-    public function sendFcmNotification(string $source, ?string $userPublicId, mixed $qrContent): void
+    public function sendFcmNotification(string $source, ?string $userPublicId, mixed $qrContent, bool $throwOnFailure = false): bool
     {
-        if ($userPublicId === null || !isset(self::FCM_DESCRIPTIONS[$source])) {
-            return;
+        if ($userPublicId === null || $userPublicId === '') {
+            $this->logger->warning('FCM notification skipped because userPublicId is missing.', [
+                'source' => $source,
+            ]);
+            return false;
+        }
+
+        if (!isset(self::FCM_DESCRIPTIONS[$source])) {
+            $this->logger->warning('FCM notification skipped because source is unsupported.', [
+                'source' => $source,
+                'userPublicId' => $userPublicId,
+            ]);
+            return false;
         }
 
         $description = self::FCM_DESCRIPTIONS[$source];
-        $this->firebaseService->manageFcm($userPublicId, $description['title'], $description['body'], $qrContent);
+        $delivered = $this->firebaseService->manageFcm($userPublicId, $description['title'], $description['body'], $qrContent);
+
+        if (!$delivered && $throwOnFailure) {
+            throw new \RuntimeException(sprintf('FCM delivery failed for source "%s" and user "%s".', $source, $userPublicId));
+        }
+
+        return $delivered;
     }
 
     /**

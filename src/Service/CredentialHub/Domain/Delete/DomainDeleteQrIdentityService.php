@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service\CredentialHub\Domain\Delete;
 
-use App\Controller\CredentialHub\Domain\Delete\DomainDeleteService;
+use App\Service\CredentialHub\Domain\Delete\DomainDeleteService;
 use App\DTO\CredentialHub\Domain\Delete\DomainDeleteQrIdentityRequestDTO;
 use App\Service\AuthBridge\AuthBridgeService;
-use App\Service\CredentialHub\SharedNotificationService;
+use App\Service\CredentialHub\DeferredFcmNotificationQueue;
+use App\Service\CredentialHub\Shared\QrContentValidationService;
 use App\Service\QrService\QrService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -18,7 +19,8 @@ class DomainDeleteQrIdentityService
         private readonly AuthBridgeService $authBridgeService,
         private readonly QrService $qrService,
         private readonly DomainDeleteService $domainDeleteService,
-        private readonly SharedNotificationService $sharedNotificationService,
+        private readonly DeferredFcmNotificationQueue $deferredFcmNotificationQueue,
+        private readonly QrContentValidationService $qrContentValidationService,
         private readonly ValidatorInterface $validator,
         private readonly LoggerInterface $logger,
     ) {
@@ -36,17 +38,11 @@ class DomainDeleteQrIdentityService
             $request->getTargetId(),            
             $identity->getSessionId(),
         );
-        $errors = $this->validator->validate($qrContent);
-
-        if (count($errors) > 0) {
-            foreach ($errors as $error) {
-                $this->logger->critical('DomainDeleteController validation error: ' . $error->getPropertyPath() . ': ' . $error->getMessage());
-            }
-        }
+        $this->qrContentValidationService->validateOrFail($qrContent, 'domain-delete');
 
         $identity->setQrCode($this->qrService->getQrCode($qrContent));
 
-        $this->sharedNotificationService->sendFcmNotification('domainDelete', $request->getUserPublicId(), $qrContent);
+        $this->deferredFcmNotificationQueue->enqueue('domainDelete', $request->getUserPublicId(), $qrContent);
         
         return $identity->toRemoveProcessArray();
     }

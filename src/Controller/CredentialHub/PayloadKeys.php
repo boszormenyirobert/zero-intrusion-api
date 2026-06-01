@@ -12,7 +12,6 @@ final class PayloadKeys
     public const DOMAIN_DELETE_QR_IDENTITY = 'domain_delete_qr_identity';
     public const DOMAIN_DELETE_CREDENTIAL = 'domain_delete_credential';
     public const DOMAIN_DELETE_STATE = 'domain_delete_state';
-    public const REMOVE_PROCESS_ID = 'sessionId';
 
     public const DOMAIN_READ_QR_IDENTITY = 'domain_read_qr_identity';
     public const DOMAIN_PROCESS_ID = 'domainProcessId';

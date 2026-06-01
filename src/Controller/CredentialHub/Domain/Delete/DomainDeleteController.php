@@ -59,14 +59,9 @@ class DomainDeleteController extends AbstractController
     ): JsonResponse
     {
         try {
-            $response = $this->domainDeleteCredentialService->handle($request);
-
-            if ($response === null) {
-                return $this->missingProcessResponse();
-            }
-
-            return new JsonResponse($response->toArray());
-            
+            return $this->responseHelper->createSuccessResponse(
+                $this->domainDeleteCredentialService->handle($request)
+            );
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }

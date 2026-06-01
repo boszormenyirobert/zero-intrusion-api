@@ -123,12 +123,12 @@ class HmacExtensionValidationListener
     {
         return match ($payloadKey) {
             'shared_registration_state' => 'registrationProcessId',
-            'domain_read_state' => 'domainProcessId',
+            'domain_read_state' => 'sessionId',
             'vault_read_state' => 'sessionId',
             'domain_delete_state' => 'sessionId',
             'vault_delete_state' => 'sessionId',
             'vault_edit_state' => 'registrationProcessId',
-            'domain_read_credential_encrypted' => 'domainProcessId',
+            'domain_read_credential_encrypted' => 'sessionId',
             'vault_read_credential_encrypted' => 'sessionId',
             'one_touch_state' => 'sessionId',
             default => null,

@@ -89,22 +89,16 @@ class SharedProcessPoller
         return $response['cache'] ?? ['process_check' => false];
     }
 
-    public function pollTheRedisOneTouch(string $processId, string $processType): array
+    public function pollTheRedisOneTouch(string $sessionId, string $processType): array
     {
         $startTime = time();
         $maxWait = 8;
         $response = [];
 
         do {
-            $user = $this->authBridgeService->fetchForOneTouch($processId, $processType);
-
+            $user = $this->authBridgeService->fetchForOneTouch($sessionId, $processType);
             if ($user) {
                 $response = $user->toOneTouchProcessArray();
-                $this->logger->info('One Touch poll result', [
-                    'processId' => $processId,
-                    'payload' => $response,
-                ]);
-
                 break;
             }
 

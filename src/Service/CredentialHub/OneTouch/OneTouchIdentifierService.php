@@ -20,14 +20,14 @@ class OneTouchIdentifierService
 
     public function handle(Request $request): OneTouchIdentifierResultDTO
     {
-        $process = $this->sharedPayloadService->getProcessId($request, PayloadKeys::ONE_TOUCH_IDENTIFIER, true);
+        $payload = $this->sharedPayloadService->getPayloadOrFail($request, PayloadKeys::ONE_TOUCH_IDENTIFIER);
 
-        if (!$process) {
-            throw new \InvalidArgumentException('Invalid or missing processId');
+        if (!isset($payload['sessionId']) || !is_string($payload['sessionId']) || $payload['sessionId'] === '') {
+            throw new \InvalidArgumentException('Invalid or missing sessionId');
         }
 
         return new OneTouchIdentifierResultDTO(
-            $this->authBridgeService->persistDecryptedUserData($process),
+            $this->authBridgeService->persistDecryptedUserData($payload),
             '',
         );
     }

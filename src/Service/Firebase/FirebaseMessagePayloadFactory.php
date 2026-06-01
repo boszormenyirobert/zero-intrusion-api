@@ -14,9 +14,16 @@ final class FirebaseMessagePayloadFactory
         return [
             'message' => [
                 'token' => $deviceToken,
+                'notification' => [
+                    'title' => $title,
+                    'body' => $body,
+                ],
                 'android' => [
                     'priority' => 'HIGH',
                     'ttl' => '7s',
+                    'notification' => [
+                        'sound' => 'default',
+                    ],
                 ],
                 'apns' => [
                     'headers' => [
@@ -24,6 +31,11 @@ final class FirebaseMessagePayloadFactory
                     ],
                     'payload' => [
                         'aps' => [
+                            'alert' => [
+                                'title' => $title,
+                                'body' => $body,
+                            ],
+                            'sound' => 'default',
                             'content-available' => 1,
                         ],
                     ],

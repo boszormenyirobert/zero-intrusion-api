@@ -20,18 +20,6 @@ class Identity
         private readonly LoggerInterface $logger
     ) {}
 
-/**
-     * Generates a secure identity object used by browser extensions and mobile apps.
-     * Steps:
-     * 1. Retrieves a newly generated identity structure from getBrowserExtensionIdentity().
-     * 2. Reads the database timestamp (createdAt) from the identity.
-     * 3. Uses predefined shared secrets and messages to generate two HMAC signatures:
-     *      - XExtensionAuthOne (SHA-256) for mobile app validation.
-     *      - XExtensionAuthTwo (SHA-1) for browser extension validation,
-     *        chosen because the QR-data payload size is limited and SHA-1 is shorter.     
-     * 4. Both HMACs protect against tampering and replay attacks.
-     * 5. Returns the identity enriched with the additional security fields.
-     */    
     public function generateRequestIdentity(string $type): ExtensionCredentialResponseDTO
     {
         $sessionKey = $this->handleSessionKey($type);
@@ -53,8 +41,7 @@ class Identity
     private function handleSessionKey(string $type): string
     {
         return match ($type) {
-            'vault-read', 'one-touch', 'sessionId' => 'sessionId',
-            'domain-read' => 'domainProcessId',
+            'vault-read', 'domain-read', 'one-touch', 'sessionId' => 'sessionId',
             'registrationProcessId' => 'registrationProcessId',
 
             default => $this->throwInvalidType($type),
@@ -98,16 +85,6 @@ class Identity
         return $identity;
     }
 
-    /**
-     * Prepares a new AuthBridge entity for storage in the database.
-     * Steps:
-     * 1. Encrypts the extension communication data using crypterDatabaseLoginService.
-     * 2. Sets the target identifier and initializes the process state as false.
-     * 3. Assigns the process ID to the appropriate property based on the processType:
-     *      - sessionId → setSessionId()
-     *      - registrationProcessId → setRegistrationProcessId()
-     * 4. Returns the prepared AuthBridge entity ready for persistence.
-     */    
     private function initializeAuthBridge(array $extensionValidCommunication, string $processType, string $targetId, string $processId): AuthBridge
     {
         $authBridge = $this->crypterDatabaseLoginService->encyptExtensionIdentityDataObject($extensionValidCommunication, $processType);

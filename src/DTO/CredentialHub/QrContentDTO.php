@@ -31,7 +31,7 @@ class QrContentDTO implements QrInterface
         ExtensionCredentialResponseDTO $identity        
     ) {
         $this->domainProcessId =  $identity->getDomainProcessId() ?? null;
-        $this->sessionId = $identity->getsessionId() ?? null;
+        $this->sessionId = $identity->getSessionId() ?? null;
         $this->domain = $identity->getDomain() ?? null;
 
         $this->type = $identity->getType();
@@ -60,7 +60,8 @@ class QrContentDTO implements QrInterface
     {
         return array_merge($this->baseNotificationPayload(), [
             'domain' => $this->domain,
-            'domainProcessId' => $this->domainProcessId
+            'sessionId' => $this->sessionId ?? $this->domainProcessId,
+            'domainProcessId' => $this->domainProcessId,
         ]);
     }
 

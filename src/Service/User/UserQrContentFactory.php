@@ -9,6 +9,7 @@ use App\DTO\QR\CredentialHubIdentityDTO;
 use App\DTO\QR\QrInterface;
 use App\DTO\QR\UserLoginDTO;
 use App\Exception\CorporateRegistrationException;
+use App\Service\Shared\ProcessTypeNormalizer;
 use Psr\Log\LoggerInterface;
 
 class UserQrContentFactory
@@ -18,6 +19,7 @@ class UserQrContentFactory
 
     public function __construct(
         private readonly LoggerInterface $logger,
+        private readonly ProcessTypeNormalizer $processTypeNormalizer,
     ) {
     }
 
@@ -60,9 +62,14 @@ class UserQrContentFactory
     {
         $this->logger->critical(' DTO start');
 
+        $processId = $this->processTypeNormalizer->resolveProcessId(
+            $identity->getSessionId(),
+            $identity->getDomainProcessId(),
+        );
+
         $dto = new UserLoginDTO(
             $payload['domain'] ?? null,
-            $identity->getDomainProcessId(),
+            $processId,
             $identity->getXExtensionAuthOne(),
             'system_hub_login',
             $payload['corporatePublicId'] ?? null,

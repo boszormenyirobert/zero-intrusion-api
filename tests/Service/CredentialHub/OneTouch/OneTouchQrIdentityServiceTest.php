@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\OneTouch;
 
-use App\Controller\CredentialHub\Shared\SharedRegistrationService;
+use App\Service\CredentialHub\Shared\SharedRegistrationService;
 use App\DTO\CredentialHub\OneTouch\OneTouchQrIdentityRequestDTO;
 use App\DTO\QR\CredentialHubIdentityDTO;
 use App\DTO\QR\OneTouchDTO;

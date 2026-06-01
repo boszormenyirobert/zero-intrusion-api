@@ -19,12 +19,13 @@ class OneTouchStateService
 
     public function handle(Request $request): array
     {
-        $processId = $this->sharedPayloadService->getProcessId($request, PayloadKeys::ONE_TOUCH_STATE, false);
+        $payload = $this->sharedPayloadService->getPayloadOrFail($request, PayloadKeys::ONE_TOUCH_STATE);
+        $sessionId = $payload['sessionId'] ?? null;
 
-        if (!$processId) {
-            throw new \InvalidArgumentException('Invalid or missing processId');
+        if (!is_string($sessionId) || $sessionId === '') {
+            throw new \InvalidArgumentException('Invalid or missing sessionId');
         }
 
-        return $this->sharedProcessPoller->pollTheRedisOneTouch($processId, 'sessionId');
+        return $this->sharedProcessPoller->pollTheRedisOneTouch($sessionId, 'sessionId');
     }
 }

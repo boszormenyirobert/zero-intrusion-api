@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller\CredentialHub\Shared;
 
-use App\Controller\CredentialHub\Shared\SharedRegistrationService;
+use App\Service\CredentialHub\Shared\SharedRegistrationService;
 use App\Service\AuthBridge\AuthBridgeService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;

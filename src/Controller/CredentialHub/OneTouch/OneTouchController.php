@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\CredentialHub\OneTouch;
 
 use App\Attribute\RequireJson;
+use App\Controller\CredentialHub\PayloadKeys;
 use App\Controller\PayloadValidator\PayloadValidator;
 use App\Helper\ResponseHelper;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -36,7 +37,7 @@ class OneTouchController extends AbstractController
         Request $request,
     ): JsonResponse {
         try {
-            $validatedPayload = $this->payloadValidator->validatePayload($request, 'one_touch_qr_identity');
+            $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::ONE_TOUCH_QR_IDENTITY);
             $oneTouchRequest = $this->oneTouchQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(

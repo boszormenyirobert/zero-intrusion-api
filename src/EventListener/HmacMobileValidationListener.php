@@ -110,15 +110,16 @@ class HmacMobileValidationListener
         return match ($payloadKey) {
             'domain_read_credential' => 'sessionId',
             'vault_read_credential' => 'sessionId',
-            'shared_registration_new_to_encrypt' => 'registrationProcessId',
-            'shared_registration_new' => 'registrationProcessId',
             'domain_delete_credential' => 'sessionId',         
             'vault_delete_credential' => 'sessionId',       
-            'vault_edit_credential' => 'registrationProcessId',
-            'user_registration' => 'registrationProcessId',
             'domain_read_credential_encrypted' => 'sessionId',
             'vault_read_credential_encrypted' => 'sessionId',
             'one_touch_identifier' => 'sessionId',  
+
+            'shared_registration_new_to_encrypt' => 'registrationProcessId',
+            'shared_registration_new' => 'registrationProcessId',
+            'vault_edit_credential' => 'registrationProcessId',
+            'user_registration' => 'registrationProcessId',
             default => null,
         };
     }

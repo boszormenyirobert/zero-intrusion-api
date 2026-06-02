@@ -7,7 +7,7 @@ namespace App\Service\CredentialHub\Domain\Delete;
 use App\Service\CredentialHub\Domain\Delete\DomainDeleteService;
 use App\DTO\CredentialHub\Domain\Delete\DomainDeleteQrIdentityRequestDTO;
 use App\Service\AuthBridge\AuthBridgeService;
-use App\Service\CredentialHub\DeferredFcmNotificationQueue;
+use App\Service\CredentialHub\SharedNotificationService;
 use App\Service\CredentialHub\Shared\QrContentValidationService;
 use App\Service\QrService\QrService;
 use Psr\Log\LoggerInterface;
@@ -19,7 +19,7 @@ class DomainDeleteQrIdentityService
         private readonly AuthBridgeService $authBridgeService,
         private readonly QrService $qrService,
         private readonly DomainDeleteService $domainDeleteService,
-        private readonly DeferredFcmNotificationQueue $deferredFcmNotificationQueue,
+        private readonly SharedNotificationService $sharedNotificationService,
         private readonly QrContentValidationService $qrContentValidationService,
         private readonly ValidatorInterface $validator,
         private readonly LoggerInterface $logger,
@@ -28,7 +28,7 @@ class DomainDeleteQrIdentityService
 
     public function handle(DomainDeleteQrIdentityRequestDTO $request): array
     {
-        $identity = $this->authBridgeService->generateRequestIdentity('sessionId');   
+        $identity = $this->authBridgeService->generateRequestIdentity('domain-delete');   
         
         $qrContent = $this->domainDeleteService->getQrContent(
             $identity->getXExtensionAuthOne(),    
@@ -42,7 +42,7 @@ class DomainDeleteQrIdentityService
 
         $identity->setQrCode($this->qrService->getQrCode($qrContent));
 
-        $this->deferredFcmNotificationQueue->enqueue('domainDelete', $request->getUserPublicId(), $qrContent);
+        $this->sharedNotificationService->sendFcmNotification('domainDelete', $request->getUserPublicId(), $qrContent);
         
         return $identity->toRemoveProcessArray();
     }

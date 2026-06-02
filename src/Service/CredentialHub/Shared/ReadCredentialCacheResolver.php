@@ -22,7 +22,6 @@ class ReadCredentialCacheResolver
         ) {
             $response = $this->processStateCacheService->get($user['credentialCacheKey'] ?? 'missing');
 
-            // Cache miss eseten terjunk vissza a database fallback agra.
             if (!is_array($response)) {
                 return false;
             }

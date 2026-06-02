@@ -6,14 +6,12 @@ namespace App\Service\CredentialHub;
 
 use App\DTO\CredentialHub\ExtensionCredentialRequestDTO;
 use App\DTO\CredentialHub\QrContentDTO;
-use App\Service\CredentialHub\SharedNotificationService;
 use App\Service\Cache\ProcessStateCacheService;
 use App\Service\CredentialHub\CredentialReadService;
 
 class ReadQrIdentityService
 {
     public function __construct(
-        private readonly SharedNotificationService $sharedNotificationService,
         private readonly ProcessStateCacheService $processStateCacheService,
         private readonly CredentialReadService $credentialReadService
     ) {

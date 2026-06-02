@@ -32,7 +32,7 @@ class DeleteService
         return false;
     }
 
-    public function deleteUserDomainCombination(array $user, array $collecion): array
+    public function deleteUserDomainCombination(array $user, array $collecion): void
     {
         $newCombination = true;
         $existingPages = [];
@@ -54,10 +54,5 @@ class DeleteService
                 $this->entityManager->flush();
             }
         }
-
-        return [
-            "newCombination" => $newCombination,
-            "existingPage" => $existingPages
-        ];
     }    
 }

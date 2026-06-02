@@ -59,7 +59,7 @@ final class AccessRegistryDomainService
         return $userData;
     }    
 
-    public function deleteDomainRegistraions(array $user, string $type = 'domain')
+    public function deleteDomainRegistraions(array $user, string $type = 'domain'): void
     {
         $encryptedUserPages =  $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
         $collection = [];

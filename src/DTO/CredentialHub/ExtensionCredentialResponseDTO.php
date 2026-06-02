@@ -217,7 +217,7 @@ class ExtensionCredentialResponseDTO
     
     public function toOneTouchProcessArray(): array
     {
-        return $this->toProcessArray('sessionId');
+        return $this->toProcessArray('one-touch');
     }
 
     /**

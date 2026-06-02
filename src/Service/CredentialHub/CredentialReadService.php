@@ -15,7 +15,7 @@ use App\DTO\QR\StoreDTO;
 use App\Service\AuthBridge\AuthBridgeHandler\Domain\Encryptor;
 use App\DTO\CredentialHub\QrContentDTO;
 use App\Service\CredentialHub\Shared\QrContentValidationService;
-use App\Service\CredentialHub\DeferredFcmNotificationQueue;
+use App\Service\CredentialHub\SharedNotificationService;
 
 enum IdentityType: string
 {
@@ -33,8 +33,7 @@ class CredentialReadService
         private readonly VaultReadCredentialDecryptedService $vaultReadCredentialDecryptedService,
         private readonly QrContentValidationService $qrContentValidationService,
         private readonly Encryptor $encryptor,
-        private readonly DeferredCredentialCacheQueue $deferredCredentialCacheQueue,
-        private readonly DeferredFcmNotificationQueue $deferredFcmNotificationQueue
+        private readonly SharedNotificationService $sharedNotificationService,
     ) {
     }
 
@@ -56,18 +55,15 @@ class CredentialReadService
         ExtensionCredentialRequestDTO $identityRequestDTO, 
         ExtensionCredentialResponseDTO $identity, 
         IdentityType $type,
-        QrContentDTO $qrContent): void
-        {
+        QrContentDTO $qrContent
+    ): void {
         if ($identityRequestDTO->userPublicId !== null && $identityRequestDTO->userPublicId !== '') {
-
             $credentialCacheKey = $this->createCredentialCacheKey($identity);
 
-            $this->deferredCredentialCacheQueue->enqueue(
-                $type,
-                $identityRequestDTO->domain,
-                $identityRequestDTO->userPublicId,
-                $credentialCacheKey,
-            );
+            // Keep cache warm-up in-band to ensure data is available when mobile consumes the notification.
+            $request = new ExtensionCredentialRequestDTO($identityRequestDTO->domain, $identityRequestDTO->userPublicId, null);
+            $credentials = $this->getCredentials($request, $type);
+            $this->setCacheKey($credentialCacheKey, $credentials);
 
             $qrContent->setCredentialCacheKey($credentialCacheKey);
             
@@ -78,7 +74,7 @@ class CredentialReadService
                 IdentityType::DOMAIN_READ => 'domainRead',
             };
 
-            $this->deferredFcmNotificationQueue->enqueue($source, $identityRequestDTO->userPublicId, $santizedQrContent);
+            $this->sharedNotificationService->sendFcmNotification($source, $identityRequestDTO->userPublicId, $santizedQrContent);
         }        
     }
 

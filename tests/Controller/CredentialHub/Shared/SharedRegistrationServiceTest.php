@@ -83,7 +83,7 @@ final class SharedRegistrationServiceTest extends TestCase
             'source' => 'extension',
         ], 'auth-1', 'process-1');
 
-        self::assertSame('process-1', $oneTouch->getOneTouchProcessId());
+        self::assertSame('process-1', $oneTouch->getSessionId());
         self::assertSame('auth-1', $oneTouch->getXExtensionAuthOne());
 
         $service->saveUserCredentialInAuthBridge((object) [

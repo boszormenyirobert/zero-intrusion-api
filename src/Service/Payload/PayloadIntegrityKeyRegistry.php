@@ -40,6 +40,7 @@ final class PayloadIntegrityKeyRegistry
         'replaceDevice' => 'replaceDevice',
         'restorePin' => 'restorePin',
         'browserRegistrationVaultIdentity' => 'browserRegistrationVaultIdentity',
+        'shared_registration_new_save' => 'shared_registration_new_save',
     ];
 
     public function isAllowed(string $key): bool

@@ -11,7 +11,6 @@ use App\Attribute\RequireJson;
 use App\Controller\CredentialHub\Shared\SharedRegistrationController;
 use App\Controller\PayloadValidator\PayloadValidator;
 use App\DTO\CredentialHub\Shared\SharedRegistrationNewResultDTO;
-use App\DTO\CredentialHub\Shared\SharedRegistrationNewToEncryptResultDTO;
 use App\DTO\CredentialHub\Shared\SharedRegistrationQrIdentityRequestDTO;
 use App\Helper\ResponseHelper;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewService;
@@ -84,15 +83,20 @@ final class SharedRegistrationControllerTest extends TestCase
         $mapper = $this->createMock(SharedRegistrationQrIdentityRequestMapper::class);
         $qrIdentityService = $this->createMock(SharedRegistrationQrIdentityService::class);
         $newToEncryptService = $this->createMock(SharedRegistrationNewToEncryptService::class);
-        $newToEncryptService->expects(self::once())->method('handle')->with($request)->willReturn(new SharedRegistrationNewToEncryptResultDTO(['id' => 1], ''));
+        $newToEncryptService->expects(self::once())->method('handle')->with($request)->willReturn(true);
         $newService = $this->createMock(SharedRegistrationNewService::class);
         $stateService = $this->createMock(SharedRegistrationStateService::class);
         $responseHelper = $this->createMock(ResponseHelper::class);
+        $responseHelper
+            ->expects(self::once())
+            ->method('createSuccessResponse')
+            ->with(['credentials' => true])
+            ->willReturn(new JsonResponse(['success' => true, 'credentials' => true]));
 
         $controller = new SharedRegistrationController($payloadValidator, $responseHelper, $mapper, $qrIdentityService, $newToEncryptService, $newService, $stateService);
         $response = $controller->sharedRegistrationNewToEncrypt($request);
 
-        self::assertSame(['registration_process_init' => ['id' => 1], 'error' => ''], json_decode((string) $response->getContent(), true));
+        self::assertSame(['success' => true, 'credentials' => true], json_decode((string) $response->getContent(), true));
     }
 
     public function testSharedRegistrationNewReturnsJsonPayload(): void

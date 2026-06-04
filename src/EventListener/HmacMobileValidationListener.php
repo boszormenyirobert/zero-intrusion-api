@@ -116,7 +116,7 @@ class HmacMobileValidationListener
             'vault_read_credential_encrypted' => 'sessionId',
             'one_touch_identifier' => 'sessionId',  
 
-            'shared_registration_new_to_encrypt' => 'registrationProcessId',
+            'shared_registration_new_to_encrypt' => 'sessionId',
             'shared_registration_new' => 'registrationProcessId',
             'vault_edit_credential' => 'registrationProcessId',
             'user_registration' => 'registrationProcessId',

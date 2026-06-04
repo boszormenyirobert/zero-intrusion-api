@@ -172,6 +172,8 @@ class ExtensionCredentialResponseDTO
             'domain-read' => $this->buildReadExtensionArray($this->sessionId),
             'vault-read' => $this->buildReadExtensionArray($this->sessionId),
             'one-touch' => $this->buildProcessArray('sessionId', $this->sessionId),
+            'new-user-credential' => $this->buildReadExtensionArray($this->sessionId),
+            
             'registrationProcessId' => $this->buildProcessArray('registrationProcessId', $this->registrationProcessId),
             'domainProcessId' => $this->buildProcessArray('domainProcessId', $this->domainProcessId),
             

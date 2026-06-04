@@ -8,7 +8,6 @@ use App\EventListener\HmacExtensionValidationListener;
 use App\EventListener\HmacMobileValidationListener;
 use App\Kernel;
 use App\DTO\CredentialHub\Shared\SharedRegistrationNewResultDTO;
-use App\DTO\CredentialHub\Shared\SharedRegistrationNewToEncryptResultDTO;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewService;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewToEncryptService;
 use App\Service\CredentialHub\Shared\SharedRegistrationStateService;
@@ -72,7 +71,7 @@ final class SharedRegistrationControllerIntegrationTest extends WebTestCase
         $service
             ->expects(self::once())
             ->method('handle')
-            ->willReturn(new SharedRegistrationNewToEncryptResultDTO(['credential' => 'secret'], ''));
+            ->willReturn(true);
         static::getContainer()->set(SharedRegistrationNewToEncryptService::class, $service);
 
         $mobileListener = $this->createMock(HmacMobileValidationListener::class);
@@ -99,8 +98,8 @@ final class SharedRegistrationControllerIntegrationTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame([
-            'registration_process_init' => ['credential' => 'secret'],
-            'error' => '',
+            'success' => true,
+            'credentials' => true,
         ], json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR));
     }
 

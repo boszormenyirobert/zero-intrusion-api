@@ -21,6 +21,7 @@ enum IdentityType: string
 {
     case DOMAIN_READ = 'domain-read';
     case VAULT_READ = 'vault-read';
+    case NEW_USER_CREDENTIAL = 'new-user-credential';
 }
 
 class CredentialReadService
@@ -40,7 +41,6 @@ class CredentialReadService
     public function getIdentity(ExtensionCredentialRequestDTO $extensionRequest, IdentityType $type): ExtensionCredentialResponseDTO
     {
         $identity = $this->identityConfiguration($extensionRequest, $type, 'extension');
-        
         $qrContent = $this->qrService->getQrContent($identity);
         $this->qrContentValidationService->validateOrFail($qrContent, $type->value);
 
@@ -62,17 +62,17 @@ class CredentialReadService
 
             // Keep cache warm-up in-band to ensure data is available when mobile consumes the notification.
             $request = new ExtensionCredentialRequestDTO($identityRequestDTO->domain, $identityRequestDTO->userPublicId, null);
-            $credentials = $this->getCredentials($request, $type);
-            $this->setCacheKey($credentialCacheKey, $credentials);
+            $this->logger->critical('identity');; 
 
-            $qrContent->setCredentialCacheKey($credentialCacheKey);
-            
             $santizedQrContent = $this->sanitizeQrContent($qrContent, $type);
 
             $source = match ($type) {
                 IdentityType::VAULT_READ => 'vaultRead',
                 IdentityType::DOMAIN_READ => 'domainRead',
+                IdentityType::NEW_USER_CREDENTIAL => 'newUserCredential',
             };
+             
+
 
             $this->sharedNotificationService->sendFcmNotification($source, $identityRequestDTO->userPublicId, $santizedQrContent);
         }        
@@ -83,6 +83,7 @@ class CredentialReadService
         return match ($type) {
             IdentityType::DOMAIN_READ => $qrContent->toNotificationDomain(),
             IdentityType::VAULT_READ => $qrContent->toNotificationApplication(),
+            IdentityType::NEW_USER_CREDENTIAL => $qrContent->toNotificationNewUserCredential(),
         };
     }
 
@@ -92,11 +93,14 @@ class CredentialReadService
         string $source): ExtensionCredentialResponseDTO
     {
         $identity = $this->authBridgeService->generateRequestIdentity($type->value);
-        $identity->setType($type->value);
-        $identity->setPublicKey($extensionRequest->publicKey);
+        $identity->setType($type->value);        
         $identity->setSource($source);
 
-        if ($type === IdentityType::DOMAIN_READ) {
+        if ($type !== IdentityType::NEW_USER_CREDENTIAL) {
+            $identity->setPublicKey($extensionRequest->publicKey);        
+        }        
+
+        if ($type === IdentityType::DOMAIN_READ || IdentityType::NEW_USER_CREDENTIAL) {
             $identity->setDomain($extensionRequest->domain);
         }
 

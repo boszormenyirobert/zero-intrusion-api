@@ -20,6 +20,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Service\CredentialHub\SharedSSE;
+use App\Service\CredentialHub\IdentityType;
 
 #[Route('/api/credential-hub/shared/registration')]
 class SharedRegistrationController extends AbstractController
@@ -35,9 +38,7 @@ class SharedRegistrationController extends AbstractController
         private readonly SharedRegistrationStateService $sharedRegistrationStateService,
     ) {
     }
-
     #[Route('/qr-identity', name: 'shared_registration_qr_identity', methods: "POST")]
-//    #[RequireHmac]
     #[RequireJson]
     public function sharedRegistrationQrIdentity(
         Request $request,
@@ -47,8 +48,8 @@ class SharedRegistrationController extends AbstractController
             $validatedPayload = $this->payloadValidator->validatePayload($request, 'shared_registration_qr_identity');
             $sharedRegistrationRequest = $this->sharedRegistrationQrIdentityRequestMapper->map($validatedPayload);
 
-            return $this->responseHelper->createSuccessResponse(
-                $this->sharedRegistrationQrIdentityService->handle($sharedRegistrationRequest, $validator)
+            return $this->responseHelper->createSuccessResponse(                 
+                $this->sharedRegistrationQrIdentityService->handle($sharedRegistrationRequest, IdentityType::NEW_USER_CREDENTIAL)
             );
         } catch (\Throwable $e) {
             return $this->responseHelper->handleException($e);
@@ -56,22 +57,20 @@ class SharedRegistrationController extends AbstractController
     }
 
     #[Route('/new/to-encrypt', name: 'shared_registration_new_to_encrypt', methods: "POST")]
-//    #[RequireHmac]
-//    #[MobileHmac]    
-    #[RequireJson]
+     #[RequireJson]
     public function sharedRegistrationNewToEncrypt(
         Request $request,
     ): JsonResponse {
         try {
-            return new JsonResponse($this->sharedRegistrationNewToEncryptService->handle($request)->toArray());
+            return $this->responseHelper->createSuccessResponse([
+                'credentials' => $this->sharedRegistrationNewToEncryptService->handle($request),
+            ]);
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
     #[Route('/new', name: 'shared_registration_new', methods: "POST")]
-//    #[RequireHmac]
-//    #[MobileHmac]    
     #[RequireJson]
     public function sharedRegistrationNew(
         Request $request,
@@ -83,30 +82,21 @@ class SharedRegistrationController extends AbstractController
         }
     }
 
-    #[Route('/state', name: 'shared_registration_state', methods: "POST")]
-//    #[RequireHmac]
+    #[Route('/new/save', name: 'shared_registration_new_save', methods: "POST")]
     #[RequireJson]
-//    #[ExtensionHmac]
-    public function sharedRegistrationState(
+    public function sharedRegistrationNewSave(
         Request $request,
     ): JsonResponse {
         try {
-            $response = $this->sharedRegistrationStateService->handle($request);
-
-            if ($response === null) {
-                return $this->missingProcessResponse();
-            }
-
-            return $this->responseHelper->createSuccessResponse($response);
-        } catch (\Throwable $e) {
-            return $this->responseHelper->handleException($e, [
-                'registration_process_check' => 'error'
-            ]);
+            return new JsonResponse($this->sharedRegistrationNewService->handleSave($request)->toArray());
+        } catch (\Exception $e) {
+            return $this->responseHelper->handleException($e);
         }
-    }
+    }    
 
-    private function missingProcessResponse(): JsonResponse
+    #[Route('/approval-challange/{key}', name: 'api_sse_create', methods: ['GET'])]
+    public function sse(string $key): StreamedResponse
     {
-        return $this->responseHelper->createErrorResponse('Invalid or missing processId');
+        return $this->sharedSSE->handle($key);
     }
 }

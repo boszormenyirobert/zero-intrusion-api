@@ -70,5 +70,12 @@ class QrContentDTO implements QrInterface
         return array_merge($this->baseNotificationPayload(), [
             'sessionId' => $this->sessionId
         ]);
-    }    
+    }
+
+    public function toNotificationNewUserCredential(): array
+    {
+        return array_merge($this->baseNotificationPayload(), [
+            'sessionId' => $this->sessionId
+        ]);
+    }
 }

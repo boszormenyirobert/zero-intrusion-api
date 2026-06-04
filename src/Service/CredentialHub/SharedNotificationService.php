@@ -9,6 +9,8 @@ use App\Repository\IdentityRepository;
 use App\Service\Firebase\FirebaseService;
 use App\Service\Identity\Database\CrypterDatabaseIdentityService;
 use Psr\Log\LoggerInterface;
+use App\Service\CredentialHub\IdentityType;
+
 
 class SharedNotificationService
 {
@@ -22,7 +24,7 @@ class SharedNotificationService
             'title' => 'From domain read',
             'body' => 'Forwarded the QR content, ordered by the user publicId',
         ],
-        'sharedRegistration' => [
+        'newUserCredential' => [
             'title' => 'From shared registration',
             'body' => 'Forwarded the QR content, ordered by the user publicId',
         ],
@@ -49,29 +51,33 @@ class SharedNotificationService
     ) {
     }
 
-    public function sendFcmNotification(string $source, ?string $userPublicId, mixed $qrContent, bool $throwOnFailure = false): bool
+    public function sendFcmNotification(string $type, ?string $userPublicId, mixed $qrContent, bool $throwOnFailure = false): bool
     {
         if ($userPublicId === null || $userPublicId === '') {
             $this->logger->warning('FCM notification skipped because userPublicId is missing.', [
-                'source' => $source,
+                'type' => $type,
             ]);
             return false;
         }
 
-        if (!isset(self::FCM_DESCRIPTIONS[$source])) {
-            $this->logger->warning('FCM notification skipped because source is unsupported.', [
-                'source' => $source,
+        if (!isset(self::FCM_DESCRIPTIONS[$type])) {
+            $this->logger->warning('FCM notification skipped because type is unsupported.', [
+                'type' => $type,
                 'userPublicId' => $userPublicId,
             ]);
             return false;
         }
 
-        $description = self::FCM_DESCRIPTIONS[$source];
+        $description = self::FCM_DESCRIPTIONS[$type];
         $delivered = $this->firebaseService->manageFcm($userPublicId, $description['title'], $description['body'], $qrContent);
 
         if (!$delivered && $throwOnFailure) {
-            throw new \RuntimeException(sprintf('FCM delivery failed for source "%s" and user "%s".', $source, $userPublicId));
+            throw new \RuntimeException(sprintf('FCM delivery failed for type "%s" and user "%s".', $type, $userPublicId));
         }
+            $this->logger->warning('FCM notification sent.', [
+                'userPublicId' => $userPublicId,
+                'qrContent' => $qrContent,
+            ]);
 
         return $delivered;
     }

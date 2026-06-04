@@ -8,6 +8,7 @@ use App\Controller\CredentialHub\PayloadKeys;
 use App\DTO\CredentialHub\Shared\SharedRegistrationQrIdentityRequestDTO;
 use App\Service\Payload\JsonPayloadDecoder;
 use Psr\Log\LoggerInterface;
+use App\DTO\CredentialHub\ExtensionCredentialRequestDTO;
 
 class SharedRegistrationQrIdentityRequestMapper
 {
@@ -17,7 +18,7 @@ class SharedRegistrationQrIdentityRequestMapper
     ) {
     }
 
-    public function map(array $validatedPayload): SharedRegistrationQrIdentityRequestDTO
+    public function map(array $validatedPayload): ExtensionCredentialRequestDTO
     {
         $payload = $this->jsonPayloadDecoder->decodeArray($validatedPayload[PayloadKeys::SHARED_REGISTRATION_QR_IDENTITY] ?? null);
 
@@ -29,6 +30,6 @@ class SharedRegistrationQrIdentityRequestMapper
             throw new \InvalidArgumentException('Invalid shared registration QR identity payload.');
         }
 
-        return SharedRegistrationQrIdentityRequestDTO::fromArray($payload);
+        return ExtensionCredentialRequestDTO::fromArray($payload);
     }
 }

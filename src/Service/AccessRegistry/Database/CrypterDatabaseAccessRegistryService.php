@@ -34,12 +34,14 @@ final class CrypterDatabaseAccessRegistryService
         $encryptedIdentity->setRegistrationState($userData['registrationState']);
         $encryptedIdentity->setPublicId($userData['publicId']);
         $encryptedIdentity->setIv(base64_encode($iv));
-        $encryptedIdentity->setRegistrationProcessId($userData['registrationProcessId']);
+        $encryptedIdentity->setRegistrationProcessId($userData['sessionId'] ?? $userData['registrationProcessId'] ?? null);
         $encryptedIdentity->setTargetId($userData['targetId']);
 
         if (array_key_exists('corporateId', $userData)) {
             $encryptedIdentity->setCorporateId($userData['corporateId']);
         }
+
+        $this->logger->critical('encryptDataObjectOrFail: Value of type: ' . $type);
 
         if ($type === 'domain') {
             return $this->encyptDataObjectDomain($userData, $encryptedIdentity, $iv);
@@ -130,7 +132,8 @@ final class CrypterDatabaseAccessRegistryService
         }
 
         if ($type === 'application') {
-            return $this->getDecryptedAccessRegistryApplication($value);
+            $result = $this->getDecryptedAccessRegistryApplication($value);
+            return $result;
         }
 
         throw new \InvalidArgumentException('invalid type');

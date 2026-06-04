@@ -93,17 +93,22 @@ final class SharedRegistrationControllerE2ETest extends WebTestCase
         $this->mockSuccessfulHmacValidation();
         $this->mockMobileListener();
 
-        $authBridgeService = $this->createMock(AuthBridgeService::class);
-        $authBridgeService
-            ->expects(self::once())
-            ->method('getUserCredentialFromAuthBridge')
-            ->with('registration-process-2')
-            ->willReturn('{"userName":"alice"}');
-        static::getContainer()->set(AuthBridgeService::class, $authBridgeService);
+        $cacheService = $this->createMock(ProcessStateCacheService::class);
+        $cacheService
+            ->expects(self::exactly(2))
+            ->method('set')
+            ->with(
+                self::callback(static fn (string $key): bool => in_array($key, ['session-2', 'session-2_userPublicId'], true)),
+                self::callback(static fn (string $value): bool => in_array($value, ['{"publicKey":"public-key-2"}', 'public-2'], true))
+            );
+        static::getContainer()->set(ProcessStateCacheService::class, $cacheService);
 
         $this->requestJson($client, 'POST', '/api/credential-hub/shared/registration/new/to-encrypt', [
             'shared_registration_new_to_encrypt' => [
-                'registrationProcessId' => 'registration-process-2',
+                'sessionId' => 'session-2',
+                'type' => 'new-user-credential',
+                'publicKey' => 'public-key-2',
+                'userPublicId' => 'public-2',
             ],
         ], [
             'HTTP_X_EXTENSION_AUTH' => 'HMAC extension-token',
@@ -111,8 +116,8 @@ final class SharedRegistrationControllerE2ETest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame([
-            'registration_process_init' => '{"userName":"alice"}',
-            'error' => '',
+            'success' => true,
+            'credentials' => true,
         ], json_decode((string) $client->getResponse()->getContent(), true, 512, JSON_THROW_ON_ERROR));
     }
 

@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Service\CredentialHub\Shared;
 
-use App\Service\CredentialHub\Shared\SharedRegistrationService;
+use App\Service\Cache\ProcessStateCacheService;
 use App\Controller\PayloadValidator\PayloadValidator;
-use App\DTO\CredentialHub\Shared\SharedRegistrationNewToEncryptResultDTO;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewToEncryptService;
 use App\Service\Payload\JsonPayloadDecoder;
 use PHPUnit\Framework\TestCase;
@@ -14,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class SharedRegistrationNewToEncryptServiceTest extends TestCase
 {
-    public function testHandleLoadsUserCredentialByRegistrationProcessId(): void
+    public function testHandleStoresOnlyPublicKeyInCacheBySessionId(): void
     {
         $request = Request::create('/api/shared/registration/new-to-encrypt', 'POST');
 
@@ -25,23 +24,25 @@ final class SharedRegistrationNewToEncryptServiceTest extends TestCase
             ->with($request, 'shared_registration_new_to_encrypt')
             ->willReturn([
                 'shared_registration_new_to_encrypt' => json_encode([
-                    'registrationProcessId' => 'process-123',
+                    'sessionId' => 'session-123',
+                    'type' => 'new-user-credential',
+                    'publicKey' => 'pub-key-1',
+                    'userPublicId' => 'public-1',
                 ], JSON_THROW_ON_ERROR),
             ]);
 
-        $sharedRegistrationService = $this->createMock(SharedRegistrationService::class);
-        $sharedRegistrationService
-            ->expects(self::once())
-            ->method('getUserCredentialFromAuthBridge')
-            ->with('process-123')
-            ->willReturn(['credential' => 'secret']);
+        $cacheService = $this->createMock(ProcessStateCacheService::class);
+        $cacheService
+            ->expects(self::exactly(2))
+            ->method('set')
+            ->with(
+                self::callback(static fn (string $key): bool => in_array($key, ['session-123', 'session-123_userPublicId'], true)),
+                self::callback(static fn (string $value): bool => in_array($value, ['{"publicKey":"pub-key-1"}', 'public-1'], true))
+            );
 
-        $service = new SharedRegistrationNewToEncryptService($payloadValidator, $sharedRegistrationService, new JsonPayloadDecoder());
+        $service = new SharedRegistrationNewToEncryptService($payloadValidator, $cacheService, new JsonPayloadDecoder());
 
-        self::assertEquals(
-            new SharedRegistrationNewToEncryptResultDTO(['credential' => 'secret'], ''),
-            $service->handle($request)
-        );
+        self::assertTrue($service->handle($request));
     }
 
     public function testHandleRejectsInvalidJsonPayload(): void
@@ -56,12 +57,12 @@ final class SharedRegistrationNewToEncryptServiceTest extends TestCase
                 'shared_registration_new_to_encrypt' => '{invalid-json',
             ]);
 
-        $sharedRegistrationService = $this->createMock(SharedRegistrationService::class);
-        $sharedRegistrationService
+        $cacheService = $this->createMock(ProcessStateCacheService::class);
+        $cacheService
             ->expects(self::never())
-            ->method('getUserCredentialFromAuthBridge');
+            ->method('set');
 
-        $service = new SharedRegistrationNewToEncryptService($payloadValidator, $sharedRegistrationService, new JsonPayloadDecoder());
+        $service = new SharedRegistrationNewToEncryptService($payloadValidator, $cacheService, new JsonPayloadDecoder());
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid shared registration new-to-encrypt payload.');
@@ -69,7 +70,7 @@ final class SharedRegistrationNewToEncryptServiceTest extends TestCase
         $service->handle($request);
     }
 
-    public function testHandleAcceptsAlreadyDecodedPayloadArray(): void
+    public function testHandleAcceptsAlreadyDecodedPayloadArrayAndDefaultsSource(): void
     {
         $request = Request::create('/api/shared/registration/new-to-encrypt', 'POST');
 
@@ -80,22 +81,24 @@ final class SharedRegistrationNewToEncryptServiceTest extends TestCase
             ->with($request, 'shared_registration_new_to_encrypt')
             ->willReturn([
                 'shared_registration_new_to_encrypt' => [
-                    'registrationProcessId' => 'process-123',
+                    'sessionId' => 'session-123',
+                    'type' => 'new-user-credential',
+                    'publicKey' => 'pub-key-2',
+                    'userPublicId' => 'public-2',
                 ],
             ]);
 
-        $sharedRegistrationService = $this->createMock(SharedRegistrationService::class);
-        $sharedRegistrationService
-            ->expects(self::once())
-            ->method('getUserCredentialFromAuthBridge')
-            ->with('process-123')
-            ->willReturn(['credential' => 'secret']);
+        $cacheService = $this->createMock(ProcessStateCacheService::class);
+        $cacheService
+            ->expects(self::exactly(2))
+            ->method('set')
+            ->with(
+                self::callback(static fn (string $key): bool => in_array($key, ['session-123', 'session-123_userPublicId'], true)),
+                self::callback(static fn (string $value): bool => in_array($value, ['{"publicKey":"pub-key-2"}', 'public-2'], true))
+            );
 
-        $service = new SharedRegistrationNewToEncryptService($payloadValidator, $sharedRegistrationService, new JsonPayloadDecoder());
+        $service = new SharedRegistrationNewToEncryptService($payloadValidator, $cacheService, new JsonPayloadDecoder());
 
-        self::assertEquals(
-            new SharedRegistrationNewToEncryptResultDTO(['credential' => 'secret'], ''),
-            $service->handle($request)
-        );
+        self::assertTrue($service->handle($request));
     }
 }

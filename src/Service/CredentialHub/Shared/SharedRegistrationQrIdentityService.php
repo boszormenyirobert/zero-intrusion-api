@@ -12,6 +12,12 @@ use App\Service\QrService\QrService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+use App\DTO\CredentialHub\ExtensionCredentialRequestDTO;
+use App\DTO\CredentialHub\QrContentDTO;
+use App\Service\Cache\ProcessStateCacheService;
+use App\Service\CredentialHub\CredentialReadService;
+use App\Service\CredentialHub\IdentityType;
+
 class SharedRegistrationQrIdentityService
 {
     public function __construct(
@@ -20,10 +26,29 @@ class SharedRegistrationQrIdentityService
         private readonly AuthBridgeService $authBridgeService,
         private readonly QrService $qrService,
         private readonly LoggerInterface $logger,
+
+        private readonly ProcessStateCacheService $processStateCacheService,
+        private readonly CredentialReadService $credentialReadService,
     ) {
     }
+    
+    public function handle(ExtensionCredentialRequestDTO $request, IdentityType $type): array
+    {
+        $identity = $this->credentialReadService->getIdentity($request, $type);       
+        $qrCacheKey = $identity->getQrCacheKey();
+        $qrContent = $this->processStateCacheService->get($qrCacheKey);
 
-    public function handle(SharedRegistrationQrIdentityRequestDTO $request, ValidatorInterface $validator): array
+        if (!$qrContent instanceof QrContentDTO) {
+            throw new \RuntimeException(sprintf('Missing or invalid QR content in cache for key: %s', (string) $qrCacheKey));
+        }
+
+        $this->credentialReadService->handleNotification($request, $identity, $type, $qrContent);
+        $qrCode = $identity->toProcessArray($type->value);
+
+        return $qrCode;
+    }
+
+    public function handleOriginal(SharedRegistrationQrIdentityRequestDTO $request, ValidatorInterface $validator): array
     {
         if ($request->type === null || $request->type === '') {
         //    throw new \InvalidArgumentException('Missing registration type');

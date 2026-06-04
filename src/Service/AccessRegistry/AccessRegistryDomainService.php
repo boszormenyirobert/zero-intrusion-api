@@ -22,13 +22,18 @@ final class AccessRegistryDomainService
 
     public function isAllowedUserDomainApplicationCombination(array $user, string $type): array
     {
-        $encryptedUserPages = $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
-        $decryptedUserPages = [];
-
         $result = [
             "newCombination" => true,
             "existingPage" => ""
         ];
+
+        if( ($user['type']  === 'registration-domain' || $type  === 'registration-application')&& $user['update'] === false) {
+            return $result;
+        }
+
+        $encryptedUserPages = $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
+        $decryptedUserPages = [];
+
         if (!empty($encryptedUserPages)) {
             $decryptedUserPages = $this->resolverService->getDecrypt()->getUserDecryptedPages($encryptedUserPages, $type);
         }
@@ -42,14 +47,17 @@ final class AccessRegistryDomainService
 
     public function createDomain(array $userData, string $type): array
     {
-        $processId = $userData['registrationProcessId'];
+        $sessionId = $userData['sessionId'] ?? $userData['registrationProcessId'] ?? null;
         
-        //$this->authBridgeService->updateProcessState('registrationProcessId', $processId);
+        if( $userData['registrationProcessId'] ?? false){
+            $processId = $userData['registrationProcessId'];
+            $this->authBridgeService->updateProcessState('registrationProcessId', $processId);
+        }        
         $encryptedUserData = $this->resolverService->getWrite()->createAccessRegistryDomain($userData, $type);
 
         $userData['encryptedAuthId'] = $encryptedUserData->getUserCredential();
 
-        $this->writeLoginEntryInRedis($processId, [
+        $this->writeLoginEntryInRedis($sessionId, [
             'process' => true,
             'validation' => true,
             'process_check' => true,

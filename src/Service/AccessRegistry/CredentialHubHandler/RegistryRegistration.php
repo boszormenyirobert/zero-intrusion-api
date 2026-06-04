@@ -19,7 +19,6 @@ final class RegistryRegistration
     {
         $result = $this->accessRegistryDomainService->isAllowedUserDomainApplicationCombination($userData, $type);
         $update = $userData['update'];
-
         if (!empty($result) && $result['newCombination'] === false && $update === 'new' && $zeroIntrusionRegistration === false) {
         //    return false;
         }
@@ -27,15 +26,13 @@ final class RegistryRegistration
         return $this->addOrUpdateRegistry($result, $userData, $update, $type);
     }
 
-    private function addOrUpdateRegistry(array $result, array $userData, string $update, string $type): array
+    private function addOrUpdateRegistry(array $result, array $userData, string|bool $update, string $type): array
     {
-        $this->logger->critical('Value of update: ' . $update);
-
-        if ($update === 'new') {
+        if ($update === 'new' || $update === false) {
             $userData['targetId'] = $this->getSubString(50);
         }
 
-        if ($update === 'update') {
+        if ($update === 'update' || $update === true) {
             $this->accessRegistryDomainService->deleteDomainRegistraions($userData);
         }
 

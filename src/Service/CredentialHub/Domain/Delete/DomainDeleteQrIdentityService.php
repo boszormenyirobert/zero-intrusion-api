@@ -31,12 +31,12 @@ class DomainDeleteQrIdentityService
         $identity = $this->authBridgeService->generateRequestIdentity('domain-delete');   
         
         $qrContent = $this->domainDeleteService->getQrContent(
-            $identity->getXExtensionAuthOne(),    
-            $request->getDomain(),
+            $identity->getXExtensionAuthOne(),                
             $request->getType(),
             $request->getSource(),
             $request->getTargetId(),            
             $identity->getSessionId(),
+            $request->getDomain()
         );
         $this->qrContentValidationService->validateOrFail($qrContent, 'domain-delete');
 

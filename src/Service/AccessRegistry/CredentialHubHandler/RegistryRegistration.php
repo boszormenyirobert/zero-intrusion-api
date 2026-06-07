@@ -17,7 +17,9 @@ final class RegistryRegistration
 
     public function addAccessRegistry(array $userData, string $type, bool $zeroIntrusionRegistration): array
     {
+        $this->logger->info('Adding access registry for user: ' . json_encode($userData) . ' with type: ' . $type);
         $result = $this->accessRegistryDomainService->isAllowedUserDomainApplicationCombination($userData, $type);
+        $this->logger->info('001 Result of combination check: ' . json_encode($result));
         $update = $userData['update'];
         if (!empty($result) && $result['newCombination'] === false && $update === 'new' && $zeroIntrusionRegistration === false) {
         //    return false;
@@ -28,12 +30,12 @@ final class RegistryRegistration
 
     private function addOrUpdateRegistry(array $result, array $userData, string|bool $update, string $type): array
     {
-        if ($update === 'new' || $update === false) {
+        if (($update === 'new' || $update === false) && !array_key_exists('targetId', $userData)) {
             $userData['targetId'] = $this->getSubString(50);
         }
 
-        if ($update === 'update' || $update === true) {
-            $this->accessRegistryDomainService->deleteDomainRegistraions($userData);
+        if (array_key_exists('targetId', $userData)) {
+            $this->accessRegistryDomainService->deleteDomainRegistraions($userData, $type);
         }
 
         return $this->accessRegistryDomainService->createDomain($userData, $type);

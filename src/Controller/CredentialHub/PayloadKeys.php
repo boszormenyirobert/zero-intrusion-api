@@ -28,7 +28,7 @@ final class PayloadKeys
     public const VAULT_DELETE_QR_IDENTITY = 'vault_delete_qr_identity';
     public const VAULT_DELETE_CREDENTIAL = 'vault_delete_credential';
     public const VAULT_DELETE_STATE = 'vault_delete_state';
-    public const VAULT_DELETE_PROCESS_ID = 'sessionId';    
+    public const CREDENTIAL_DELETE = 'credential_delete';    
 
     public const VAULT_EDIT_QR_IDENTITY = 'vault_edit_qr_identity';
     public const VAULT_EDIT_CREDENTIAL = 'vault_edit_credential';

@@ -69,14 +69,21 @@ final class AccessRegistryDomainService
 
     public function deleteDomainRegistraions(array $user, string $type = 'domain'): void
     {
+        $this->logger->info('Deleting ' . $type . ' registrations for user.', [
+            'publicId' => $user['publicId'] ?? null,
+            'domain' => $user['domain'] ?? null,
+            'targetId' => $user['targetId'] ?? null,
+            'type' => $type,
+        ]);
+$this->logger->info('------------------STEP 0');
         $encryptedUserPages =  $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
         $collection = [];
-
         if (!empty($encryptedUserPages)) {
             $collection = $this->resolverService->getDecrypt()->getUserEncryptedDecryptedPageCollection($encryptedUserPages);
+            $this->logger->info('------------------STEP 1');
         }
-
         if (!empty($collection)) {
+            $this->logger->info('------------------STEP 2 : ' . $type);
             $this->resolverService->getDelete()->deleteUserDomainCombination($user, $collection);
         }
     }

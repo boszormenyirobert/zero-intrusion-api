@@ -10,6 +10,7 @@ final readonly class ExtensionCredentialRequestDTO
         public ?string $domain,
         public ?string $userPublicId,
         public ?string $publicKey,
+        public ?string $isNew = 'new',
     ) {
     }
 
@@ -19,6 +20,7 @@ final readonly class ExtensionCredentialRequestDTO
             $payload['domain'] ?? null,
             $payload['userPublicId'] ?? null,
             $payload['publicKey'] ?? null,
+            array_key_exists('isNew', $payload) ? (string) $payload['isNew'] : null,
         );
     }
 }

@@ -13,7 +13,7 @@ use App\Helper\ResponseHelper;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewService;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewToEncryptService;
 use App\Service\CredentialHub\Shared\SharedRegistrationQrIdentityRequestMapper;
-use App\Service\CredentialHub\Shared\SharedRegistrationQrIdentityService;
+use App\Service\CredentialHub\ReadQrIdentityService;
 use App\Service\CredentialHub\Shared\SharedRegistrationStateService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -32,12 +32,14 @@ class SharedRegistrationController extends AbstractController
         private readonly PayloadValidator $payloadValidator,
         private readonly ResponseHelper $responseHelper,
         private readonly SharedRegistrationQrIdentityRequestMapper $sharedRegistrationQrIdentityRequestMapper,
-        private readonly SharedRegistrationQrIdentityService $sharedRegistrationQrIdentityService,
+        private readonly ReadQrIdentityService $readQrIdentityService,
         private readonly SharedRegistrationNewToEncryptService $sharedRegistrationNewToEncryptService,
         private readonly SharedRegistrationNewService $sharedRegistrationNewService,
         private readonly SharedRegistrationStateService $sharedRegistrationStateService,
     ) {
     }
+
+    // Generate the sessionId, send challenge, and show QR-code to retrieve a publicKey from the mobile app
     #[Route('/qr-identity', name: 'shared_registration_qr_identity', methods: "POST")]
     #[RequireJson]
     public function sharedRegistrationQrIdentity(
@@ -49,13 +51,14 @@ class SharedRegistrationController extends AbstractController
             $sharedRegistrationRequest = $this->sharedRegistrationQrIdentityRequestMapper->map($validatedPayload);
 
             return $this->responseHelper->createSuccessResponse(                 
-                $this->sharedRegistrationQrIdentityService->handle($sharedRegistrationRequest, IdentityType::NEW_USER_CREDENTIAL)
+                $this->readQrIdentityService->handle($sharedRegistrationRequest, IdentityType::NEW_USER_CREDENTIAL)
             );
         } catch (\Throwable $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
+    // Mobile calls back with the publicKey, we save in Redis the sessionId and publicKey, and send an event to the SSE connection to notify the web client
     #[Route('/new/to-encrypt', name: 'shared_registration_new_to_encrypt', methods: "POST")]
      #[RequireJson]
     public function sharedRegistrationNewToEncrypt(
@@ -70,6 +73,10 @@ class SharedRegistrationController extends AbstractController
         }
     }
 
+    // Extension call. Get the credential encrypted with the publicKey
+    // Send an notification to the mobile app
+    // Payload contains the sessionId, encryptedAesKey, encryptedData, and iv
+    // The notification is "silent" on the mobile app
     #[Route('/new', name: 'shared_registration_new', methods: "POST")]
     #[RequireJson]
     public function sharedRegistrationNew(
@@ -82,6 +89,7 @@ class SharedRegistrationController extends AbstractController
         }
     }
 
+    // Mobil call to save the credential
     #[Route('/new/save', name: 'shared_registration_new_save', methods: "POST")]
     #[RequireJson]
     public function sharedRegistrationNewSave(
@@ -94,6 +102,7 @@ class SharedRegistrationController extends AbstractController
         }
     }    
 
+    //Extension connection by clicking to get user credential. Return by the sessionId
     #[Route('/approval-challange/{key}', name: 'api_sse_create', methods: ['GET'])]
     public function sse(string $key): StreamedResponse
     {

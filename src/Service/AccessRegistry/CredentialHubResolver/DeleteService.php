@@ -38,18 +38,26 @@ class DeleteService
         $existingPages = [];
 
         foreach ($collecion as $page) {
+
+            if ($page['decrypted']->getTargetId() === $user['targetId']
+            ) {
+            $this->logger->info('------------------STEP 2.2.0'. $page['encrypted']->getPublicId());
+            $this->logger->info('------------------STEP 2.2.0'. $page['decrypted']->getTargetId());
+            }
+
             if ($page['encrypted']->getPublicId() === $user['publicId'] && 
-                $page['decrypted']->getDomain() === $user['domain'] &&
+            //    $page['decrypted']->getDomain() === $user['domain'] &&
                 $page['decrypted']->getTargetId() === $user['targetId']
             ) {
                 $newCombination = false;
                 $deleteUserItem = $this->accessRegistryRepository->findOneBy(
                     [
-                        'domain' => $page['encrypted']->getDomain(),
+              //          'domain' => $page['encrypted']->getDomain(),
                         'publicId' => $page['encrypted']->getPublicId(),
                         'targetId' => $page['encrypted']->getTargetId()
                     ]
                 );
+                $this->logger->info('------------------STEP 2.2');
                 $this->entityManager->remove($deleteUserItem);
                 $this->entityManager->flush();
             }

@@ -46,6 +46,7 @@ class SharedRegistrationNewService
                 'iv' => $this->requireNonEmptyString($user, 'iv'),
                 'sessionId' => $sessionId,
                 'type' => 'new-user-credential-silent',
+                'targetId' => $user['targetId'] ?? null,
             ];
 
             $this->sharedNotificationService->sendFcmNotification('newUserCredential', $userPublicId, $fcmPayload, true);
@@ -67,12 +68,11 @@ class SharedRegistrationNewService
         // registration-domain
         // registration-application
         // system_hub_registration
+        // update-applications
 
         $type = $user['type'];
         $key = in_array($type, ['registration-domain', 'system_hub_registration'], true) ? 'domain' : 'application';
         
-        $this->logger->critical('key .  type: ' . $key . '  :  '. $type);
-
         $registeredUser = $this->accessRegistryRegistrationService->addAccessRegistry($user, $key, $type === 'system_hub_registration');
 
         if ($type === 'system_hub_registration') {

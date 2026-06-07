@@ -8,8 +8,11 @@ use App\Attribute\RequireHmac;
 use App\Attribute\ExtensionHmac;
 use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
+use App\Controller\CredentialHub\PayloadKeys;
+use App\Controller\PayloadValidator\PayloadValidator;
 use App\Helper\ResponseHelper;
 use App\Service\CredentialHub\Vault\Delete\VaultDeleteCredentialService;
+use App\Service\CredentialHub\Vault\Delete\VaultDeleteQrIdentityRequestMapper;
 use App\Service\CredentialHub\Vault\Delete\VaultDeleteQrIdentityService;
 use App\Service\CredentialHub\Vault\Delete\VaultDeleteStateService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,7 +24,9 @@ use Symfony\Component\Routing\Annotation\Route;
 class VaultDeleteController extends AbstractController
 {
     public function __construct(
+        private readonly PayloadValidator $payloadValidator,
         private readonly ResponseHelper $responseHelper,
+        private readonly VaultDeleteQrIdentityRequestMapper $vaultDeleteQrIdentityRequestMapper,
         private readonly VaultDeleteQrIdentityService $vaultDeleteQrIdentityService,
         private readonly VaultDeleteCredentialService $vaultDeleteCredentialService,
         private readonly VaultDeleteStateService $vaultDeleteStateService,
@@ -34,7 +39,10 @@ class VaultDeleteController extends AbstractController
         Request $request
     ): JsonResponse {
         try {
-            $response = $this->vaultDeleteQrIdentityService->handle($request);
+            $validatedPayload = $this->payloadValidator->validatePayload($request, PayloadKeys::VAULT_DELETE_QR_IDENTITY);
+            $vaultDeleteRequest = $this->vaultDeleteQrIdentityRequestMapper->map($validatedPayload);
+
+            $response = $this->vaultDeleteQrIdentityService->handle($vaultDeleteRequest);
 
             if ($response === null) {
                 return $this->missingProcessResponse();

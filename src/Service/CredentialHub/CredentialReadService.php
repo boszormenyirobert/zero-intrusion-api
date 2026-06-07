@@ -22,6 +22,7 @@ enum IdentityType: string
     case DOMAIN_READ = 'domain-read';
     case VAULT_READ = 'vault-read';
     case NEW_USER_CREDENTIAL = 'new-user-credential';
+    case CREDENTIAL_DELETE = 'credential-delete';
 }
 
 class CredentialReadService

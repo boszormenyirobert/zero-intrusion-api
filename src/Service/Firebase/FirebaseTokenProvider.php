@@ -37,7 +37,9 @@ class FirebaseTokenProvider
         $signature = $this->signJwtPayload($header, $claim, $this->config->getPrivateKey());
 
         if ($signature === null) {
-            $this->logger->critical('JWT aláírás sikertelen');
+            $this->logger->error('Firebase JWT signing failed.', [
+                'operation' => 'firebase_access_token',
+            ]);
 
             return null;
         }
@@ -58,10 +60,24 @@ class FirebaseTokenProvider
     public function getAccessTokenFromJwt(string $jwt): ?string
     {
         $data = [];
+        $requestPayload = [
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertionPreview' => $this->maskValue($jwt),
+        ];
 
         try {
-            $body = $this->httpClientAdapter->postForm(
-                $this->config->getTokenUri(),
+            $url = $this->config->getTokenUri();
+
+            $this->logger->info('Outgoing HTTP request.', [
+                'channel' => 'firebase',
+                'operation' => 'access_token',
+                'method' => 'POST',
+                'url' => $url,
+                'payload' => $requestPayload,
+            ]);
+
+            $response = $this->httpClientAdapter->postForm(
+                $url,
                 [
                     'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
                     'assertion' => $jwt,
@@ -72,27 +88,54 @@ class FirebaseTokenProvider
                 $this->config->getCaCertPath(),
             );
 
-            $data = $this->jsonPayloadDecoder->decodeArray($body) ?? [];
+            $this->logger->info('Outgoing HTTP response.', [
+                'channel' => 'firebase',
+                'operation' => 'access_token',
+                'method' => 'POST',
+                'url' => $url,
+                'statusCode' => $response['statusCode'],
+                'responseBody' => $response['body'],
+            ]);
+
+            $data = $this->jsonPayloadDecoder->decodeArray($response['body']) ?? [];
 
             if (empty($data['access_token'])) {
-                $this->logger->error('Firebase response did not contain an access_token.', [
-                    'responseBody' => $body,
+                $this->logger->error('Firebase access token response is missing access_token.', [
+                    'url' => $url,
+                    'responseBody' => $response['body'],
                 ]);
             }
-        } catch (RequestException $e) {
+        } catch (RequestException $exception) {
             $context = [
-                'message' => $e->getMessage(),
+                'channel' => 'firebase',
+                'operation' => 'access_token',
+                'method' => 'POST',
+                'url' => $this->config->getTokenUri(),
+                'payload' => $requestPayload,
+                'exceptionClass' => $exception::class,
+                'exceptionMessage' => $exception->getMessage(),
             ];
 
-            if ($e->hasResponse()) {
-                $context['statusCode'] = $e->getResponse()->getStatusCode();
-                $context['responseBody'] = $e->getResponse()->getBody()->getContents();
+            if ($exception->hasResponse()) {
+                $context['statusCode'] = $exception->getResponse()->getStatusCode();
+                $context['responseBody'] = $exception->getResponse()->getBody()->getContents();
             }
 
-            $this->logger->critical('Firebase access token request failed.', $context);
+            $this->logger->error('Outgoing HTTP request failed.', $context);
         }
 
         return $data['access_token'] ?? null;
+    }
+
+    private function maskValue(string $value): string
+    {
+        $length = strlen($value);
+
+        if ($length <= 10) {
+            return str_repeat('*', $length);
+        }
+
+        return substr($value, 0, 6) . '...' . substr($value, -4);
     }
 
     /**

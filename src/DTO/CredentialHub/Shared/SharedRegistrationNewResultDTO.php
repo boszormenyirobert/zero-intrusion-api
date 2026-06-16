@@ -20,9 +20,15 @@ final readonly class SharedRegistrationNewResultDTO
      */
     public function toArray(): array
     {
+        if($this->error !== '') {
+            return [
+                'state' => 'error',
+                'error' => $this->error,
+            ];
+        }
+
         return [
-            'registration_process_one' => $this->registrationProcessOne,
-            'error' => $this->error,
+            'state' => $this->registrationProcessOne['state'] 
         ];
     }
 }

@@ -54,17 +54,10 @@ class SharedNotificationService
     public function sendFcmNotification(string $type, ?string $userPublicId, mixed $qrContent, bool $throwOnFailure = false): bool
     {
         if ($userPublicId === null || $userPublicId === '') {
-            $this->logger->warning('FCM notification skipped because userPublicId is missing.', [
-                'type' => $type,
-            ]);
             return false;
         }
 
         if (!isset(self::FCM_DESCRIPTIONS[$type])) {
-            $this->logger->warning('FCM notification skipped because type is unsupported.', [
-                'type' => $type,
-                'userPublicId' => $userPublicId,
-            ]);
             return false;
         }
 
@@ -74,10 +67,6 @@ class SharedNotificationService
         if (!$delivered && $throwOnFailure) {
             throw new \RuntimeException(sprintf('FCM delivery failed for type "%s" and user "%s".', $type, $userPublicId));
         }
-            $this->logger->warning('FCM notification sent.', [
-                'userPublicId' => $userPublicId,
-                'qrContent' => $qrContent,
-            ]);
 
         return $delivered;
     }
@@ -108,7 +97,11 @@ class SharedNotificationService
                 }
             }
         } catch (\Exception $exception) {
-            $this->logger->error('Error retrieving user email: ' . $exception->getMessage());
+            $this->logger->error('User email lookup failed.', [
+                'source' => $source,
+                'exceptionClass' => $exception::class,
+                'exceptionMessage' => $exception->getMessage(),
+            ]);
         }
 
         return ['email' => null, 'publicId' => null];

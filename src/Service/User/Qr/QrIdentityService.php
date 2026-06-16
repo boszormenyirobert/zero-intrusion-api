@@ -18,7 +18,7 @@ class QrIdentityService
     public function handle(QrIdentityRequestDTO $request): QrIdentityResultDTO
     {
         return QrIdentityResultDTO::fromServiceResult(
-            $this->userService->getQrData($request->payload, $request->processKey)
+            $this->userService->getQrDataHubUserRegistration($request->payload, $request->processKey)
         );
     }
 }

@@ -38,7 +38,7 @@ class UserQrContentFactory
         };
     }
 
-    private function createRegistrationContent(array $payload, CredentialHubIdentityDTO $identity): CorporateRegistrationDTO
+    private function createRegistrationContent(array $payload, $identity): CorporateRegistrationDTO
     {
         $corporateAuthentication = $payload['corporateAuthentication'] ?? null;
 
@@ -54,6 +54,7 @@ class UserQrContentFactory
         $newCorporateRegistration->setRegistrationProcessId($identity->getRegistrationProcessId());
         $newCorporateRegistration->setType('system_hub_registration');
         $newCorporateRegistration->setIsNew('new');
+        $newCorporateRegistration->setSessionId($identity->getSessionId());
 
         return $newCorporateRegistration;
     }

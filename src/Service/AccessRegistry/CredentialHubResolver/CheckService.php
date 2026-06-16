@@ -20,7 +20,9 @@ final class CheckService
                 //$newCombination = false;
                 //break;
             } else {
-                if ($key === 'application' && $registratedPage->getPublicId() === $user['publicId'] && $registratedPage->getApplication() === $user['application']) {
+                if ($key === 'application' && $registratedPage->getPublicId() === $user['publicId'] 
+                && array_key_exists('application', $user)
+                && $registratedPage->getApplication() === $user['application']) {
                     $newCombination = false;
                     break;
                 }

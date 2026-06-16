@@ -30,30 +30,30 @@ class SharedRegistrationNewToEncryptService
 
         $sessionId = $user['sessionId'] ?? null;
         if (!is_string($sessionId) || $sessionId === '') {
-            throw new \InvalidArgumentException('Invalid or missing sessionId.');
+            throw new \InvalidArgumentException('Invalid or missing sessionId from SharedRegistrationNewToEncryptService.');
         }
 
         $type = $user['type'] ?? null;
         if (!is_string($type) || $type === '') {
-            throw new \InvalidArgumentException('Invalid or missing type.');
+            throw new \InvalidArgumentException('Invalid or missing type from SharedRegistrationNewToEncryptService.');
         }
         if ($type !== 'new-user-credential') {
-            throw new \InvalidArgumentException('Invalid type. Expected new-user-credential.');
+            throw new \InvalidArgumentException('Invalid type from SharedRegistrationNewToEncryptService. Expected new-user-credential.');
         }
 
         $source = $user['source'] ?? 'extension';
         if (!is_string($source) || $source === '') {
-            throw new \InvalidArgumentException('Invalid source value.');
+            throw new \InvalidArgumentException('Invalid source value from SharedRegistrationNewToEncryptService.');
         }
 
         $publicKey = $user['publicKey'] ?? null;
         if (!is_string($publicKey) || $publicKey === '') {
-            throw new \InvalidArgumentException('Invalid or missing publicKey.');
+            throw new \InvalidArgumentException('Invalid or missing publicKey from SharedRegistrationNewToEncryptService.');
         }
 
         $userPublicId = $user['userPublicId'] ?? null;
         if (!is_string($userPublicId) || $userPublicId === '') {
-            throw new \InvalidArgumentException('Invalid or missing userPublicId.');
+            throw new \InvalidArgumentException('Invalid or missing userPublicId from SharedRegistrationNewToEncryptService.');
         }
 
         try {

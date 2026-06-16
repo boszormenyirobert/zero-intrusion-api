@@ -41,8 +41,7 @@ class Identity
     private function handleSessionKey(string $type): string
     {
         return match ($type) {
-            'vault-read', 'domain-read', 'one-touch', 'domain-delete', 'new-user-credential', 'credential-delete', 'application-delete' => 'sessionId',            
-            'registrationProcessId' => 'registrationProcessId',
+            'vault-read', 'domain-read', 'one-touch', 'domain-delete', 'new-user-credential', 'credential-delete', 'application-delete', 'registrationProcessId' => 'sessionId',            
 
             default => $this->throwInvalidType($type),
         };

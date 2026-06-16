@@ -28,9 +28,12 @@ class ProcessStateCacheService
         return $item->isHit() ? $item->get() : null;
     }
 
-    public function set(string $processId, mixed $value, int $ttl = 3600): void
+    public function set(string $processId, mixed $value, int $ttl = 3600): bool
     {
         $item = $this->cachePool->getItem($this->getCacheKey($processId));
+        if(!$this->getCacheKey($processId)) {
+            throw new RuntimeException(sprintf('Failed to create cache key for processId: %s', $processId));
+        }
 
         $item->set($value);
         $item->expiresAfter($ttl);
@@ -38,5 +41,7 @@ class ProcessStateCacheService
         if (!$this->cachePool->save($item)) {
             throw new RuntimeException(sprintf('Failed to save process state cache for processId: %s', $processId));
         }
+
+        return true;
     }
 }

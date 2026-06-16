@@ -6,19 +6,19 @@ namespace App\Service\AccessRegistry;
 
 use App\DTO\CredentialHub\ResponseDTO;
 use App\Service\AccessRegistry\CredentialHubHandler\CredentialHubHandler;
-use App\Service\Notifier\NotifierService;
+use App\Service\Callback\CallbackService;
 
 class AccessRegistryRegistrationService
 {
     public function __construct(
         private readonly CredentialHubHandler $credentialHubHandler,
-        private readonly NotifierService $notifierService
+        private readonly CallbackService $callbackService
     ) {}
 
 
-    public function addAccessRegistry(array $userData, string $type, bool $zeroIntrusionRegistration): array
+    public function addAccessRegistry(array $userData, string $type): array
     {
-        return $this->credentialHubHandler->getRegistration()->addAccessRegistry($userData, $type, $zeroIntrusionRegistration);
+        return $this->credentialHubHandler->getRegistration()->addAccessRegistry($userData, $type);
     }
 
     public function setRegistrationState(array $user, bool $state): array
@@ -31,8 +31,8 @@ class AccessRegistryRegistrationService
         return $this->credentialHubHandler->getStateHandler()->registrationState($processId, $key);
     }
 
-    public function sendNotification(array $registratedUser, array $user): void
+    public function callBackUserRegistration(array $registratedUser, array $user): void
     {
-        $this->notifierService->callBackUserRegistration($registratedUser, $user);
+        $this->callbackService->callBackUserRegistration($registratedUser, $user);
     }
 }

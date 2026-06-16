@@ -23,7 +23,7 @@ class OneTouchIdentifierService
         $payload = $this->sharedPayloadService->getPayloadOrFail($request, PayloadKeys::ONE_TOUCH_IDENTIFIER);
 
         if (!isset($payload['sessionId']) || !is_string($payload['sessionId']) || $payload['sessionId'] === '') {
-            throw new \InvalidArgumentException('Invalid or missing sessionId');
+            throw new \InvalidArgumentException('Invalid or missing sessionId from OneTouchIdentifierService.');
         }
 
         return new OneTouchIdentifierResultDTO(

@@ -10,6 +10,7 @@ use App\Service\AccessRegistry\AccessRegistryRegistrationService;
 use App\Service\Payload\JsonPayloadDecoder;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Service\Cache\ProcessStateCacheService;
+use Psr\Log\LoggerInterface;
 
 class SharedSSE
 {
@@ -17,7 +18,8 @@ class SharedSSE
         private readonly PayloadValidator $payloadValidator,
         private readonly AccessRegistryRegistrationService $accessRegistryRegistrationService,
         private readonly JsonPayloadDecoder $jsonPayloadDecoder,
-        private readonly ProcessStateCacheService $processStateCacheService
+        private readonly ProcessStateCacheService $processStateCacheService,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -28,7 +30,7 @@ class SharedSSE
             session_write_close();
 
             $startedAt = time();
-
+            
             while (true) {                
                 if ((time() - $startedAt) >= 15) {
 

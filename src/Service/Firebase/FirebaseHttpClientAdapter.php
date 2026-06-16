@@ -14,7 +14,10 @@ final class FirebaseHttpClientAdapter
     ) {
     }
 
-    public function postForm(string $url, array $formParams, array $headers, string $caCertPath): string
+    /**
+     * @return array{statusCode: int, body: string}
+     */
+    public function postForm(string $url, array $formParams, array $headers, string $caCertPath): array
     {
         $response = $this->client->post($url, [
             'form_params' => $formParams,
@@ -22,10 +25,13 @@ final class FirebaseHttpClientAdapter
             'verify' => $caCertPath,
         ]);
 
-        return $this->readBody($response);
+        return $this->readResponse($response);
     }
 
-    public function postJson(string $url, string $body, array $headers, string $caCertPath): string
+    /**
+     * @return array{statusCode: int, body: string}
+     */
+    public function postJson(string $url, string $body, array $headers, string $caCertPath): array
     {
         $response = $this->client->post($url, [
             'body' => $body,
@@ -33,11 +39,17 @@ final class FirebaseHttpClientAdapter
             'verify' => $caCertPath,
         ]);
 
-        return $this->readBody($response);
+        return $this->readResponse($response);
     }
 
-    private function readBody(ResponseInterface $response): string
+    /**
+     * @return array{statusCode: int, body: string}
+     */
+    private function readResponse(ResponseInterface $response): array
     {
-        return $response->getBody()->getContents();
+        return [
+            'statusCode' => $response->getStatusCode(),
+            'body' => $response->getBody()->getContents(),
+        ];
     }
 }

@@ -42,6 +42,24 @@ class UserService
         ];
     }
 
+    public function getQrDataHubUserRegistration(array $payload, $key): array
+    {
+        $identity = $this->authBridgeService->generateRequestIdentity($key);
+
+        // $key => registrationProcessId
+        $qrCodeContent = $this->userQrContentFactory->create($payload, $identity, $key);
+        $qrCode = $this->qrService->getQrCode($qrCodeContent);
+
+        $defaultResponse = $this->userAuthorizationResponseFactory->create(
+            $this->buildExtendedIdentityPayload($identity, $qrCode)
+        );
+
+        return [
+            'defaultResponse' => $defaultResponse,
+            'mobileResponse' => $qrCodeContent,
+        ];
+    }    
+
     /**
      * @return array<string, mixed>
      */

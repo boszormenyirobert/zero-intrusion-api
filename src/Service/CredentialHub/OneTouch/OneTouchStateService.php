@@ -23,7 +23,7 @@ class OneTouchStateService
         $sessionId = $payload['sessionId'] ?? null;
 
         if (!is_string($sessionId) || $sessionId === '') {
-            throw new \InvalidArgumentException('Invalid or missing sessionId');
+            throw new \InvalidArgumentException('Invalid or missing sessionId from OneTouchStateService.');
         }
 
         return $this->sharedProcessPoller->pollTheRedisOneTouch($sessionId, 'sessionId');

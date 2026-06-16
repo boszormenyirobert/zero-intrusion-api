@@ -15,15 +15,10 @@ final class RegistryRegistration
         private readonly AccessRegistryDomainService $accessRegistryDomainService
     ) {}
 
-    public function addAccessRegistry(array $userData, string $type, bool $zeroIntrusionRegistration): array
+    public function addAccessRegistry(array $userData, string $type): array
     {
-        $this->logger->info('Adding access registry for user: ' . json_encode($userData) . ' with type: ' . $type);
         $result = $this->accessRegistryDomainService->isAllowedUserDomainApplicationCombination($userData, $type);
-        $this->logger->info('001 Result of combination check: ' . json_encode($result));
         $update = $userData['update'];
-        if (!empty($result) && $result['newCombination'] === false && $update === 'new' && $zeroIntrusionRegistration === false) {
-        //    return false;
-        }
 
         return $this->addOrUpdateRegistry($result, $userData, $update, $type);
     }

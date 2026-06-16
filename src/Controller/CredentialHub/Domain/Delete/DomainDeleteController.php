@@ -87,6 +87,6 @@ class DomainDeleteController extends AbstractController
 
     private function missingSessionResponse(): JsonResponse
     {
-        return $this->responseHelper->createErrorResponse('Invalid or missing sessionId');
+        return $this->responseHelper->createErrorResponse('Invalid or missing sessionId from DomainDeleteStateService.', JsonResponse::HTTP_BAD_REQUEST);
     }
 }

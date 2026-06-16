@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller\CredentialHub\Shared;
 
-use App\Attribute\RequireHmac;
-use App\Attribute\ExtensionHmac;
-use App\Attribute\MobileHmac;
 use App\Attribute\RequireJson;
 use App\Controller\PayloadValidator\PayloadValidator;
 use App\Helper\ResponseHelper;
@@ -14,7 +11,6 @@ use App\Service\CredentialHub\Shared\SharedRegistrationNewService;
 use App\Service\CredentialHub\Shared\SharedRegistrationNewToEncryptService;
 use App\Service\CredentialHub\Shared\SharedRegistrationQrIdentityRequestMapper;
 use App\Service\CredentialHub\ReadQrIdentityService;
-use App\Service\CredentialHub\Shared\SharedRegistrationStateService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,7 +31,7 @@ class SharedRegistrationController extends AbstractController
         private readonly ReadQrIdentityService $readQrIdentityService,
         private readonly SharedRegistrationNewToEncryptService $sharedRegistrationNewToEncryptService,
         private readonly SharedRegistrationNewService $sharedRegistrationNewService,
-        private readonly SharedRegistrationStateService $sharedRegistrationStateService,
+        private readonly SharedSSE $sharedSSE,
     ) {
     }
 
@@ -83,13 +79,13 @@ class SharedRegistrationController extends AbstractController
         Request $request,
     ): JsonResponse {
         try {
-            return new JsonResponse($this->sharedRegistrationNewService->handle($request)->toArray());
+            return new JsonResponse($this->sharedRegistrationNewService->handleCredentialRegistration($request)->toArray());
         } catch (\Exception $e) {
             return $this->responseHelper->handleException($e);
         }
     }
 
-    // Mobil call to save the credential
+    // Mobil call to save the credential/ Add new HUB-User
     #[Route('/new/save', name: 'shared_registration_new_save', methods: "POST")]
     #[RequireJson]
     public function sharedRegistrationNewSave(

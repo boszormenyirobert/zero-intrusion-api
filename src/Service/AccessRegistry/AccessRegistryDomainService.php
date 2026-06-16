@@ -27,13 +27,12 @@ final class AccessRegistryDomainService
             "existingPage" => ""
         ];
 
-        if( ($user['type']  === 'registration-domain' || $type  === 'registration-application')&& $user['update'] === false) {
+        if( ( $user['type']  === 'registration-domain' || $type  === 'registration-application')&& $user['update'] === false) {
             return $result;
         }
-
+        
         $encryptedUserPages = $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
         $decryptedUserPages = [];
-
         if (!empty($encryptedUserPages)) {
             $decryptedUserPages = $this->resolverService->getDecrypt()->getUserDecryptedPages($encryptedUserPages, $type);
         }
@@ -41,7 +40,6 @@ final class AccessRegistryDomainService
         if (!empty($decryptedUserPages)) {
             $result = $this->resolverService->getCheck()->userDomainCombinationExists($user, $decryptedUserPages, $type);
         }
-
         return $result;
     }
 
@@ -56,6 +54,7 @@ final class AccessRegistryDomainService
         $encryptedUserData = $this->resolverService->getWrite()->createAccessRegistryDomain($userData, $type);
 
         $userData['encryptedAuthId'] = $encryptedUserData->getUserCredential();
+        $userData['state'] = true;
 
         $this->writeLoginEntryInRedis($sessionId, [
             'process' => true,
@@ -69,21 +68,12 @@ final class AccessRegistryDomainService
 
     public function deleteDomainRegistraions(array $user, string $type = 'domain'): void
     {
-        $this->logger->info('Deleting ' . $type . ' registrations for user.', [
-            'publicId' => $user['publicId'] ?? null,
-            'domain' => $user['domain'] ?? null,
-            'targetId' => $user['targetId'] ?? null,
-            'type' => $type,
-        ]);
-$this->logger->info('------------------STEP 0');
         $encryptedUserPages =  $this->resolverService->getFilter()->getUserRegistratedPages($user, $type);
         $collection = [];
         if (!empty($encryptedUserPages)) {
             $collection = $this->resolverService->getDecrypt()->getUserEncryptedDecryptedPageCollection($encryptedUserPages);
-            $this->logger->info('------------------STEP 1');
         }
         if (!empty($collection)) {
-            $this->logger->info('------------------STEP 2 : ' . $type);
             $this->resolverService->getDelete()->deleteUserDomainCombination($user, $collection);
         }
     }
@@ -109,13 +99,22 @@ $this->logger->info('------------------STEP 0');
 
     private function writeLoginEntryInRedis(string $processId, array $status): void
     {
-        $this->processStateCacheService->set(
-            $processId,
-            $this->encodeJson($status, JSON_UNESCAPED_UNICODE),
-            300
-        );
+        try {
+            $this->processStateCacheService->set(
+                $processId,
+                $this->encodeJson($status, JSON_UNESCAPED_UNICODE),
+                300
+            );
+        } catch (\Throwable $exception) {
+            $this->logger->error('Process state cache write failed.', [
+                'processId' => $processId,
+                'status' => $status,
+                'exceptionClass' => $exception::class,
+                'exceptionMessage' => $exception->getMessage(),
+            ]);
 
-        $this->logger->info(sprintf('Process state cached for processId: %s', $processId));
+            throw $exception;
+        }
     }
 
     private function encodeJson(array $payload, int $flags = 0): string

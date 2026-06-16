@@ -18,8 +18,12 @@ class RecoverySettingsService
 
     public function handle(RecoverySettingsRequestDTO $request): array
     {
-        $this->logger->info('Processing recovery settings update.', [
+        $this->logger->info('Incoming FCM request received.', [
+            'channel' => 'fcm',
+            'operation' => 'recovery_settings',
             'publicId' => $request->publicId,
+            'hasFcmToken' => $request->fcmToken !== null && $request->fcmToken !== '',
+            'fcmTokenPreview' => $this->maskValue($request->fcmToken),
         ]);
 
         $this->identityService->updateIdentityRecoverySettings($request->toArray());
@@ -27,5 +31,24 @@ class RecoverySettingsService
         return [
             'success' => true,
         ];
+    }
+
+    private function maskValue(mixed $value): mixed
+    {
+        if (is_string($value)) {
+            $length = strlen($value);
+
+            if ($length <= 10) {
+                return str_repeat('*', $length);
+            }
+
+            return substr($value, 0, 6) . '...' . substr($value, -4);
+        }
+
+        if (is_array($value)) {
+            return array_map(fn (mixed $item): mixed => $this->maskValue($item), $value);
+        }
+
+        return $value;
     }
 }

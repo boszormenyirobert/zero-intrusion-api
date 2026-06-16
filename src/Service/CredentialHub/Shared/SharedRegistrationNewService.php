@@ -25,13 +25,27 @@ class SharedRegistrationNewService
     ) {
     }
 
-    public function handle(Request $request): SharedRegistrationNewResultDTO
-    {
+
+
+    private function validatePayload(Request $request){
         $validatedPayload = $this->payloadValidator->validatePayload($request, 'shared_registration_new');
+
         $user = $this->jsonPayloadDecoder->requireArray(
             $validatedPayload['shared_registration_new'] ?? null,
             'Invalid shared registration new payload.'
         );
+        return $user;
+    }
+
+    public function handleCredentialRegistration(Request $request): SharedRegistrationNewResultDTO
+    {
+        $user = $this->validatePayload($request);
+        $registeredUser = [];
+        $sessionId = $this->requireNonEmptyString($user, 'sessionId');
+
+        $this->processStateCacheService->set($sessionId, [
+            'success' => true,
+        ], 160);   
 
         if ($this->isEncryptedNewCredentialPayload($user)) {
             $sessionId = $this->requireNonEmptyString($user, 'sessionId');
@@ -51,11 +65,11 @@ class SharedRegistrationNewService
 
             $this->sharedNotificationService->sendFcmNotification('newUserCredential', $userPublicId, $fcmPayload, true);
 
-            return new SharedRegistrationNewResultDTO(['forwarded' => true], '');
+            return new SharedRegistrationNewResultDTO(['state' => 'in progress'], '');
         }
 
         return new SharedRegistrationNewResultDTO($registeredUser, '');
-    }
+    }    
 
     public function handleSave(Request $request): SharedRegistrationNewResultDTO
     {
@@ -65,21 +79,30 @@ class SharedRegistrationNewService
             'Invalid shared registration new save payload.'
         );
 
-        // registration-domain
-        // registration-application
-        // system_hub_registration
-        // update-applications
+        $key = $this->mapTypeToKey($user);
+        $registeredUser = $this->accessRegistryRegistrationService->addAccessRegistry($user, $key);
 
-        $type = $user['type'];
-        $key = in_array($type, ['registration-domain', 'system_hub_registration'], true) ? 'domain' : 'application';
-        
-        $registeredUser = $this->accessRegistryRegistrationService->addAccessRegistry($user, $key, $type === 'system_hub_registration');
-
-        if ($type === 'system_hub_registration') {
-            $this->accessRegistryRegistrationService->sendNotification($registeredUser, $user);
-        }
+        $this->accessRegistryRegistrationService->callBackUserRegistration($registeredUser, $user);
 
         return new SharedRegistrationNewResultDTO($registeredUser, '');
+    }
+
+    private function mapTypeToKey($user): string {
+        if(array_key_exists('type', $user) && is_string($user['type'])){
+            switch ($user['type']) {
+                case 'registration-domain':
+                    return 'domain';
+                case 'registration-application':
+                    return 'application';
+                case 'update-applications':
+                    return 'application';
+                case 'new-user-credential':
+                    return 'system_hub_registration';   
+                default:
+                    throw new \InvalidArgumentException('Invalid type in shared registration new save payload.');
+            }
+        }
+        throw new \InvalidArgumentException('Missing type in shared registration new save payload.');
     }
 
     private function isEncryptedNewCredentialPayload(array $payload): bool
@@ -98,6 +121,9 @@ class SharedRegistrationNewService
             return $payload['userPublicId'];
         }
 
+        if (isset($payload['publicId']) && is_string($payload['publicId']) && $payload['publicId'] !== '') {
+            return $payload['publicId'];
+        }
         throw new \InvalidArgumentException('Invalid or missing userPublicId for encrypted shared registration notification.');
     }
 
@@ -105,7 +131,7 @@ class SharedRegistrationNewService
     {
         $value = $payload[$key] ?? null;
         if (!is_string($value) || $value === '') {
-            throw new \InvalidArgumentException(sprintf('Invalid or missing %s.', $key));
+         throw new \InvalidArgumentException(sprintf('Invalid or missing %s from SharedRegistrationNewService.', $key));
         }
 
         return $value;

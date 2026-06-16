@@ -8,7 +8,7 @@ use App\Repository\CorporateIdentityRepository;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use App\Repository\AccessRegistryRepository;
 use Psr\Log\LoggerInterface;
-use App\Service\Notifier\NotifierService;
+use App\Service\Callback\CallbackService;
 use App\DTO\CredentialHub\ExtensionCredentialResponseDTO;
 use App\DTO\CredentialHub\QrContentDTO;
 
@@ -21,7 +21,7 @@ class DomainService
         private HttpClientInterface $httpClient,
         private LoggerInterface $logger,
         private AccessRegistryRepository $accessRegistryRepository,
-        private NotifierService $notifierService
+        private CallbackService $callbackService
     ) {}
 
     public function getQrContent( ExtensionCredentialResponseDTO $identity): QrContentDTO
@@ -58,7 +58,7 @@ class DomainService
             return false;
         }
 
-        $this->notifierService->callBackUserLogin($decryptedResponse, $user);
+        $this->callbackService->callBackUserLogin($decryptedResponse, $user);
         return true;
     }
 }

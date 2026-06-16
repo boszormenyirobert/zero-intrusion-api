@@ -30,6 +30,8 @@ class CorporateRegistrationDTO implements QrInterface
     #[Assert\NotBlank]
     public ?string $isNew;
 
+    public ?string $sessionId;
+
 
     /**
      * Get the value of corporateId
@@ -187,6 +189,18 @@ class CorporateRegistrationDTO implements QrInterface
     public function setIsNew($isNew)
     {
         $this->isNew = $isNew;
+
+        return $this;
+    }
+
+    public function getSessionId(): ?string
+    {
+        return $this->sessionId;
+    }
+
+    public function setSessionId(?string $sessionId): self
+    {
+        $this->sessionId = $sessionId;
 
         return $this;
     }

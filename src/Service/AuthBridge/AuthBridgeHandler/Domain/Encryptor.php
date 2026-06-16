@@ -140,12 +140,15 @@ class Encryptor
 
         $app = $this->extractCredentialForWeb($pages, $user['domain']);
 
-        if (!$app || !$app['credential']) {
-            $this->logger->critical("No matching credential found for domain: " . $user['domain']);
-            return null;
-        }
+        $decrypted = null;
+        if($user['type'] !== 'system_hub_login'){
+            if (!$app || !$app['credential']) {
+                $this->logger->critical("No matching credential found for domain: " . $user['domain']);
+                return null;
+            }
 
-        $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
+            $decrypted = $this->sodiumService->sodiumDecrypt($app['credential'], $userSecret);
+        }
         return ['decrypted' => $decrypted];
     }    
 
@@ -181,7 +184,6 @@ class Encryptor
                 }
             }
         }
-        $this->logger->critical('credential not found to the domain'); 
         return null;       
     }
 

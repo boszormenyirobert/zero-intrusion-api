@@ -33,28 +33,14 @@ class FirebaseService
     {
         $identityEncrypted = $this->identityRepository->findOneBy(['publicId' => $publicId]);
         if (!$identityEncrypted) {
-            $this->logger->warning('FCM notification skipped because identity was not found.', [
-                'publicId' => $publicId,
-                'title' => $title,
-            ]);
             return false;
         }
 
         $fcmTokens = $identityEncrypted->getFcmToken() ?? [];
 
         if (!is_array($fcmTokens) || count($fcmTokens) === 0) {
-            $this->logger->warning('FCM notification skipped because no device token is registered.', [
-                'publicId' => $publicId,
-                'title' => $title,
-            ]);
             return false;
         }
-
-        $this->logger->info('Sending FCM notification to registered devices.', [
-            'publicId' => $publicId,
-            'tokenCount' => count($fcmTokens),
-            'title' => $title,
-        ]);
 
         $delivered = 0;
 
@@ -89,7 +75,7 @@ class FirebaseService
     {
         $accessToken = $this->tokenProvider()->getAccessToken();
         if (!$accessToken) {
-            $this->logger->critical('FCM send aborted because access token retrieval failed.', [
+            $this->logger->error('FCM send aborted because access token retrieval failed.', [
                 'maskedToken' => $this->maskToken($deviceToken),
                 'title' => $title,
             ]);
@@ -147,7 +133,16 @@ class FirebaseService
         $message = $this->createMessagePayload((string) $deviceToken, (string) $title, (string) $body, $qrData);
 
         try {
-            $body = $this->httpClientAdapter()->postJson(
+            $this->logger->info('Outgoing HTTP request.', [
+                'channel' => 'firebase',
+                'operation' => 'send_message',
+                'method' => 'POST',
+                'url' => $url,
+                'payload' => $message,
+                'maskedToken' => $this->maskToken($deviceToken),
+            ]);
+
+            $response = $this->httpClientAdapter()->postJson(
                 $url,
                 (string) json_encode($message),
                 [
@@ -157,26 +152,34 @@ class FirebaseService
                 $this->config()->getCaCertPath(),
             );
 
-            $decoded = $this->jsonPayloadDecoder->decodeArray($body) ?? [];
-            $this->logger->info('FCM request accepted by Firebase.', [
-                'projectId' => $project_id,
+            $this->logger->info('Outgoing HTTP response.', [
+                'channel' => 'firebase',
+                'operation' => 'send_message',
+                'method' => 'POST',
+                'url' => $url,
+                'statusCode' => $response['statusCode'],
+                'responseBody' => $response['body'],
                 'maskedToken' => $this->maskToken($deviceToken),
-                'firebaseMessageName' => $decoded['name'] ?? null,
             ]);
 
-            return $body;
+            return $response['body'];
 
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (\GuzzleHttp\Exception\RequestException $exception) {
             $context = [
-                'message' => $e->getMessage(),
+                'channel' => 'firebase',
+                'operation' => 'send_message',
+                'method' => 'POST',
                 'projectId' => $project_id,
                 'maskedToken' => $this->maskToken($deviceToken),
                 'title' => $title,
                 'requestUrl' => $url,
+                'payload' => $message,
+                'exceptionClass' => $exception::class,
+                'exceptionMessage' => $exception->getMessage(),
             ];
 
-            if ($e->hasResponse()) {
-                $resp = $e->getResponse();
+            if ($exception->hasResponse()) {
+                $resp = $exception->getResponse();
                 $responseBody = $resp->getBody()->getContents();
                 $decodedBody = $this->jsonPayloadDecoder->decodeArray($responseBody) ?? [];
 
@@ -188,7 +191,7 @@ class FirebaseService
                 $context['firebaseErrorCode'] = $decodedBody['error']['details'][0]['errorCode'] ?? null;
             }
 
-            $this->logger->critical('FCM request failed.', $context);
+            $this->logger->error('Outgoing HTTP request failed.', $context);
         }
 
         return null;
